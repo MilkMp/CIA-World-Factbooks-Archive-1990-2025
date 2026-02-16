@@ -385,6 +385,150 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
       <hr class="doc-rule">
 
       <div class="sec">
+        <span class="sec-num">ETL</span>
+        <span class="sec-title">ETL Pipeline &amp; Python Scripts</span>
+        <hr class="sec-rule">
+      </div>
+
+      <p>The raw CIA World Factbook changed format <strong style="color:#C5CBD3;">at least 10 times</strong> between 1990 and 2025. The ETL pipeline downloads original source data, parses every format variant, and loads structured results into SQL Server via pyodbc.</p>
+
+      <table class="data-table">
+        <thead>
+          <tr><th>Script</th><th>Years</th><th>What It Does</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">build_archive.py</td><td>2000&ndash;2020</td><td>Downloads HTML zips from the Wayback Machine, detects which of 5 HTML layouts each year uses, and parses fields</td></tr>
+          <tr><td class="mono">load_gutenberg_years.py</td><td>1990&ndash;2001</td><td>Parses plain-text Gutenberg editions with 4 distinct format variants (tagged, asterisk, at-sign, colon)</td></tr>
+          <tr><td class="mono">reload_json_years.py</td><td>2021&ndash;2025</td><td>Checks out year-end git commits from factbook/cache.factbook.json and loads structured JSON</td></tr>
+          <tr><td class="mono">build_field_mappings.py</td><td>All</td><td>Maps 1,090 raw field name variants to 414 canonical names using a 7-rule system</td></tr>
+          <tr><td class="mono">classify_entities.py</td><td>All</td><td>Auto-classifies 281 entities into 9 types based on Dependency Status and Government Type fields</td></tr>
+          <tr><td class="mono">validate_integrity.py</td><td>All</td><td>Read-only validation with 9 checks: field count benchmarks, ground truth, year-over-year consistency</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sec" style="margin-top: 20px;">
+        <span class="sec-num">PARSING</span>
+        <span class="sec-title">Why Parsing Was So Difficult</span>
+        <hr class="sec-rule">
+      </div>
+
+      <p>The CIA never maintained a stable schema. Every few years the HTML layout changed completely, field names were renamed without notice, and entire categories were restructured.</p>
+
+      <div style="margin: 16px 0 20px; padding: 16px 20px; background: #1C2127; border: 1px solid #2F343C; border-radius: 4px; font-size: 0.85rem; color: #8F99A8; line-height: 1.8;">
+        <strong style="color: #C5CBD3; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px;">1990&ndash;1999 (Plain Text)</strong><br>
+        Four different formatting conventions across the decade. 1990&ndash;1993 used indented fields. 1994 introduced tagged markers. 1996 switched to bare section headers. 1999 changed the delimiter scheme again. Each variant required its own regex-based parser.
+        <br><br>
+        <strong style="color: #C5CBD3; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px;">2000&ndash;2020 (HTML)</strong><br>
+        The CIA redesigned the Factbook website at least 5 times. The 2000 edition used inline &lt;b&gt; formatting. By 2004 it switched to table layouts. 2008 introduced CollapsiblePanel JavaScript widgets. 2014 changed to expand/collapse sections. 2017 moved to field-anchor div structures. A parser that worked on 2006 data would produce garbage on 2010 data.
+        <br><br>
+        <strong style="color: #C5CBD3; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px;">Field Name Drift</strong><br>
+        The CIA renamed fields silently over the decades. &ldquo;GDP - real growth rate&rdquo; became &ldquo;Real GDP growth rate.&rdquo; &ldquo;Telephones&rdquo; split into &ldquo;Telephones - fixed lines&rdquo; and &ldquo;Telephones - mobile cellular.&rdquo; The field mapping script tracks all 1,090 variants through 7 rule layers.
+      </div>
+
+      <hr class="doc-rule">
+
+      <div class="sec">
+        <span class="sec-num">EDITIONS</span>
+        <span class="sec-title">Year-by-Year Breakdown</span>
+        <hr class="sec-rule">
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr><th>Year</th><th>Source</th><th style="text-align:right;">Countries</th><th style="text-align:right;">Fields</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">1990</td><td><span class="badge badge-text">TEXT</span></td><td class="r">249</td><td class="r">15,750</td></tr>
+          <tr><td class="mono">1991</td><td><span class="badge badge-text">TEXT</span></td><td class="r">247</td><td class="r">14,903</td></tr>
+          <tr><td class="mono">1992</td><td><span class="badge badge-text">TEXT</span></td><td class="r">264</td><td class="r">17,372</td></tr>
+          <tr><td class="mono">1993</td><td><span class="badge badge-text">TEXT</span></td><td class="r">266</td><td class="r">18,509</td></tr>
+          <tr><td class="mono">1994</td><td><span class="badge badge-text">TEXT</span></td><td class="r">266</td><td class="r">28,633</td></tr>
+          <tr><td class="mono">1995</td><td><span class="badge badge-text">TEXT</span></td><td class="r">266</td><td class="r">19,599</td></tr>
+          <tr><td class="mono">1996</td><td><span class="badge badge-text">TEXT</span></td><td class="r">266</td><td class="r">20,764</td></tr>
+          <tr><td class="mono">1997</td><td><span class="badge badge-text">TEXT</span></td><td class="r">266</td><td class="r">23,405</td></tr>
+          <tr><td class="mono">1998</td><td><span class="badge badge-text">TEXT</span></td><td class="r">266</td><td class="r">23,524</td></tr>
+          <tr><td class="mono">1999</td><td><span class="badge badge-text">TEXT</span></td><td class="r">266</td><td class="r">25,178</td></tr>
+          <tr><td class="mono">2000</td><td><span class="badge badge-html">HTML</span></td><td class="r">267</td><td class="r">25,724</td></tr>
+          <tr><td class="mono">2001</td><td><span class="badge badge-text">TEXT</span></td><td class="r">265</td><td class="r">27,281</td></tr>
+          <tr><td class="mono">2002</td><td><span class="badge badge-html">HTML</span></td><td class="r">268</td><td class="r">27,430</td></tr>
+          <tr><td class="mono">2003</td><td><span class="badge badge-html">HTML</span></td><td class="r">268</td><td class="r">28,676</td></tr>
+          <tr><td class="mono">2004</td><td><span class="badge badge-html">HTML</span></td><td class="r">271</td><td class="r">28,958</td></tr>
+          <tr><td class="mono">2005</td><td><span class="badge badge-html">HTML</span></td><td class="r">271</td><td class="r">28,728</td></tr>
+          <tr><td class="mono">2006</td><td><span class="badge badge-html">HTML</span></td><td class="r">262</td><td class="r">28,950</td></tr>
+          <tr><td class="mono">2007</td><td><span class="badge badge-html">HTML</span></td><td class="r">259</td><td class="r">29,096</td></tr>
+          <tr><td class="mono">2008</td><td><span class="badge badge-html">HTML</span></td><td class="r">261</td><td class="r">30,753</td></tr>
+          <tr><td class="mono">2009</td><td><span class="badge badge-html">HTML</span></td><td class="r">260</td><td class="r">30,818</td></tr>
+          <tr><td class="mono">2010</td><td><span class="badge badge-html">HTML</span></td><td class="r">262</td><td class="r">30,805</td></tr>
+          <tr><td class="mono">2011</td><td><span class="badge badge-html">HTML</span></td><td class="r">262</td><td class="r">33,634</td></tr>
+          <tr><td class="mono">2012</td><td><span class="badge badge-html">HTML</span></td><td class="r">262</td><td class="r">35,183</td></tr>
+          <tr><td class="mono">2013</td><td><span class="badge badge-html">HTML</span></td><td class="r">267</td><td class="r">36,729</td></tr>
+          <tr><td class="mono">2014</td><td><span class="badge badge-html">HTML</span></td><td class="r">267</td><td class="r">36,679</td></tr>
+          <tr><td class="mono">2015</td><td><span class="badge badge-html">HTML</span></td><td class="r">266</td><td class="r">36,868</td></tr>
+          <tr><td class="mono">2016</td><td><span class="badge badge-html">HTML</span></td><td class="r">268</td><td class="r">36,804</td></tr>
+          <tr><td class="mono">2017</td><td><span class="badge badge-html">HTML</span></td><td class="r">268</td><td class="r">37,046</td></tr>
+          <tr><td class="mono">2018</td><td><span class="badge badge-html">HTML</span></td><td class="r">268</td><td class="r">37,285</td></tr>
+          <tr><td class="mono">2019</td><td><span class="badge badge-html">HTML</span></td><td class="r">268</td><td class="r">37,394</td></tr>
+          <tr><td class="mono">2020</td><td><span class="badge badge-html">HTML</span></td><td class="r">268</td><td class="r">36,687</td></tr>
+          <tr><td class="mono">2021</td><td><span class="badge badge-json">JSON</span></td><td class="r">260</td><td class="r">39,714</td></tr>
+          <tr><td class="mono">2022</td><td><span class="badge badge-json">JSON</span></td><td class="r">260</td><td class="r">37,344</td></tr>
+          <tr><td class="mono">2023</td><td><span class="badge badge-json">JSON</span></td><td class="r">260</td><td class="r">37,558</td></tr>
+          <tr><td class="mono">2024</td><td><span class="badge badge-json">JSON</span></td><td class="r">260</td><td class="r">34,838</td></tr>
+          <tr><td class="mono">2025</td><td><span class="badge badge-json">JSON</span></td><td class="r">260</td><td class="r">32,594</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="doc-rule">
+
+      <div class="sec">
+        <span class="sec-num">ENTITIES</span>
+        <span class="sec-title">Entity Types</span>
+        <hr class="sec-rule">
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr><th>Type</th><th style="text-align:right;">Count</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="badge badge-sovereign">sovereign</span></td><td class="r">192</td><td>Independent states</td></tr>
+          <tr><td><span class="badge badge-territory">territory</span></td><td class="r">65</td><td>Dependencies, overseas territories</td></tr>
+          <tr><td><span class="badge badge-misc">misc</span></td><td class="r">7</td><td>Oceans, World, European Union</td></tr>
+          <tr><td><span class="badge badge-disputed">disputed</span></td><td class="r">6</td><td>Kosovo, Gaza Strip, West Bank, etc.</td></tr>
+          <tr><td><span class="badge badge-other">crown dep.</span></td><td class="r">3</td><td>Jersey, Guernsey, Isle of Man</td></tr>
+          <tr><td><span class="badge badge-other">freely assoc.</span></td><td class="r">3</td><td>Marshall Islands, Micronesia, Palau</td></tr>
+          <tr><td><span class="badge badge-other">special admin</span></td><td class="r">2</td><td>Hong Kong, Macau</td></tr>
+          <tr><td><span class="badge badge-other">dissolved</span></td><td class="r">2</td><td>Netherlands Antilles, Serbia and Montenegro</td></tr>
+          <tr><td><span class="badge badge-other">antarctic</span></td><td class="r">1</td><td>Antarctica</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="doc-rule">
+
+      <div class="sec">
+        <span class="sec-num">FIELDS</span>
+        <span class="sec-title">Field Name Standardization</span>
+        <hr class="sec-rule">
+      </div>
+
+      <p>The CIA renamed many fields over the 36-year span. The <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.85rem; color: #C5CBD3;">FieldNameMappings</span> table maps 1,090 raw field name variants to 414 canonical names:</p>
+
+      <table class="data-table">
+        <thead>
+          <tr><th>Mapping Type</th><th style="text-align:right;">Count</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Identity</td><td class="r">184</td><td>Modern field names (unchanged)</td></tr>
+          <tr><td>Rename</td><td class="r">159</td><td>CIA renamed the field (e.g. &ldquo;GDP - real growth rate&rdquo; &rarr; &ldquo;Real GDP growth rate&rdquo;)</td></tr>
+          <tr><td>Dash format</td><td class="r">64</td><td>Formatting differences (single vs double dashes)</td></tr>
+          <tr><td>Consolidation</td><td class="r">48</td><td>Sub-fields merged into parents (e.g. Oil &rarr; Petroleum)</td></tr>
+          <tr><td>Country-specific</td><td class="r">354</td><td>Regional sub-entries, government body names</td></tr>
+          <tr><td>Noise</td><td class="r">281</td><td>Parser artifacts, fragments (flagged IsNoise=1)</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="doc-rule">
+
+      <div class="sec">
         <span class="sec-num">GALLERY</span>
         <span class="sec-title">Application Screenshots</span>
         <hr class="sec-rule">
