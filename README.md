@@ -2,7 +2,7 @@
 
 A complete, structured archive of the CIA World Factbook spanning **36 years** (1990-2025), covering **281 entities** with **1,071,213 data fields** in a normalized SQL Server database.
 
-The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves every edition published during its 36-year run as a structured, queryable dataset.
+The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves every edition published since 1990 and creates a structured, queryable dataset.
 
 **[Browse the archive online](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)**
 
