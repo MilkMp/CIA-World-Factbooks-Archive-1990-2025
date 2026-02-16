@@ -4,6 +4,19 @@ A complete, structured archive of the CIA World Factbook spanning **36 years** (
 
 The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves every edition published during its 36-year run as a structured, queryable dataset.
 
+**[Browse the archive online](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)**
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Homepage](docs/screenshots/homepage.png) | ![Search Results](docs/screenshots/search_results.png) |
+| **Homepage** — Database statistics and navigation | **Full-Text Search** — Boolean search across 1M+ fields |
+| ![Country Profile](docs/screenshots/country_profile.png) | ![Regional Dashboard](docs/screenshots/regional_dashboard.png) |
+| **Country Profile** — Complete field data by category | **Regional Dashboard** — COCOM regions with choropleth maps |
+| ![Intelligence Dossier](docs/screenshots/dossier.png) | ![Field Time Series](docs/screenshots/field_timeseries.png) |
+| **Intelligence Dossier** — Assessments per ICD 203 standards | **Field Time Series** — Track any field across 36 years |
+
 ## Database Statistics
 
 | Metric | Value |
