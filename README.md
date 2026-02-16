@@ -194,12 +194,13 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 |---|---|
 | ![Homepage](docs/screenshots/homepage.png) | ![Search Results](docs/screenshots/search_results.png) |
 | **Homepage** — Database statistics and navigation | **Full-Text Search** — Keyword search across 1M+ fields |
+| ![Field Time Series](docs/screenshots/field_timeseries.png) | ![Factbook Export](docs/screenshots/country_export.png) |
+| **Field Time Series** — Track any field across 36 years | **Factbook Export** — Print-ready report with parsed fields |
 | ![Boolean Search](docs/screenshots/search_boolean.png) | ![Country Profile](docs/screenshots/country_profile.png) |
 | **Boolean Search** — Exact phrase + AND/OR/NOT operators | **Country Profile** — Complete field data by category |
 | ![Regional Dashboard](docs/screenshots/regional_dashboard.png) | ![Intelligence Dossier](docs/screenshots/dossier.png) |
 | **Regional Dashboard** — COCOM regions with choropleth maps | **Intelligence Dossier** — Assessments per ICD 203 standards |
-| ![Field Time Series](docs/screenshots/field_timeseries.png) | ![Factbook Export](docs/screenshots/country_export.png) |
-| **Field Time Series** — Track any field across 36 years | **Factbook Export** — Print-ready report with parsed fields |
+
 
 
 ## License
