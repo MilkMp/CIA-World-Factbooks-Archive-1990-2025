@@ -5,244 +5,595 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CIA World Factbooks Archive 1990-2025</title>
 <style>
-  :root {
-    --bg: #111418;
-    --surface: #1C2127;
-    --border: #2F343C;
-    --text: #C5CBD3;
-    --text-dim: #8F99A8;
-    --accent: #4C90F0;
-    --gold: #D1980B;
+/* Core reset */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background: #111418;
+  color: #ABB3BF;
+  line-height: 1.65;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: #C5CBD3; text-decoration: none; transition: color 100ms cubic-bezier(0.4, 1, 0.75, 0.9); }
+a:hover { text-decoration: underline; color: #FFFFFF; }
+
+/* Banner */
+.banner {
+  background: #1C2127; border-bottom: 1px solid #2F343C;
+  padding: 6px 0; text-align: center;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase; color: #5F6B7C;
+  position: sticky; top: 0; z-index: 100;
+}
+
+/* Layout */
+.layout { display: flex; min-height: calc(100vh - 30px); }
+
+.sidebar {
+  width: 220px; background: #1C2127; border-right: 1px solid #2F343C;
+  padding: 20px 0; flex-shrink: 0; position: sticky; top: 30px;
+  height: calc(100vh - 30px); overflow-y: auto;
+}
+.sidebar-title {
+  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.65rem;
+  text-transform: uppercase; letter-spacing: 2px; color: #5F6B7C; padding: 0 20px; margin-bottom: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 20px;
+  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.82rem;
+  color: #8F99A8; border-left: 3px solid transparent; cursor: pointer;
+  transition: color 100ms, background-color 100ms, border-color 100ms;
+}
+.sidebar a:hover, .sidebar a.active {
+  background: rgba(47, 52, 60, 0.5); color: #C5CBD3;
+  border-left-color: #C5CBD3; text-decoration: none;
+}
+.sidebar .nav-section {
+  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.65rem;
+  text-transform: uppercase; letter-spacing: 1.5px; color: #5F6B7C; padding: 16px 20px 6px;
+}
+
+.main-content { flex: 1; padding: 32px 40px; min-width: 0; max-width: 1400px; margin: 0 auto; }
+
+/* Page Header */
+.page-header { margin-bottom: 28px; }
+.page-header h1 { font-size: 1.4rem; font-weight: 400; color: #C5CBD3; text-transform: uppercase; letter-spacing: 3px; line-height: 1.3; }
+.page-header .subtitle { font-size: 0.9rem; color: #8F99A8; font-style: italic; margin-top: 4px; }
+.page-header .doc-id { font-family: 'Consolas', 'Courier New', monospace; font-size: 0.72rem; color: #5F6B7C; letter-spacing: 1px; margin-bottom: 8px; }
+
+/* Sections */
+.sec { margin-top: 32px; margin-bottom: 14px; }
+.sec-num { font-family: 'Consolas', 'Courier New', monospace; font-size: 0.75rem; color: #5F6B7C; display: block; margin-bottom: 2px; }
+.sec-title { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #8F99A8; }
+.sec-rule { border: none; border-top: 1px solid #2F343C; margin-top: 6px; }
+.doc-rule { border: none; border-top: 2px solid #2F343C; margin: 24px 0; }
+.doc-rule.double { border-top: 3px double #383E47; }
+
+/* Body text */
+p { font-size: 0.9rem; color: #8F99A8; max-width: 860px; margin-bottom: 12px; }
+
+/* Data tables */
+.data-table { width: 100%; border-collapse: collapse; margin: 14px 0 8px; font-size: 0.85rem; }
+.data-table th {
+  font-family: -apple-system, 'Segoe UI', sans-serif; text-align: left;
+  padding: 8px 12px; border-bottom: 1px solid #383E47; color: #8F99A8;
+  font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
+}
+.data-table td { padding: 6px 12px; border-bottom: 1px solid #252A31; color: #ABB3BF; }
+.data-table td.r { text-align: right; font-family: 'Consolas', 'Courier New', monospace; color: #C5CBD3; font-size: 0.82rem; }
+.data-table td.mono { font-family: 'Consolas', 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3; }
+.data-table tr { transition: background-color 100ms; }
+.data-table tr:hover td { background: rgba(47, 52, 60, 0.3); }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: rgba(47, 52, 60, 0.4); }
+
+/* Stat cards */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
+.stat-card {
+  background: #1C2127; border: 1px solid #2F343C; border-radius: 4px;
+  padding: 16px 20px; text-align: center;
+  transition: border-color 200ms, box-shadow 200ms;
+}
+.stat-card:hover { border-color: #383E47; box-shadow: 0 2px 8px rgba(17, 20, 24, 0.5); }
+.stat-card .stat-value { font-family: 'Consolas', 'Courier New', monospace; font-size: 1.6rem; color: #C5CBD3; font-weight: 700; }
+.stat-card .stat-label { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: #5F6B7C; margin-top: 6px; }
+
+/* Badges */
+.badge { padding: 2px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; }
+.badge-sovereign { background: #238551; color: #fff; }
+.badge-territory { background: #2D72D2; color: #fff; }
+.badge-disputed { background: #C87619; color: #fff; }
+.badge-misc { background: #404854; color: #ABB3BF; }
+.badge-other { background: #252A31; color: #8F99A8; }
+.badge-text { background: #404854; color: #ABB3BF; }
+.badge-html { background: #215DB0; color: #fff; }
+.badge-json { background: #238551; color: #fff; }
+
+/* Search/filter box */
+.filter-box {
+  display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap;
+}
+.filter-box input {
+  background: #1C2127; border: 1px solid #383E47; border-radius: 3px;
+  color: #C5CBD3; padding: 8px 14px;
+  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.85rem;
+  outline: none; flex: 1; min-width: 200px;
+  transition: border-color 100ms, box-shadow 100ms;
+}
+.filter-box input:focus { border-color: #ABB3BF; box-shadow: 0 0 0 1px rgba(171, 179, 191, 0.3); }
+
+/* Filter pills */
+.filter-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.filter-pill {
+  display: inline-block; padding: 4px 12px;
+  background: #1C2127; border: 1px solid #2F343C; border-radius: 3px;
+  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.75rem;
+  color: #8F99A8; cursor: pointer;
+  transition: background-color 100ms, border-color 100ms, color 100ms;
+}
+.filter-pill:hover, .filter-pill.active { background: #252A31; border-color: #383E47; color: #C5CBD3; }
+.filter-pill .count { font-family: 'Consolas', 'Courier New', monospace; font-size: 0.7rem; color: #5F6B7C; margin-left: 4px; }
+
+/* Buttons */
+.btn {
+  background: #252A31; border: 1px solid #383E47; border-radius: 3px;
+  color: #C5CBD3; padding: 8px 18px; display: inline-block;
+  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.82rem;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+  transition: background-color 100ms, border-color 100ms, color 100ms, box-shadow 100ms;
+  text-decoration: none;
+}
+.btn:hover { background: #383E47; color: #FFFFFF; box-shadow: 0 1px 4px rgba(17, 20, 24, 0.4); text-decoration: none; }
+.btn-primary { background: #2D72D2; border-color: #2D72D2; color: #fff; }
+.btn-primary:hover { background: #215DB0; }
+.btn-disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+/* Caveat */
+.caveat {
+  margin-top: 20px; padding: 12px 16px; background: #1C2127;
+  border: 1px solid #2F343C; border-radius: 4px;
+  font-size: 0.82rem; color: #8F99A8; line-height: 1.6; max-width: 960px;
+}
+.caveat strong { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #ABB3BF; }
+
+/* Screenshot gallery */
+.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 16px; margin: 20px 0; }
+.gallery-item {
+  background: #1C2127; border: 1px solid #2F343C; border-radius: 4px; overflow: hidden;
+  transition: border-color 200ms, box-shadow 200ms, transform 200ms;
+}
+.gallery-item:hover { border-color: #383E47; box-shadow: 0 4px 16px rgba(17, 20, 24, 0.6); transform: translateY(-2px); }
+.gallery-item img { width: 100%; height: auto; display: block; }
+.gallery-item .caption {
+  padding: 10px 14px;
+  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.78rem;
+  color: #8F99A8;
+}
+.gallery-item .caption strong { color: #C5CBD3; display: block; margin-bottom: 2px; }
+
+/* Footer */
+footer {
+  padding: 24px 40px; border-top: 3px double #2F343C;
+  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.7rem;
+  color: #404854; text-align: center; letter-spacing: 0.5px;
+}
+footer a { color: #5F6B7C; margin: 0 8px; }
+footer a:hover { text-decoration: underline; color: #8F99A8; }
+
+/* Tab content visibility */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Search screenshot */
+.search-screenshot {
+  max-width: 900px; width: 100%; border-radius: 4px;
+  border: 1px solid #2F343C; display: block; margin: 20px 0;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .sidebar { width: 180px; }
+  .sidebar a { padding: 7px 14px; font-size: 0.78rem; }
+  .main-content { padding: 24px 24px; }
+}
+@media (max-width: 800px) {
+  .layout { flex-direction: column; }
+  .sidebar {
+    width: 100%; height: auto; position: relative; top: 0;
+    border-right: none; border-bottom: 1px solid #2F343C;
+    padding: 8px 0; display: flex; flex-wrap: wrap; align-items: center;
+    overflow-x: auto; overflow-y: hidden;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
-    line-height: 1.6;
+  .sidebar-title { padding: 0 12px; margin-bottom: 0; }
+  .sidebar .nav-section { display: none; }
+  .sidebar a {
+    display: inline-block; padding: 6px 12px; border-left: none;
+    border-bottom: 2px solid transparent; font-size: 0.75rem; white-space: nowrap;
   }
-  .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
-  header {
-    text-align: center;
-    padding: 60px 0 40px;
-    border-bottom: 2px solid var(--border);
-    margin-bottom: 40px;
-  }
-  .doc-id {
-    font-family: Consolas, 'Courier New', monospace;
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  h1 {
-    font-size: 2rem;
-    font-weight: 400;
-    color: #E5E8EB;
-    margin-bottom: 8px;
-    letter-spacing: 1px;
-  }
-  .subtitle {
-    color: var(--text-dim);
-    font-size: 0.95rem;
-  }
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin: 30px 0;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 20px;
-    text-align: center;
-  }
-  .stat-num {
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: var(--gold);
-    display: block;
-  }
-  .stat-label {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 4px;
-  }
-  h2 {
-    font-size: 1.1rem;
-    font-weight: 400;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin: 40px 0 16px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
-  p { margin-bottom: 12px; color: var(--text); }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .btn {
-    display: inline-block;
-    background: var(--accent);
-    color: #fff;
-    padding: 10px 24px;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    margin: 6px 4px;
-    transition: opacity 0.2s;
-  }
-  .btn:hover { opacity: 0.85; text-decoration: none; }
-  .btn-outline {
-    background: transparent;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 16px 0;
-    font-size: 0.85rem;
-  }
-  th, td {
-    padding: 8px 12px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  th {
-    color: var(--text-dim);
-    text-transform: uppercase;
-    font-size: 0.7rem;
-    letter-spacing: 1px;
-  }
-  .mono {
-    font-family: Consolas, 'Courier New', monospace;
-    font-size: 0.85rem;
-  }
-  footer {
-    margin-top: 60px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-    text-align: center;
-    color: var(--text-dim);
-    font-size: 0.8rem;
-  }
+  .sidebar a:hover, .sidebar a.active { background: none; border-left-color: transparent; border-bottom-color: #C5CBD3; }
+  .main-content { padding: 20px 16px; max-width: 100%; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .data-table { display: block; overflow-x: auto; }
+  .gallery { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .banner { font-size: 0.55rem; letter-spacing: 2px; padding: 4px 0; }
+  .main-content { padding: 14px 12px; }
+  .page-header h1 { font-size: 1rem; letter-spacing: 1px; }
+  .stat-grid { grid-template-columns: 1fr; }
+  .stat-card .stat-value { font-size: 1.3rem; }
+  footer { padding: 16px 12px; }
+}
 </style>
 </head>
 <body>
-<div class="container">
 
-<header>
-  <div class="doc-id">Public Archive // Unclassified</div>
-  <h1>CIA World Factbooks Archive</h1>
-  <p class="subtitle">1990-2025 &mdash; 36 Years of Global Intelligence Data</p>
-</header>
+<div class="banner">UNCLASSIFIED // OPEN SOURCE INTELLIGENCE</div>
 
-<div class="stats">
-  <div class="stat-card">
-    <span class="stat-num">36</span>
-    <span class="stat-label">Years (1990-2025)</span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-num">281</span>
-    <span class="stat-label">Entities</span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-num">1,071,213</span>
-    <span class="stat-label">Data Fields</span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-num">414</span>
-    <span class="stat-label">Canonical Fields</span>
-  </div>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-title">Factbook Archive</div>
+    <a onclick="showTab('overview')" id="nav-overview" class="active">Home</a>
+    <a onclick="showTab('countries')" id="nav-countries">Country Dictionary</a>
+
+    <div class="nav-section">Archive</div>
+    <a onclick="showTab('years')" id="nav-years">Browse by Year</a>
+    <a onclick="showTab('search')" id="nav-search">Search Fields</a>
+
+    <div class="nav-section">Reference</div>
+    <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank">GitHub Repository</a>
+    <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases" target="_blank">Download Data</a>
+  </nav>
+
+  <main class="main-content">
+
+    <!-- ============================================================ -->
+    <!-- OVERVIEW TAB                                                 -->
+    <!-- ============================================================ -->
+    <div id="tab-overview" class="tab-content active">
+
+      <div class="page-header">
+        <div class="doc-id">UNCLASSIFIED // OPEN SOURCE INTELLIGENCE ARCHIVE</div>
+        <h1>CIA World Factbook 1990 &ndash; 2025</h1>
+        <div class="subtitle">36 years of geopolitical intelligence preserved and structured for analysis.</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value">281</div>
+          <div class="stat-label">Entities</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">36</div>
+          <div class="stat-label">Editions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">9,500</div>
+          <div class="stat-label">Country-Year Records</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">1,071,213</div>
+          <div class="stat-label">Parsed Data Fields</div>
+        </div>
+      </div>
+
+      <hr class="doc-rule">
+
+      <div class="sec">
+        <span class="sec-num">GALLERY</span>
+        <span class="sec-title">Application Screenshots</span>
+        <hr class="sec-rule">
+      </div>
+
+      <div class="gallery">
+        <div class="gallery-item">
+          <img src="screenshots/homepage.png" alt="Homepage" loading="lazy">
+          <div class="caption"><strong>Homepage</strong>Landing page with database statistics and navigation</div>
+        </div>
+        <div class="gallery-item">
+          <img src="screenshots/search_results.png" alt="Full-Text Search" loading="lazy">
+          <div class="caption"><strong>Full-Text Search</strong>Boolean search across 1M+ fields with Library of Congress Z39.58 syntax</div>
+        </div>
+        <div class="gallery-item">
+          <img src="screenshots/country_profile.png" alt="Country Profile" loading="lazy">
+          <div class="caption"><strong>Country Profile</strong>Complete field data for any entity, organized by category</div>
+        </div>
+        <div class="gallery-item">
+          <img src="screenshots/regional_dashboard.png" alt="Regional Dashboard" loading="lazy">
+          <div class="caption"><strong>Regional Dashboard</strong>COCOM region analysis with choropleth maps and key indicators</div>
+        </div>
+        <div class="gallery-item">
+          <img src="screenshots/dossier.png" alt="Intelligence Dossier" loading="lazy">
+          <div class="caption"><strong>Intelligence Dossier</strong>Country assessments formatted per ICD 203 analytic standards</div>
+        </div>
+        <div class="gallery-item">
+          <img src="screenshots/field_timeseries.png" alt="Field Time Series" loading="lazy">
+          <div class="caption"><strong>Field Time Series</strong>Track any data field across 36 years with interactive charts</div>
+        </div>
+      </div>
+
+      <hr class="doc-rule">
+
+      <div class="sec">
+        <span class="sec-num">ABOUT</span>
+        <span class="sec-title">About This Archive</span>
+        <hr class="sec-rule">
+      </div>
+
+      <p>The CIA World Factbook was published continuously from 1962 until its discontinuation on February 4, 2026. This archive preserves every publicly available edition from 1990 to 2025 in a structured, queryable SQL Server database.</p>
+      <p>Data was collected from three sources: Project Gutenberg (1990s plain text editions), the Wayback Machine (2000-2020 HTML archives), and the <a href="https://github.com/factbook/cache.factbook.json" target="_blank">factbook/cache.factbook.json</a> GitHub repository (2021-2025 JSON snapshots).</p>
+
+      <table class="data-table">
+        <thead>
+          <tr><th>Years</th><th>Source</th><th>Format</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1990-1999</td><td>Project Gutenberg</td><td>Plain text (4 format variants)</td></tr>
+          <tr><td>2000-2020</td><td>Wayback Machine</td><td>HTML zip archives (5 parser generations)</td></tr>
+          <tr><td>2021-2025</td><td>GitHub (factbook/cache.factbook.json)</td><td>JSON with year-end git snapshots</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sec">
+        <span class="sec-num">SCHEMA</span>
+        <span class="sec-title">Database Schema</span>
+        <hr class="sec-rule">
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr><th>Table</th><th>Rows</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">MasterCountries</td><td class="r">281</td><td>Canonical entities with EntityType, ISO codes</td></tr>
+          <tr><td class="mono">Countries</td><td class="r">9,500</td><td>Per-year country records</td></tr>
+          <tr><td class="mono">CountryCategories</td><td class="r">83,599</td><td>Section headings (Geography, Economy, etc.)</td></tr>
+          <tr><td class="mono">CountryFields</td><td class="r">1,071,213</td><td>Individual data fields (~263 MB)</td></tr>
+          <tr><td class="mono">FieldNameMappings</td><td class="r">1,090</td><td>Maps 1,090 variants to 414 canonical names</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sec">
+        <span class="sec-num">RESTORE</span>
+        <span class="sec-title">How to Restore</span>
+        <hr class="sec-rule">
+      </div>
+
+      <p>The data is provided as SQL INSERT scripts compatible with SQL Server 2017+. The <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.85rem; color: #C5CBD3;">CountryFields</span> table is split into 36 gzipped files by year (~59 MB total compressed).</p>
+
+      <p style="margin-bottom: 4px;">To restore the archive locally:</p>
+      <div style="margin-left: 16px; margin-bottom: 20px; font-size: 0.88rem; color: #8F99A8; line-height: 2;">
+        1. Create a database: <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">CREATE DATABASE CIA_WorldFactbook</span><br>
+        2. Run <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">schema/create_tables.sql</span><br>
+        3. Import <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">data/master_countries.sql</span>, then <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">countries.sql</span>, <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">categories.sql</span>, <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">field_name_mappings.sql</span><br>
+        4. Decompress and import each <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">data/fields/country_fields_YYYY.sql.gz</span>
+      </div>
+
+      <div style="margin: 24px 0; display: flex; gap: 12px; flex-wrap: wrap;">
+        <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank" class="btn btn-primary">View on GitHub</a>
+        <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases" target="_blank" class="btn">Download Data</a>
+      </div>
+
+      <div class="caveat">
+        <strong>Note</strong><br>
+        All data originates from the CIA World Factbook, a public-domain U.S. Government publication. This project is not affiliated with the CIA or U.S. Government.
+      </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- COUNTRIES TAB                                                -->
+    <!-- ============================================================ -->
+    <div id="tab-countries" class="tab-content">
+
+      <div class="page-header">
+        <div class="doc-id">ARCHIVE // ENTITIES</div>
+        <h1>Country Dictionary</h1>
+        <div class="subtitle">281 entities tracked across 36 years of CIA World Factbook editions</div>
+      </div>
+
+      <div class="filter-box">
+        <input type="text" id="country-filter" placeholder="Filter by name...">
+      </div>
+
+      <div class="filter-pills">
+        <span class="filter-pill active" data-type="all" onclick="filterType('all')">All <span class="count">281</span></span>
+        <span class="filter-pill" data-type="sovereign" onclick="filterType('sovereign')">Sovereign <span class="count">192</span></span>
+        <span class="filter-pill" data-type="territory" onclick="filterType('territory')">Territory <span class="count">65</span></span>
+        <span class="filter-pill" data-type="misc" onclick="filterType('misc')">Misc <span class="count">7</span></span>
+        <span class="filter-pill" data-type="disputed" onclick="filterType('disputed')">Disputed <span class="count">6</span></span>
+        <span class="filter-pill" data-type="crown_dependency" onclick="filterType('crown_dependency')">Crown Dep. <span class="count">3</span></span>
+        <span class="filter-pill" data-type="freely_associated" onclick="filterType('freely_associated')">Freely Assoc. <span class="count">3</span></span>
+        <span class="filter-pill" data-type="special_admin" onclick="filterType('special_admin')">Special Admin <span class="count">2</span></span>
+        <span class="filter-pill" data-type="dissolved" onclick="filterType('dissolved')">Dissolved <span class="count">2</span></span>
+        <span class="filter-pill" data-type="antarctic" onclick="filterType('antarctic')">Antarctic <span class="count">1</span></span>
+      </div>
+
+      <p id="countries-count" style="font-family: 'Consolas', 'Courier New', monospace; font-size: 0.75rem; color: #5F6B7C; margin: 8px 0;">281 entities</p>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Entity Name</th>
+            <th>FIPS</th>
+            <th>ISO-2</th>
+            <th>Type</th>
+            <th>Coverage</th>
+            <th style="text-align: right;">Fields</th>
+          </tr>
+        </thead>
+        <tbody id="countries-tbody"></tbody>
+      </table>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- YEARS TAB                                                    -->
+    <!-- ============================================================ -->
+    <div id="tab-years" class="tab-content">
+
+      <div class="page-header">
+        <div class="doc-id">ARCHIVE // EDITIONS</div>
+        <h1>Browse by Year</h1>
+        <div class="subtitle">36 editions spanning text, HTML, and JSON source formats</div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Source</th>
+            <th style="text-align: right;">Countries</th>
+            <th style="text-align: right;">Fields</th>
+          </tr>
+        </thead>
+        <tbody id="years-tbody"></tbody>
+      </table>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SEARCH TAB                                                   -->
+    <!-- ============================================================ -->
+    <div id="tab-search" class="tab-content">
+
+      <div class="page-header">
+        <div class="doc-id">ARCHIVE // SEARCH</div>
+        <h1>Search the Archive</h1>
+        <div class="subtitle">Full-text boolean search across 1,071,213 parsed data fields</div>
+      </div>
+
+      <p>The interactive search tool provides full-text boolean search across every field in every edition of the CIA World Factbook. Features include Library of Congress Z39.58 boolean syntax (AND, OR, NOT, exact phrases, wildcards), year range filtering, and direct links to country profiles with search term highlighting.</p>
+
+      <img src="screenshots/search_results.png" alt="Search interface screenshot" class="search-screenshot" loading="lazy">
+
+      <div class="sec">
+        <span class="sec-num">CAPABILITIES</span>
+        <span class="sec-title">Search Features</span>
+        <hr class="sec-rule">
+      </div>
+
+      <div style="margin-left: 16px; margin-bottom: 20px; font-size: 0.88rem; color: #8F99A8; line-height: 2.1;">
+        <p>&bull; Boolean operators: AND, OR, NOT with parentheses grouping</p>
+        <p>&bull; Exact phrase matching with double quotes</p>
+        <p>&bull; Wildcard support: ? (single char) and * (truncation)</p>
+        <p>&bull; Year range filtering (1990-2025)</p>
+        <p>&bull; Paginated results with 50 results per page</p>
+        <p>&bull; Direct links to country profiles with search hit highlighting</p>
+        <p>&bull; Field time series charts for tracking data changes over time</p>
+      </div>
+
+      <div style="margin: 24px 0; padding: 20px; background: #1C2127; border: 1px solid #2F343C; border-radius: 4px; max-width: 600px;">
+        <p style="margin-bottom: 12px; color: #8F99A8;">The search tool will be available at a hosted URL soon.</p>
+        <span class="btn btn-primary btn-disabled">Launch Search Tool</span>
+      </div>
+
+      <div class="caveat">
+        <strong>Note</strong><br>
+        In the meantime, you can restore the database locally and use the included CLI search tool (<span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">queries/search_cli.py</span>) or the sample SQL queries (<span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">queries/sample_queries.sql</span>).
+      </div>
+
+    </div>
+
+  </main>
 </div>
-
-<div style="text-align:center; margin: 30px 0;">
-  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" class="btn">View on GitHub</a>
-  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases" class="btn btn-outline">Download Data</a>
-</div>
-
-<h2>About</h2>
-<p>
-  The CIA World Factbook was published continuously from 1962 until its discontinuation on
-  <strong>February 4, 2026</strong>. This archive preserves every publicly available edition
-  from 1990 to 2025 in a structured, queryable SQL Server database.
-</p>
-<p>
-  Data was collected from three sources: Project Gutenberg (1990s plain text editions),
-  the Wayback Machine (2000-2020 HTML archives), and the
-  <a href="https://github.com/factbook/cache.factbook.json">factbook/cache.factbook.json</a>
-  GitHub repository (2021-2025 JSON snapshots using year-specific git commits).
-</p>
-
-<h2>Data Sources</h2>
-<table>
-  <thead>
-    <tr><th>Years</th><th>Source</th><th>Format</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>1990-1999</td><td>Project Gutenberg</td><td>Plain text (6 format variants)</td></tr>
-    <tr><td>2000-2020</td><td>Wayback Machine</td><td>HTML zip archives (5 parser generations)</td></tr>
-    <tr><td>2021-2025</td><td>GitHub (factbook/cache.factbook.json)</td><td>JSON with year-end git snapshots</td></tr>
-  </tbody>
-</table>
-
-<h2>Entity Types</h2>
-<table>
-  <thead>
-    <tr><th>Type</th><th>Count</th><th>Examples</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>Sovereign</td><td>192</td><td>United States, China, France, Brazil</td></tr>
-    <tr><td>Territory</td><td>65</td><td>Guam, Bermuda, French Polynesia</td></tr>
-    <tr><td>Misc</td><td>7</td><td>World, Arctic Ocean, European Union</td></tr>
-    <tr><td>Disputed</td><td>6</td><td>Kosovo, Gaza Strip, West Bank</td></tr>
-    <tr><td>Other</td><td>11</td><td>Hong Kong, Jersey, Antarctica, Marshall Islands</td></tr>
-  </tbody>
-</table>
-
-<h2>Database Schema</h2>
-<table>
-  <thead>
-    <tr><th>Table</th><th>Rows</th><th>Description</th></tr>
-  </thead>
-  <tbody>
-    <tr><td class="mono">MasterCountries</td><td>281</td><td>Canonical entities with EntityType, ISO codes</td></tr>
-    <tr><td class="mono">Countries</td><td>9,500</td><td>Per-year country records</td></tr>
-    <tr><td class="mono">CountryCategories</td><td>83,599</td><td>Section headings (Geography, Economy, etc.)</td></tr>
-    <tr><td class="mono">CountryFields</td><td>1,071,213</td><td>Individual data fields (~263 MB)</td></tr>
-    <tr><td class="mono">FieldNameMappings</td><td>1,090</td><td>Maps 1,090 variants to 414 canonical names</td></tr>
-  </tbody>
-</table>
-
-<h2>How to Restore</h2>
-<p>
-  The data is provided as SQL INSERT scripts compatible with SQL Server 2017+.
-  The <code>CountryFields</code> table is split into 36 gzipped files by year (~59 MB total compressed).
-</p>
-<ol style="margin-left: 20px; margin-bottom: 16px;">
-  <li>Create a database: <code>CREATE DATABASE CIA_WorldFactbook</code></li>
-  <li>Run <code>schema/create_tables.sql</code></li>
-  <li>Import <code>data/master_countries.sql</code>, then <code>countries.sql</code>, <code>categories.sql</code>, <code>field_name_mappings.sql</code></li>
-  <li>Decompress and import each <code>data/fields/country_fields_YYYY.sql.gz</code></li>
-</ol>
-
-<h2>License</h2>
-<p>
-  The CIA World Factbook is a work of the United States Government and is in the
-  <strong>public domain</strong> (17 U.S.C. &sect; 105). This archive is released under
-  <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0 Universal (Public Domain Dedication)</a>.
-</p>
 
 <footer>
-  <p>CIA World Factbooks Archive 1990-2025 &mdash; A preservation project</p>
-  <p>The CIA World Factbook was discontinued on February 4, 2026</p>
+  CIA World Factbooks Archive 1990-2025 &mdash; A preservation project
+  <br>
+  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank">GitHub</a>
+  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases" target="_blank">Releases</a>
+  <br style="margin-top: 6px;">
+  <span style="display: inline-block; margin-top: 6px;">The CIA World Factbook was discontinued on February 4, 2026</span>
 </footer>
 
-</div>
+<script>
+const DATA = {"entities":[{"name":"Afghanistan","fips":"AF","iso2":"AF","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4742},{"name":"Akrotiri","fips":"AX","iso2":"","type":"territory","first":2004,"last":2025,"years":22,"fields":675},{"name":"Albania","fips":"AL","iso2":"AL","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4713},{"name":"Algeria","fips":"AG","iso2":"DZ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4716},{"name":"American Samoa","fips":"AQ","iso2":"AS","type":"territory","first":1990,"last":2025,"years":36,"fields":3813},{"name":"Andorra","fips":"AN","iso2":"AD","type":"sovereign","first":1990,"last":2025,"years":36,"fields":3685},{"name":"Angola","fips":"AO","iso2":"AO","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4740},{"name":"Anguilla","fips":"AV","iso2":"AI","type":"territory","first":1990,"last":2025,"years":36,"fields":3626},{"name":"Antarctica","fips":"AY","iso2":"AQ","type":"antarctic","first":1990,"last":2025,"years":35,"fields":1196},{"name":"Antigua and Barbuda","fips":"AC","iso2":"AG","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4319},{"name":"Arctic Ocean","fips":"XQ","iso2":"","type":"misc","first":1990,"last":2025,"years":36,"fields":658},{"name":"Argentina","fips":"AR","iso2":"AR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4823},{"name":"Armenia","fips":"AM","iso2":"AM","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4418},{"name":"Aruba","fips":"AA","iso2":"AW","type":"territory","first":1990,"last":2025,"years":36,"fields":4069},{"name":"Ashmore and Cartier Islands","fips":"AT","iso2":"AU","type":"territory","first":1990,"last":2025,"years":36,"fields":1080},{"name":"Atlantic Ocean","fips":"ZH","iso2":"","type":"misc","first":1990,"last":2025,"years":36,"fields":657},{"name":"Australia","fips":"AS","iso2":"AU","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4803},{"name":"Austria","fips":"AU","iso2":"AT","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4829},{"name":"Azerbaijan","fips":"AJ","iso2":"AZ","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4586},{"name":"Bahamas, The","fips":"BF","iso2":"BS","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4398},{"name":"Bahrain","fips":"BA","iso2":"BH","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4563},{"name":"Baker Island","fips":"FQ","iso2":"UM","type":"territory","first":1990,"last":2020,"years":21,"fields":451},{"name":"Bangladesh","fips":"BG","iso2":"BD","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4767},{"name":"Barbados","fips":"BB","iso2":"BB","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4459},{"name":"Bassas da India","fips":"BS","iso2":"RE","type":"territory","first":1990,"last":2005,"years":16,"fields":410},{"name":"Belarus","fips":"BO","iso2":"BY","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4563},{"name":"Belgium","fips":"BE","iso2":"BE","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4742},{"name":"Belize","fips":"BH","iso2":"BZ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4571},{"name":"Benin","fips":"BN","iso2":"BJ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4612},{"name":"Bermuda","fips":"BD","iso2":"BM","type":"territory","first":1990,"last":2025,"years":36,"fields":4136},{"name":"Bhutan","fips":"BT","iso2":"BT","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4363},{"name":"Bolivia","fips":"BL","iso2":"BO","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4779},{"name":"Bosnia and Herzegovina","fips":"BK","iso2":"BA","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4538},{"name":"Botswana","fips":"BC","iso2":"BW","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4491},{"name":"Bouvet Island","fips":"BV","iso2":"BV","type":"territory","first":1990,"last":2025,"years":36,"fields":1040},{"name":"Brazil","fips":"BR","iso2":"BR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4811},{"name":"British Indian Ocean Territory","fips":"IO","iso2":"IO","type":"territory","first":1990,"last":2025,"years":36,"fields":1471},{"name":"British Virgin Islands","fips":"VI","iso2":"VG","type":"territory","first":1990,"last":2025,"years":36,"fields":3943},{"name":"Brunei","fips":"BX","iso2":"BN","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4496},{"name":"Bulgaria","fips":"BU","iso2":"BG","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4762},{"name":"Burkina Faso","fips":"UV","iso2":"BF","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4521},{"name":"Burma (Myanmar)","fips":"BM","iso2":"MM","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4729},{"name":"Burundi","fips":"BY","iso2":"BI","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4569},{"name":"Cabo Verde","fips":"CV","iso2":"CV","type":"sovereign","first":2000,"last":2025,"years":25,"fields":3458},{"name":"Cambodia","fips":"CB","iso2":"KH","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4669},{"name":"Cameroon","fips":"CM","iso2":"CM","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4706},{"name":"Canada","fips":"CA","iso2":"CA","type":"sovereign","first":1990,"last":2025,"years":36,"fields":5470},{"name":"Cayman Islands","fips":"CJ","iso2":"KY","type":"territory","first":1990,"last":2025,"years":36,"fields":4089},{"name":"Central African Republic","fips":"CT","iso2":"CF","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4466},{"name":"Chad","fips":"CD","iso2":"TD","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4590},{"name":"Chile","fips":"CI","iso2":"CL","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4726},{"name":"China","fips":"CH","iso2":"CN","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4825},{"name":"Christmas Island","fips":"KT","iso2":"CX","type":"territory","first":1990,"last":2025,"years":36,"fields":2942},{"name":"Clipperton Island","fips":"IP","iso2":"PF","type":"territory","first":1990,"last":2025,"years":36,"fields":976},{"name":"Cocos (Keeling) Islands","fips":"CK","iso2":"CC","type":"territory","first":1990,"last":2025,"years":35,"fields":2847},{"name":"Colombia","fips":"CO","iso2":"CO","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4842},{"name":"Comoros","fips":"CN","iso2":"KM","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4338},{"name":"Congo, Democratic Republic of the","fips":"CG","iso2":"CD","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4686},{"name":"Congo, Republic of the","fips":"CF","iso2":"CG","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4640},{"name":"Cook Islands","fips":"CW","iso2":"CK","type":"territory","first":1990,"last":2025,"years":36,"fields":3964},{"name":"Coral Sea Islands","fips":"CR","iso2":"AU","type":"territory","first":1990,"last":2025,"years":36,"fields":1089},{"name":"Costa Rica","fips":"CS","iso2":"CR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4687},{"name":"Cote d'Ivoire","fips":"IV","iso2":"CI","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4719},{"name":"Croatia","fips":"HR","iso2":"HR","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4607},{"name":"Cuba","fips":"CU","iso2":"CU","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4674},{"name":"Curacao","fips":"UC","iso2":"CW","type":"territory","first":2010,"last":2025,"years":16,"fields":1812},{"name":"Cyprus","fips":"CY","iso2":"CY","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4696},{"name":"Czechia","fips":"EZ","iso2":"CZ","type":"sovereign","first":1993,"last":2025,"years":33,"fields":4517},{"name":"Denmark","fips":"DA","iso2":"DK","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4665},{"name":"Dhekelia","fips":"DX","iso2":"","type":"territory","first":2004,"last":2025,"years":22,"fields":677},{"name":"Djibouti","fips":"DJ","iso2":"DJ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4481},{"name":"Dominica","fips":"DO","iso2":"DM","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4232},{"name":"Dominican Republic","fips":"DR","iso2":"DO","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4667},{"name":"Ecuador","fips":"EC","iso2":"EC","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4794},{"name":"Egypt","fips":"EG","iso2":"EG","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4858},{"name":"El Salvador","fips":"ES","iso2":"SV","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4674},{"name":"Equatorial Guinea","fips":"EK","iso2":"GQ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4439},{"name":"Eritrea","fips":"ER","iso2":"ER","type":"sovereign","first":1993,"last":2025,"years":33,"fields":4225},{"name":"Estonia","fips":"EN","iso2":"EE","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4552},{"name":"Eswatini","fips":"WZ","iso2":"SZ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4441},{"name":"Ethiopia","fips":"ET","iso2":"ET","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4698},{"name":"Europa Island","fips":"EU","iso2":"RE","type":"territory","first":1990,"last":2005,"years":16,"fields":467},{"name":"European Union","fips":"EE","iso2":"","type":"misc","first":2004,"last":2025,"years":22,"fields":2641},{"name":"Falkland Islands (Islas Malvinas)","fips":"FK","iso2":"FK","type":"territory","first":1990,"last":2025,"years":36,"fields":3795},{"name":"Faroe Islands","fips":"FO","iso2":"FO","type":"territory","first":1990,"last":2025,"years":36,"fields":3996},{"name":"Fiji","fips":"FJ","iso2":"FJ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4518},{"name":"Finland","fips":"FI","iso2":"FI","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4652},{"name":"France","fips":"FR","iso2":"FR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4832},{"name":"French Guiana","fips":"FG","iso2":"GF","type":"territory","first":1990,"last":2006,"years":17,"fields":1644},{"name":"French Polynesia","fips":"FP","iso2":"PF","type":"territory","first":1990,"last":2025,"years":36,"fields":4071},{"name":"French Southern and Antarctic Lands","fips":"FS","iso2":"TF","type":"territory","first":1990,"last":2025,"years":36,"fields":1294},{"name":"Gabon","fips":"GB","iso2":"GA","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4632},{"name":"Gambia, The","fips":"GA","iso2":"GM","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4515},{"name":"Gaza Strip","fips":"GZ","iso2":"PS","type":"disputed","first":1990,"last":2025,"years":36,"fields":3144},{"name":"Georgia","fips":"GG","iso2":"GE","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4611},{"name":"Germany","fips":"GM","iso2":"DE","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4787},{"name":"Ghana","fips":"GH","iso2":"GH","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4761},{"name":"Gibraltar","fips":"GI","iso2":"GI","type":"territory","first":1990,"last":2025,"years":36,"fields":3894},{"name":"Glorioso Islands","fips":"GO","iso2":"RE","type":"territory","first":1990,"last":2005,"years":16,"fields":453},{"name":"Greece","fips":"GR","iso2":"GR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4668},{"name":"Greenland","fips":"GL","iso2":"GL","type":"territory","first":1990,"last":2025,"years":36,"fields":3991},{"name":"Grenada","fips":"GJ","iso2":"GD","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4252},{"name":"Guadeloupe","fips":"GP","iso2":"GP","type":"territory","first":1990,"last":2006,"years":17,"fields":1586},{"name":"Guam","fips":"GQ","iso2":"GU","type":"territory","first":1990,"last":2025,"years":36,"fields":3911},{"name":"Guatemala","fips":"GT","iso2":"GT","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4721},{"name":"Guernsey","fips":"GK","iso2":"GB","type":"crown_dependency","first":1990,"last":2025,"years":36,"fields":3386},{"name":"Guinea","fips":"GV","iso2":"GN","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4563},{"name":"Guinea-Bissau","fips":"PU","iso2":"GW","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4448},{"name":"Guyana","fips":"GY","iso2":"GY","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4559},{"name":"Haiti","fips":"HA","iso2":"HT","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4516},{"name":"Heard Island and McDonald Islands","fips":"HM","iso2":"HM","type":"territory","first":1990,"last":2025,"years":36,"fields":1058},{"name":"Holy See (Vatican City)","fips":"VT","iso2":"VA","type":"sovereign","first":1990,"last":2025,"years":36,"fields":2504},{"name":"Honduras","fips":"HO","iso2":"HN","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4657},{"name":"Hong Kong","fips":"HK","iso2":"HK","type":"special_admin","first":1990,"last":2025,"years":36,"fields":4408},{"name":"Howland Island","fips":"HQ","iso2":"UM","type":"territory","first":1990,"last":2020,"years":24,"fields":638},{"name":"Hungary","fips":"HU","iso2":"HU","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4715},{"name":"Iceland","fips":"IC","iso2":"IS","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4462},{"name":"Iles Eparses","fips":"ZZ","iso2":"","type":"territory","first":2006,"last":2006,"years":1,"fields":29},{"name":"India","fips":"IN","iso2":"IN","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4842},{"name":"Indian Ocean","fips":"XO","iso2":"","type":"misc","first":1990,"last":2025,"years":36,"fields":639},{"name":"Indonesia","fips":"ID","iso2":"ID","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4833},{"name":"Iran","fips":"IR","iso2":"IR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4788},{"name":"Iraq","fips":"IZ","iso2":"IQ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4703},{"name":"Ireland","fips":"EI","iso2":"IE","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4696},{"name":"Isle of Man","fips":"IM","iso2":"GB","type":"crown_dependency","first":2000,"last":2025,"years":25,"fields":2521},{"name":"Israel","fips":"IS","iso2":"IL","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4722},{"name":"Italy","fips":"IT","iso2":"IT","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4763},{"name":"Jamaica","fips":"JM","iso2":"JM","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4580},{"name":"Jan Mayen","fips":"JN","iso2":"SJ","type":"territory","first":1990,"last":2025,"years":36,"fields":1126},{"name":"Japan","fips":"JA","iso2":"JP","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4719},{"name":"Jarvis Island","fips":"DQ","iso2":"UM","type":"territory","first":1990,"last":2020,"years":24,"fields":624},{"name":"Jersey","fips":"JE","iso2":"GB","type":"crown_dependency","first":1990,"last":2025,"years":36,"fields":3438},{"name":"Johnston Atoll","fips":"JQ","iso2":"UM","type":"territory","first":1990,"last":2020,"years":24,"fields":739},{"name":"Jordan","fips":"JO","iso2":"JO","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4700},{"name":"Juan de Nova Island","fips":"JU","iso2":"RE","type":"territory","first":1990,"last":2005,"years":16,"fields":481},{"name":"Kazakhstan","fips":"KZ","iso2":"KZ","type":"sovereign","first":1992,"last":2025,"years":32,"fields":4437},{"name":"Kenya","fips":"KE","iso2":"KE","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4732},{"name":"Kingman Reef","fips":"KQ","iso2":"UM","type":"territory","first":1990,"last":2020,"years":24,"fields":613},{"name":"Kiribati","fips":"KR","iso2":"KI","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4230},{"name":"Korea, North","fips":"KN","iso2":"KP","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4369},{"name":"Korea, South","fips":"KS","iso2":"KR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4699},{"name":"Kosovo","fips":"KV","iso2":"","type":"disputed","first":2008,"last":2025,"years":18,"fields":2041},{"name":"Kuwait","fips":"KU","iso2":"KW","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4616},{"name":"Kyrgyzstan","fips":"KG","iso2":"KG","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4536},{"name":"Laos","fips":"LA","iso2":"LA","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4610},{"name":"Latvia","fips":"LG","iso2":"LV","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4562},{"name":"Lebanon","fips":"LE","iso2":"LB","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4636},{"name":"Lesotho","fips":"LT","iso2":"LS","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4444},{"name":"Liberia","fips":"LI","iso2":"LR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4515},{"name":"Libya","fips":"LY","iso2":"LY","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4595},{"name":"Liechtenstein","fips":"LS","iso2":"LI","type":"sovereign","first":1990,"last":2025,"years":36,"fields":3580},{"name":"Lithuania","fips":"LH","iso2":"LT","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4555},{"name":"Luxembourg","fips":"LU","iso2":"LU","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4587},{"name":"Macau","fips":"MC","iso2":"MO","type":"special_admin","first":1990,"last":2025,"years":36,"fields":4161},{"name":"Madagascar","fips":"MA","iso2":"MG","type":"sovereign","first":1990,"last":2025,"years":36,"fields":5280},{"name":"Malawi","fips":"MI","iso2":"MW","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4598},{"name":"Malaysia","fips":"MY","iso2":"MY","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4833},{"name":"Maldives","fips":"MV","iso2":"MV","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4433},{"name":"Mali","fips":"ML","iso2":"ML","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4609},{"name":"Malta","fips":"MT","iso2":"MT","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4471},{"name":"Marshall Islands","fips":"RM","iso2":"MH","type":"freely_associated","first":1990,"last":2025,"years":36,"fields":3916},{"name":"Martinique","fips":"MB","iso2":"MQ","type":"territory","first":1990,"last":2006,"years":17,"fields":1590},{"name":"Mauritania","fips":"MR","iso2":"MR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4563},{"name":"Mauritius","fips":"MP","iso2":"MU","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4499},{"name":"Mayotte","fips":"MF","iso2":"YT","type":"territory","first":1990,"last":2012,"years":23,"fields":2074},{"name":"Mexico","fips":"MX","iso2":"MX","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4824},{"name":"Micronesia, Federated States of","fips":"FM","iso2":"FM","type":"freely_associated","first":1990,"last":2025,"years":36,"fields":3965},{"name":"Midway Islands","fips":"MQ","iso2":"UM","type":"territory","first":1990,"last":2020,"years":24,"fields":758},{"name":"Moldova","fips":"MD","iso2":"MD","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4527},{"name":"Monaco","fips":"MN","iso2":"MC","type":"sovereign","first":1990,"last":2025,"years":36,"fields":3460},{"name":"Mongolia","fips":"MG","iso2":"MN","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4579},{"name":"Montenegro","fips":"MJ","iso2":"ME","type":"sovereign","first":2006,"last":2025,"years":20,"fields":2798},{"name":"Montserrat","fips":"MH","iso2":"MS","type":"territory","first":1990,"last":2025,"years":36,"fields":3910},{"name":"Morocco","fips":"MO","iso2":"MA","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4740},{"name":"Mozambique","fips":"MZ","iso2":"MZ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4685},{"name":"Namibia","fips":"WA","iso2":"NA","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4587},{"name":"Nauru","fips":"NR","iso2":"NR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4006},{"name":"Navassa Island","fips":"BQ","iso2":"UM","type":"territory","first":1990,"last":2025,"years":36,"fields":987},{"name":"Nepal","fips":"NP","iso2":"NP","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4565},{"name":"Netherlands","fips":"NL","iso2":"NL","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4788},{"name":"Netherlands Antilles","fips":"NT","iso2":"AN","type":"dissolved","first":1990,"last":2010,"years":21,"fields":2138},{"name":"New Caledonia","fips":"NC","iso2":"NC","type":"territory","first":1990,"last":2025,"years":36,"fields":4091},{"name":"New Zealand","fips":"NZ","iso2":"NZ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4673},{"name":"Nicaragua","fips":"NU","iso2":"NI","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4624},{"name":"Niger","fips":"NG","iso2":"NE","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4550},{"name":"Nigeria","fips":"NI","iso2":"NG","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4820},{"name":"Niue","fips":"NE","iso2":"NU","type":"territory","first":1990,"last":2025,"years":36,"fields":3731},{"name":"Norfolk Island","fips":"NF","iso2":"NF","type":"territory","first":1990,"last":2025,"years":36,"fields":2999},{"name":"North Macedonia","fips":"MK","iso2":"MK","type":"sovereign","first":1992,"last":2025,"years":33,"fields":4331},{"name":"Northern Mariana Islands","fips":"CQ","iso2":"MP","type":"territory","first":1990,"last":2025,"years":36,"fields":3521},{"name":"Norway","fips":"NO","iso2":"NO","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4732},{"name":"Oman","fips":"MU","iso2":"OM","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4607},{"name":"Pacific Ocean","fips":"ZN","iso2":"","type":"misc","first":1990,"last":2025,"years":36,"fields":652},{"name":"Pakistan","fips":"PK","iso2":"PK","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4817},{"name":"Palau","fips":"PS","iso2":"PW","type":"freely_associated","first":1993,"last":2025,"years":33,"fields":3550},{"name":"Palmyra Atoll","fips":"LQ","iso2":"UM","type":"territory","first":1990,"last":2020,"years":24,"fields":646},{"name":"Panama","fips":"PM","iso2":"PA","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4674},{"name":"Papua New Guinea","fips":"PP","iso2":"PG","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4658},{"name":"Paracel Islands","fips":"PF","iso2":"","type":"disputed","first":1990,"last":2025,"years":36,"fields":972},{"name":"Paraguay","fips":"PA","iso2":"PY","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4828},{"name":"Peru","fips":"PE","iso2":"PE","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4844},{"name":"Philippines","fips":"RP","iso2":"PH","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4810},{"name":"Pitcairn Islands","fips":"PC","iso2":"PN","type":"territory","first":1990,"last":2025,"years":36,"fields":2909},{"name":"Poland","fips":"PL","iso2":"PL","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4797},{"name":"Portugal","fips":"PO","iso2":"PT","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4714},{"name":"Puerto Rico","fips":"RQ","iso2":"PR","type":"territory","first":1990,"last":2025,"years":36,"fields":4080},{"name":"Qatar","fips":"QA","iso2":"QA","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4568},{"name":"Reunion","fips":"RE","iso2":"RE","type":"territory","first":1990,"last":2006,"years":17,"fields":1599},{"name":"Romania","fips":"RO","iso2":"RO","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4764},{"name":"Russia","fips":"RS","iso2":"RU","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4721},{"name":"Rwanda","fips":"RW","iso2":"RW","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4596},{"name":"Saint Barthelemy","fips":"TB","iso2":"BL","type":"territory","first":2007,"last":2025,"years":19,"fields":1059},{"name":"Saint Helena, Ascension, and Tristan da Cunha","fips":"SH","iso2":"SH","type":"territory","first":1991,"last":2025,"years":35,"fields":3723},{"name":"Saint Kitts and Nevis","fips":"SC","iso2":"KN","type":"sovereign","first":1991,"last":2025,"years":35,"fields":4187},{"name":"Saint Lucia","fips":"ST","iso2":"LC","type":"sovereign","first":1991,"last":2025,"years":35,"fields":4199},{"name":"Saint Martin","fips":"RN","iso2":"MF","type":"territory","first":2007,"last":2025,"years":19,"fields":1223},{"name":"Saint Pierre and Miquelon","fips":"SB","iso2":"PM","type":"territory","first":1991,"last":2025,"years":35,"fields":3654},{"name":"Saint Vincent and the Grenadines","fips":"VC","iso2":"VC","type":"sovereign","first":1991,"last":2025,"years":35,"fields":4212},{"name":"Samoa","fips":"WS","iso2":"WS","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4289},{"name":"San Marino","fips":"SM","iso2":"SM","type":"sovereign","first":1990,"last":2025,"years":36,"fields":3621},{"name":"Sao Tome and Principe","fips":"TP","iso2":"ST","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4393},{"name":"Saudi Arabia","fips":"SA","iso2":"SA","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4715},{"name":"Senegal","fips":"SG","iso2":"SN","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4724},{"name":"Serbia","fips":"RI","iso2":"RS","type":"sovereign","first":2006,"last":2025,"years":20,"fields":3097},{"name":"Serbia and Montenegro","fips":"YI","iso2":"CS","type":"dissolved","first":1992,"last":2005,"years":13,"fields":1411},{"name":"Seychelles","fips":"SE","iso2":"SC","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4422},{"name":"Sierra Leone","fips":"SL","iso2":"SL","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4514},{"name":"Singapore","fips":"SN","iso2":"SG","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4559},{"name":"Sint Maarten","fips":"NN","iso2":"SX","type":"territory","first":2010,"last":2025,"years":16,"fields":1384},{"name":"Slovakia","fips":"LO","iso2":"SK","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4724},{"name":"Slovenia","fips":"SI","iso2":"SI","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4533},{"name":"Solomon Islands","fips":"BP","iso2":"SB","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4293},{"name":"Somalia","fips":"SO","iso2":"SO","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4512},{"name":"South Africa","fips":"SF","iso2":"ZA","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4778},{"name":"South Georgia and the South Sandwich Islands","fips":"SX","iso2":"GS","type":"territory","first":1990,"last":2025,"years":34,"fields":1187},{"name":"South Sudan","fips":"OD","iso2":"SS","type":"sovereign","first":2011,"last":2025,"years":15,"fields":1848},{"name":"Southern Ocean","fips":"OO","iso2":"","type":"misc","first":2000,"last":2025,"years":26,"fields":518},{"name":"Spain","fips":"SP","iso2":"ES","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4776},{"name":"Spratly Islands","fips":"PG","iso2":"","type":"disputed","first":1990,"last":2025,"years":36,"fields":1001},{"name":"Sri Lanka","fips":"CE","iso2":"LK","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4692},{"name":"Sudan","fips":"SU","iso2":"SD","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4668},{"name":"Suriname","fips":"NS","iso2":"SR","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4526},{"name":"Svalbard","fips":"SV","iso2":"SJ","type":"territory","first":1990,"last":2025,"years":36,"fields":2365},{"name":"Sweden","fips":"SW","iso2":"SE","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4697},{"name":"Switzerland","fips":"SZ","iso2":"CH","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4729},{"name":"Syria","fips":"SY","iso2":"SY","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4701},{"name":"Taiwan","fips":"TW","iso2":"TW","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4370},{"name":"Tajikistan","fips":"TI","iso2":"TJ","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4507},{"name":"Tanzania","fips":"TZ","iso2":"TZ","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4774},{"name":"Thailand","fips":"TH","iso2":"TH","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4827},{"name":"Timor-Leste","fips":"TT","iso2":"TL","type":"sovereign","first":2002,"last":2025,"years":24,"fields":3302},{"name":"Togo","fips":"TO","iso2":"TG","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4611},{"name":"Tokelau","fips":"TL","iso2":"TK","type":"territory","first":1990,"last":2025,"years":36,"fields":3117},{"name":"Tonga","fips":"TN","iso2":"TO","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4328},{"name":"Trinidad and Tobago","fips":"TD","iso2":"TT","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4552},{"name":"Tromelin Island","fips":"TE","iso2":"UM","type":"territory","first":1990,"last":2005,"years":16,"fields":463},{"name":"Tunisia","fips":"TS","iso2":"TN","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4652},{"name":"Turkiye","fips":"TU","iso2":"TR","type":"sovereign","first":2000,"last":2025,"years":25,"fields":3805},{"name":"Turkmenistan","fips":"TX","iso2":"TM","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4518},{"name":"Turks and Caicos Islands","fips":"TK","iso2":"TC","type":"territory","first":1990,"last":2025,"years":36,"fields":3886},{"name":"Tuvalu","fips":"TV","iso2":"TV","type":"sovereign","first":1990,"last":2025,"years":36,"fields":3765},{"name":"Uganda","fips":"UG","iso2":"UG","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4643},{"name":"Ukraine","fips":"UP","iso2":"UA","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4639},{"name":"United Arab Emirates","fips":"AE","iso2":"AE","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4622},{"name":"United Kingdom","fips":"UK","iso2":"GB","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4807},{"name":"United States","fips":"US","iso2":"US","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4769},{"name":"United States Pacific Island Wildlife Refuges","fips":"UM","iso2":"","type":"territory","first":2006,"last":2025,"years":20,"fields":616},{"name":"Uruguay","fips":"UY","iso2":"UY","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4661},{"name":"Uzbekistan","fips":"UZ","iso2":"UZ","type":"sovereign","first":1992,"last":2025,"years":34,"fields":4535},{"name":"Vanuatu","fips":"NH","iso2":"VU","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4294},{"name":"Venezuela","fips":"VE","iso2":"VE","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4715},{"name":"Vietnam","fips":"VM","iso2":"VN","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4757},{"name":"Virgin Islands","fips":"VQ","iso2":"VI","type":"territory","first":1990,"last":2025,"years":36,"fields":3801},{"name":"Wake Island","fips":"WQ","iso2":"UM","type":"territory","first":1990,"last":2025,"years":35,"fields":1244},{"name":"Wallis and Futuna","fips":"WF","iso2":"WF","type":"territory","first":1990,"last":2025,"years":36,"fields":3416},{"name":"West Bank","fips":"WE","iso2":"PS","type":"disputed","first":1990,"last":2025,"years":36,"fields":3374},{"name":"Western Sahara","fips":"WI","iso2":"EH","type":"disputed","first":1990,"last":2020,"years":31,"fields":2818},{"name":"World","fips":"XX","iso2":"","type":"misc","first":1990,"last":2025,"years":36,"fields":3108},{"name":"Yemen","fips":"YM","iso2":"YE","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4723},{"name":"Zambia","fips":"ZA","iso2":"ZM","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4684},{"name":"Zimbabwe","fips":"ZI","iso2":"ZW","type":"sovereign","first":1990,"last":2025,"years":36,"fields":4992}],"years":[{"year":1990,"source":"text","countries":249,"fields":15750},{"year":1991,"source":"text","countries":247,"fields":14903},{"year":1992,"source":"text","countries":264,"fields":17372},{"year":1993,"source":"text","countries":266,"fields":18509},{"year":1994,"source":"text","countries":266,"fields":28633},{"year":1995,"source":"text","countries":266,"fields":19599},{"year":1996,"source":"text","countries":266,"fields":20764},{"year":1997,"source":"text","countries":266,"fields":23405},{"year":1998,"source":"text","countries":266,"fields":23524},{"year":1999,"source":"text","countries":266,"fields":25178},{"year":2000,"source":"html","countries":267,"fields":25724},{"year":2001,"source":"text","countries":265,"fields":27281},{"year":2002,"source":"html","countries":268,"fields":27430},{"year":2003,"source":"html","countries":268,"fields":28676},{"year":2004,"source":"html","countries":271,"fields":28958},{"year":2005,"source":"html","countries":271,"fields":28728},{"year":2006,"source":"html","countries":262,"fields":28950},{"year":2007,"source":"html","countries":259,"fields":29096},{"year":2008,"source":"html","countries":261,"fields":30753},{"year":2009,"source":"html","countries":260,"fields":30818},{"year":2010,"source":"html","countries":262,"fields":30805},{"year":2011,"source":"html","countries":262,"fields":33634},{"year":2012,"source":"html","countries":262,"fields":35183},{"year":2013,"source":"html","countries":267,"fields":36729},{"year":2014,"source":"html","countries":267,"fields":36679},{"year":2015,"source":"html","countries":266,"fields":36868},{"year":2016,"source":"html","countries":268,"fields":36804},{"year":2017,"source":"html","countries":268,"fields":37046},{"year":2018,"source":"html","countries":268,"fields":37285},{"year":2019,"source":"html","countries":268,"fields":37394},{"year":2020,"source":"html","countries":268,"fields":36687},{"year":2021,"source":"json","countries":260,"fields":39714},{"year":2022,"source":"json","countries":260,"fields":37344},{"year":2023,"source":"json","countries":260,"fields":37558},{"year":2024,"source":"json","countries":260,"fields":34838},{"year":2025,"source":"json","countries":260,"fields":32594}]};
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.sidebar a[id^="nav-"]').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('tab-' + tab).classList.add('active');
+  var navEl = document.getElementById('nav-' + tab);
+  if (navEl) navEl.classList.add('active');
+}
+
+function getBadgeClass(type) {
+  if (type === 'sovereign') return 'badge-sovereign';
+  if (type === 'territory') return 'badge-territory';
+  if (type === 'disputed') return 'badge-disputed';
+  if (type === 'misc') return 'badge-misc';
+  return 'badge-other';
+}
+
+function renderCountries(filter, type) {
+  var rows = DATA.entities;
+  if (filter) {
+    var lc = filter.toLowerCase();
+    rows = rows.filter(function(e) { return e.name.toLowerCase().indexOf(lc) !== -1; });
+  }
+  if (type && type !== 'all') {
+    rows = rows.filter(function(e) { return e.type === type; });
+  }
+
+  var tbody = document.getElementById('countries-tbody');
+  tbody.innerHTML = rows.map(function(e) {
+    var badgeClass = getBadgeClass(e.type);
+    var typeLabel = e.type.replace(/_/g, ' ');
+    return '<tr>' +
+      '<td>' + e.name + '</td>' +
+      '<td class="mono">' + e.fips + '</td>' +
+      '<td class="mono">' + e.iso2 + '</td>' +
+      '<td><span class="badge ' + badgeClass + '">' + typeLabel + '</span></td>' +
+      '<td class="mono">' + e.first + '&ndash;' + e.last + ' (' + e.years + 'y)</td>' +
+      '<td class="r">' + e.fields.toLocaleString() + '</td>' +
+      '</tr>';
+  }).join('');
+
+  document.getElementById('countries-count').textContent = rows.length + ' entities';
+}
+
+function renderYears() {
+  var tbody = document.getElementById('years-tbody');
+  tbody.innerHTML = DATA.years.map(function(y) {
+    var badgeClass = 'badge-' + y.source;
+    return '<tr>' +
+      '<td class="mono">' + y.year + '</td>' +
+      '<td><span class="badge ' + badgeClass + '">' + y.source.toUpperCase() + '</span></td>' +
+      '<td class="r">' + y.countries + '</td>' +
+      '<td class="r">' + y.fields.toLocaleString() + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+var activeType = 'all';
+
+function filterType(type) {
+  activeType = type;
+  document.querySelectorAll('.filter-pill').forEach(function(p) {
+    if (p.dataset.type === type) {
+      p.classList.add('active');
+    } else {
+      p.classList.remove('active');
+    }
+  });
+  renderCountries(document.getElementById('country-filter').value, type);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderCountries('', 'all');
+  renderYears();
+  document.getElementById('country-filter').addEventListener('input', function(e) {
+    renderCountries(e.target.value, activeType);
+  });
+});
+</script>
+
 </body>
 </html>
