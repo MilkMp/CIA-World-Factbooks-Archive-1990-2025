@@ -162,20 +162,51 @@ tr.clickable:hover td { background: rgba(47, 52, 60, 0.4); }
 }
 .caveat strong { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #ABB3BF; }
 
-/* Screenshot gallery */
-.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 16px; margin: 20px 0; }
-.gallery-item {
-  background: #1C2127; border: 1px solid #2F343C; border-radius: 4px; overflow: hidden;
-  transition: border-color 200ms, box-shadow 200ms, transform 200ms;
+/* Screenshot carousel */
+.carousel-section { margin: 24px 0; }
+.carousel-container { position: relative; }
+.carousel {
+  display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+  gap: 20px; padding: 4px 0 16px;
+  scrollbar-width: none; -ms-overflow-style: none;
+  scroll-behavior: smooth;
 }
-.gallery-item:hover { border-color: #383E47; box-shadow: 0 4px 16px rgba(17, 20, 24, 0.6); transform: translateY(-2px); }
-.gallery-item img { width: 100%; height: auto; display: block; }
-.gallery-item .caption {
-  padding: 10px 14px;
-  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.78rem;
+.carousel::-webkit-scrollbar { display: none; }
+.carousel-slide {
+  flex: 0 0 min(720px, 88%); scroll-snap-align: center;
+  background: #1C2127; border: 1px solid #2F343C; border-radius: 6px;
+  overflow: hidden; transition: border-color 200ms, box-shadow 200ms;
+}
+.carousel-slide:hover { border-color: #383E47; box-shadow: 0 4px 20px rgba(17, 20, 24, 0.6); }
+.carousel-slide img { width: 100%; height: auto; display: block; }
+.carousel-slide .slide-caption {
+  padding: 14px 18px;
+  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.82rem;
   color: #8F99A8;
 }
-.gallery-item .caption strong { color: #C5CBD3; display: block; margin-bottom: 2px; }
+.carousel-slide .slide-caption strong { color: #C5CBD3; font-size: 0.88rem; display: block; margin-bottom: 3px; }
+.carousel-arrow {
+  position: absolute; top: 50%; transform: translateY(-60%);
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(28, 33, 39, 0.9); border: 1px solid #383E47;
+  color: #C5CBD3; font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 150ms, border-color 150ms, color 150ms;
+  z-index: 2; backdrop-filter: blur(4px);
+}
+.carousel-arrow:hover { background: rgba(37, 42, 49, 0.95); border-color: #ABB3BF; color: #fff; }
+.carousel-arrow.left { left: 10px; }
+.carousel-arrow.right { right: 10px; }
+.carousel-dots {
+  display: flex; justify-content: center; gap: 8px; margin-top: 4px;
+}
+.carousel-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #2F343C; border: none; cursor: pointer;
+  transition: background 200ms, transform 200ms;
+}
+.carousel-dot:hover { background: #5F6B7C; }
+.carousel-dot.active { background: #C5CBD3; transform: scale(1.25); }
 
 /* Footer */
 footer {
@@ -220,7 +251,8 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
   .main-content { padding: 20px 16px; max-width: 100%; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .data-table { display: block; overflow-x: auto; }
-  .gallery { grid-template-columns: 1fr; }
+  .carousel-slide { flex: 0 0 92%; }
+  .carousel-arrow { width: 34px; height: 34px; font-size: 0.9rem; }
 }
 @media (max-width: 480px) {
   .banner { font-size: 0.55rem; letter-spacing: 2px; padding: 4px 0; }
@@ -286,41 +318,6 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
       <hr class="doc-rule">
 
       <div class="sec">
-        <span class="sec-num">GALLERY</span>
-        <span class="sec-title">Application Screenshots</span>
-        <hr class="sec-rule">
-      </div>
-
-      <div class="gallery">
-        <div class="gallery-item">
-          <img src="screenshots/homepage.png" alt="Homepage" loading="lazy">
-          <div class="caption"><strong>Homepage</strong>Landing page with database statistics and navigation</div>
-        </div>
-        <div class="gallery-item">
-          <img src="screenshots/search_results.png" alt="Full-Text Search" loading="lazy">
-          <div class="caption"><strong>Full-Text Search</strong>Boolean search across 1M+ fields with Library of Congress Z39.58 syntax</div>
-        </div>
-        <div class="gallery-item">
-          <img src="screenshots/country_profile.png" alt="Country Profile" loading="lazy">
-          <div class="caption"><strong>Country Profile</strong>Complete field data for any entity, organized by category</div>
-        </div>
-        <div class="gallery-item">
-          <img src="screenshots/regional_dashboard.png" alt="Regional Dashboard" loading="lazy">
-          <div class="caption"><strong>Regional Dashboard</strong>COCOM region analysis with choropleth maps and key indicators</div>
-        </div>
-        <div class="gallery-item">
-          <img src="screenshots/dossier.png" alt="Intelligence Dossier" loading="lazy">
-          <div class="caption"><strong>Intelligence Dossier</strong>Country assessments formatted per ICD 203 analytic standards</div>
-        </div>
-        <div class="gallery-item">
-          <img src="screenshots/field_timeseries.png" alt="Field Time Series" loading="lazy">
-          <div class="caption"><strong>Field Time Series</strong>Track any data field across 36 years with interactive charts</div>
-        </div>
-      </div>
-
-      <hr class="doc-rule">
-
-      <div class="sec">
         <span class="sec-num">ABOUT</span>
         <span class="sec-title">About This Archive</span>
         <hr class="sec-rule">
@@ -378,6 +375,48 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
       <div style="margin: 24px 0; display: flex; gap: 12px; flex-wrap: wrap;">
         <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank" class="btn btn-primary">View on GitHub</a>
         <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases" target="_blank" class="btn">Download Data</a>
+      </div>
+
+      <hr class="doc-rule">
+
+      <div class="sec">
+        <span class="sec-num">GALLERY</span>
+        <span class="sec-title">Application Screenshots</span>
+        <hr class="sec-rule">
+      </div>
+
+      <div class="carousel-section">
+        <div class="carousel-container">
+          <button class="carousel-arrow left" onclick="scrollCarousel(-1)" aria-label="Previous">&#10094;</button>
+          <div class="carousel" id="screenshot-carousel">
+            <div class="carousel-slide">
+              <img src="screenshots/homepage.png" alt="Homepage" loading="lazy">
+              <div class="slide-caption"><strong>Homepage</strong>Landing page with database statistics and navigation</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/search_results.png" alt="Full-Text Search" loading="lazy">
+              <div class="slide-caption"><strong>Full-Text Search</strong>Boolean search across 1M+ fields with Library of Congress Z39.58 syntax</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/country_profile.png" alt="Country Profile" loading="lazy">
+              <div class="slide-caption"><strong>Country Profile</strong>Complete field data for any entity, organized by category</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/regional_dashboard.png" alt="Regional Dashboard" loading="lazy">
+              <div class="slide-caption"><strong>Regional Dashboard</strong>COCOM region analysis with choropleth maps and key indicators</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/dossier.png" alt="Intelligence Dossier" loading="lazy">
+              <div class="slide-caption"><strong>Intelligence Dossier</strong>Country assessments formatted per ICD 203 analytic standards</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/field_timeseries.png" alt="Field Time Series" loading="lazy">
+              <div class="slide-caption"><strong>Field Time Series</strong>Track any data field across 36 years with interactive charts</div>
+            </div>
+          </div>
+          <button class="carousel-arrow right" onclick="scrollCarousel(1)" aria-label="Next">&#10095;</button>
+        </div>
+        <div class="carousel-dots" id="carousel-dots"></div>
       </div>
 
       <div class="caveat">
@@ -572,6 +611,46 @@ function renderYears() {
   }).join('');
 }
 
+/* Carousel logic */
+function initCarousel() {
+  var carousel = document.getElementById('screenshot-carousel');
+  var slides = carousel.querySelectorAll('.carousel-slide');
+  var dotsContainer = document.getElementById('carousel-dots');
+
+  /* Build dot indicators */
+  slides.forEach(function(_, i) {
+    var dot = document.createElement('button');
+    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+    dot.onclick = function() {
+      slides[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    };
+    dotsContainer.appendChild(dot);
+  });
+
+  /* Update dots on scroll */
+  var dots = dotsContainer.querySelectorAll('.carousel-dot');
+  var scrollTimeout;
+  carousel.addEventListener('scroll', function() {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(function() {
+      var scrollLeft = carousel.scrollLeft;
+      var slideWidth = slides[0].offsetWidth + 20; /* 20 = gap */
+      var idx = Math.round(scrollLeft / slideWidth);
+      idx = Math.max(0, Math.min(idx, slides.length - 1));
+      dots.forEach(function(d, i) {
+        d.classList.toggle('active', i === idx);
+      });
+    }, 50);
+  });
+}
+
+function scrollCarousel(dir) {
+  var carousel = document.getElementById('screenshot-carousel');
+  var slideWidth = carousel.querySelector('.carousel-slide').offsetWidth + 20;
+  carousel.scrollBy({ left: dir * slideWidth, behavior: 'smooth' });
+}
+
 var activeType = 'all';
 
 function filterType(type) {
@@ -589,6 +668,7 @@ function filterType(type) {
 document.addEventListener('DOMContentLoaded', function() {
   renderCountries('', 'all');
   renderYears();
+  initCarousel();
   document.getElementById('country-filter').addEventListener('input', function(e) {
     renderCountries(e.target.value, activeType);
   });
