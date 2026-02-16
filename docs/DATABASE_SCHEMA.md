@@ -13,7 +13,7 @@ MasterCountries (281 rows)
   |             |
   |             |-- 1:N --> CountryCategories (83,599 rows)
   |             |             |
-  |             |             |-- 1:N --> CountryFields (1,071,213 rows)
+  |             |             |-- 1:N --> CountryFields (1,061,341 rows)
   |             |
   |             |-- 1:N --> CountryFields (via CountryID)
   |

@@ -1,6 +1,6 @@
 # CIA World Factbooks Archive 1990-2025
 
-A complete, structured archive of the CIA World Factbook spanning **36 years** (1990-2025), covering **281 entities** with **1,071,213 data fields** in a normalized SQL Server database.
+A complete, structured archive of the CIA World Factbook spanning **36 years** (1990-2025), covering **281 entities** with **1,061,341 data fields** in a normalized SQL Server database.
 
 The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves every edition published since 1990 and creates a structured, queryable dataset.
 
@@ -15,7 +15,7 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 | **Entities** | 281 (192 sovereign states, 65 territories, 6 disputed, and more) |
 | **Country-year records** | 9,500 |
 | **Category records** | 83,599 |
-| **Data fields** | 1,071,213 |
+| **Data fields** | 1,061,341 |
 | **Content size** | ~263 MB |
 | **Field name variants** | 1,090 mapped to 414 canonical names |
 
@@ -184,7 +184,7 @@ See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) and [docs/ETL_PIPELINE.md](docs/E
 
 5. **Verify:**
    ```sql
-   SELECT COUNT(*) FROM CountryFields;  -- Should return 1,071,213
+   SELECT COUNT(*) FROM CountryFields;  -- Should return 1,061,341
    ```
 
 ## Entity Types
