@@ -18,26 +18,44 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 
 ## Year-by-Year Breakdown
 
-| Year | Source | Countries | Fields | Year | Source | Countries | Fields |
-|------|--------|-----------|--------|------|--------|-----------|--------|
-| 1990 | Text | 249 | 15,750 | 2008 | HTML | 261 | 30,753 |
-| 1991 | Text | 247 | 14,903 | 2009 | HTML | 260 | 30,818 |
-| 1992 | Text | 264 | 17,372 | 2010 | HTML | 262 | 30,805 |
-| 1993 | Text | 266 | 18,509 | 2011 | HTML | 262 | 33,634 |
-| 1994 | Text | 266 | 28,633 | 2012 | HTML | 262 | 35,183 |
-| 1995 | Text | 266 | 19,599 | 2013 | HTML | 267 | 36,729 |
-| 1996 | Text | 266 | 20,764 | 2014 | HTML | 267 | 36,679 |
-| 1997 | Text | 266 | 23,405 | 2015 | HTML | 266 | 36,868 |
-| 1998 | Text | 266 | 23,524 | 2016 | HTML | 268 | 36,804 |
-| 1999 | Text | 266 | 25,178 | 2017 | HTML | 268 | 37,046 |
-| 2000 | HTML | 267 | 25,724 | 2018 | HTML | 268 | 37,285 |
-| 2001 | Text | 265 | 27,281 | 2019 | HTML | 268 | 37,394 |
-| 2002 | HTML | 268 | 27,430 | 2020 | HTML | 268 | 36,687 |
-| 2003 | HTML | 268 | 28,676 | 2021 | JSON | 260 | 39,714 |
-| 2004 | HTML | 271 | 28,958 | 2022 | JSON | 260 | 37,344 |
-| 2005 | HTML | 271 | 28,728 | 2023 | JSON | 260 | 37,558 |
-| 2006 | HTML | 262 | 28,950 | 2024 | JSON | 260 | 34,838 |
-| 2007 | HTML | 259 | 29,096 | 2025 | JSON | 260 | 32,594 |
+| Year | Source | Countries | Fields |
+|------|--------|-----------|--------|
+| 1990 | Text | 249 | 15,750 |
+| 1991 | Text | 247 | 14,903 |
+| 1992 | Text | 264 | 17,372 |
+| 1993 | Text | 266 | 18,509 |
+| 1994 | Text | 266 | 28,633 |
+| 1995 | Text | 266 | 19,599 |
+| 1996 | Text | 266 | 20,764 |
+| 1997 | Text | 266 | 23,405 |
+| 1998 | Text | 266 | 23,524 |
+| 1999 | Text | 266 | 25,178 |
+| 2000 | HTML | 267 | 25,724 |
+| 2001 | Text | 265 | 27,281 |
+| 2002 | HTML | 268 | 27,430 |
+| 2003 | HTML | 268 | 28,676 |
+| 2004 | HTML | 271 | 28,958 |
+| 2005 | HTML | 271 | 28,728 |
+| 2006 | HTML | 262 | 28,950 |
+| 2007 | HTML | 259 | 29,096 |
+| 2008 | HTML | 261 | 30,753 |
+| 2009 | HTML | 260 | 30,818 |
+| 2010 | HTML | 262 | 30,805 |
+| 2011 | HTML | 262 | 33,634 |
+| 2012 | HTML | 262 | 35,183 |
+| 2013 | HTML | 267 | 36,729 |
+| 2014 | HTML | 267 | 36,679 |
+| 2015 | HTML | 266 | 36,868 |
+| 2016 | HTML | 268 | 36,804 |
+| 2017 | HTML | 268 | 37,046 |
+| 2018 | HTML | 268 | 37,285 |
+| 2019 | HTML | 268 | 37,394 |
+| 2020 | HTML | 268 | 36,687 |
+| 2021 | JSON | 260 | 39,714 |
+| 2022 | JSON | 260 | 37,344 |
+| 2023 | JSON | 260 | 37,558 |
+| 2024 | JSON | 260 | 34,838 |
+| 2025 | JSON | 260 | 32,594 |
 
 ## Data Sources
 
@@ -77,6 +95,7 @@ docs/
   DATABASE_SCHEMA.md         # Table definitions and relationships
   ETL_PIPELINE.md            # How the archive was built
   FIELD_EVOLUTION.md         # How CIA field names changed over time
+  METHODOLOGY.md             # Complete methodology: parsing, standardization, validation
 ```
 
 ## How to Restore
