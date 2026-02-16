@@ -105,6 +105,11 @@ docs/
 
 ## ETL Pipeline & Python Scripts
 
+There are **two ways** to get the data:
+
+1. **Import the pre-built SQL dumps** (in `data/`) — no Python required. See [How to Restore](#how-to-restore) below.
+2. **Re-run the ETL pipeline from scratch** — the Python scripts in `etl/` download raw Factbook data directly from their original sources (Wayback Machine, Project Gutenberg, GitHub), parse every format variant, and load the structured results into SQL Server via pyodbc. This is how the archive was originally built.
+
 The raw CIA World Factbook changed format **at least 10 times** between 1990 and 2025. Every script in `etl/` exists because a previous version of the parser broke on a new year's data. The pipeline handles 4 plain-text format variants, 5 HTML layout generations, and a final JSON era — each requiring its own parser.
 
 ### Scripts
