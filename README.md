@@ -4,7 +4,7 @@ A complete, structured archive of the CIA World Factbook spanning **36 years** (
 
 The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves every edition published since 1990 and creates a structured, queryable dataset.
 
-**[Browse the archive online](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)**
+**[Search the interactive archive](https://cia-factbook-archive.fly.dev/)** | **[Project documentation](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)**
 
 
 ## Database Statistics
@@ -38,7 +38,7 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 | 1991 | Text | 247 | 14,903 |
 | 1992 | Text | 264 | 17,372 |
 | 1993 | Text | 266 | 18,509 |
-| 1994 | Text | 266 | 28,633 |
+| 1994 | Text | 266 | 18,761 |
 | 1995 | Text | 266 | 19,599 |
 | 1996 | Text | 266 | 20,764 |
 | 1997 | Text | 266 | 23,405 |
@@ -186,6 +186,20 @@ See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) and [docs/ETL_PIPELINE.md](docs/E
    ```sql
    SELECT COUNT(*) FROM CountryFields;  -- Should return 1,061,341
    ```
+
+### Alternative: SQLite (No SQL Server Required)
+
+A pre-built SQLite database (`factbook.db`, ~238 MB) is available for users who don't need SQL Server. SQLite requires no installation — Python's built-in `sqlite3` module can query it directly.
+
+| | SQL Server | SQLite |
+|--|-----------|--------|
+| **Setup** | Install SQL Server + ODBC driver, run schema + import scripts | Download one `.db` file |
+| **Size** | ~263 MB across 36 gzipped SQL files | 238 MB single file |
+| **Query tool** | SSMS, sqlcmd, pyodbc | Python `sqlite3`, DB Browser, any SQLite client |
+| **Best for** | Power BI, enterprise analytics, large-scale joins | Quick exploration, scripting, lightweight apps |
+| **Schema** | Identical 5-table structure | Identical 5-table structure |
+
+The SQLite database contains the same 5 tables, same indexes, and same 1,061,341 fields as the SQL Server version. This is what the [live webapp](https://cia-factbook-archive.fly.dev/) runs on.
 
 ## Entity Types
 
