@@ -164,39 +164,39 @@ tr.clickable:hover td { background: rgba(47, 52, 60, 0.4); }
 
 /* Screenshot carousel */
 .carousel-section { margin: 24px 0; }
-.carousel-container { position: relative; }
+.carousel-container { position: relative; overflow: hidden; }
 .carousel {
   display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-  gap: 20px; padding: 4px 0 16px;
+  gap: 0; padding: 0;
   scrollbar-width: none; -ms-overflow-style: none;
   scroll-behavior: smooth;
 }
 .carousel::-webkit-scrollbar { display: none; }
 .carousel-slide {
-  flex: 0 0 min(720px, 88%); scroll-snap-align: center;
-  background: #1C2127; border: 1px solid #2F343C; border-radius: 6px;
-  overflow: hidden; transition: border-color 200ms, box-shadow 200ms;
+  flex: 0 0 100%; scroll-snap-align: start; position: relative;
+  background: #1C2127; border-radius: 6px;
+  overflow: hidden;
 }
-.carousel-slide:hover { border-color: #383E47; box-shadow: 0 4px 20px rgba(17, 20, 24, 0.6); }
-.carousel-slide img { width: 100%; height: 400px; display: block; object-fit: cover; object-position: top; }
+.carousel-slide img { width: 100%; height: 420px; display: block; object-fit: cover; object-position: top; }
 .carousel-slide .slide-caption {
   padding: 14px 18px;
   font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.82rem;
-  color: #8F99A8;
+  color: #8F99A8; background: #1C2127; border: 1px solid #2F343C;
+  border-top: none; border-radius: 0 0 6px 6px;
 }
 .carousel-slide .slide-caption strong { color: #C5CBD3; font-size: 0.88rem; display: block; margin-bottom: 3px; }
 .carousel-arrow {
-  position: absolute; top: 50%; transform: translateY(-60%);
-  width: 40px; height: 40px; border-radius: 50%;
-  background: rgba(28, 33, 39, 0.9); border: 1px solid #383E47;
-  color: #C5CBD3; font-size: 1.1rem; cursor: pointer;
+  position: absolute; top: 200px; transform: translateY(-50%);
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(17, 20, 24, 0.75); border: 1px solid rgba(255,255,255,0.15);
+  color: #fff; font-size: 1.2rem; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: background 150ms, border-color 150ms, color 150ms;
-  z-index: 2; backdrop-filter: blur(4px);
+  transition: background 150ms, border-color 150ms;
+  z-index: 2; backdrop-filter: blur(6px);
 }
-.carousel-arrow:hover { background: rgba(37, 42, 49, 0.95); border-color: #ABB3BF; color: #fff; }
-.carousel-arrow.left { left: 10px; }
-.carousel-arrow.right { right: 10px; }
+.carousel-arrow:hover { background: rgba(17, 20, 24, 0.9); border-color: rgba(255,255,255,0.35); }
+.carousel-arrow.left { left: 16px; }
+.carousel-arrow.right { right: 16px; }
 .carousel-dots {
   display: flex; justify-content: center; gap: 8px; margin-top: 4px;
 }
@@ -251,9 +251,10 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
   .main-content { padding: 20px 16px; max-width: 100%; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .data-table { display: block; overflow-x: auto; }
-  .carousel-slide { flex: 0 0 92%; }
-  .carousel-slide img { height: 280px; }
-  .carousel-arrow { width: 34px; height: 34px; font-size: 0.9rem; }
+  .carousel-slide img { height: 240px; }
+  .carousel-arrow { top: 120px; width: 36px; height: 36px; font-size: 0.95rem; }
+  .carousel-arrow.left { left: 8px; }
+  .carousel-arrow.right { right: 8px; }
 }
 @media (max-width: 480px) {
   .banner { font-size: 0.55rem; letter-spacing: 2px; padding: 4px 0; }
@@ -408,7 +409,7 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
             </div>
             <div class="carousel-slide">
               <img src="screenshots/regional_dashboard.png" alt="Regional Dashboard" loading="lazy">
-              <div class="slide-caption"><strong>Regional Dashboard</strong>COCOM region analysis with choropleth maps and key indicators</div>
+              <div class="slide-caption"><strong>Regional Dashboard</strong>EUCOM region detail with GDP choropleth map and country indicators</div>
             </div>
             <div class="carousel-slide">
               <img src="screenshots/dossier.png" alt="Intelligence Dossier" loading="lazy">
@@ -644,7 +645,7 @@ function initCarousel() {
     clearTimeout(scrollTimeout);
     scrollTimeout = setTimeout(function() {
       var scrollLeft = carousel.scrollLeft;
-      var slideWidth = slides[0].offsetWidth + 20; /* 20 = gap */
+      var slideWidth = slides[0].offsetWidth;
       var idx = Math.round(scrollLeft / slideWidth);
       idx = Math.max(0, Math.min(idx, slides.length - 1));
       dots.forEach(function(d, i) {
@@ -656,7 +657,7 @@ function initCarousel() {
 
 function scrollCarousel(dir) {
   var carousel = document.getElementById('screenshot-carousel');
-  var slideWidth = carousel.querySelector('.carousel-slide').offsetWidth + 20;
+  var slideWidth = carousel.querySelector('.carousel-slide').offsetWidth;
   carousel.scrollBy({ left: dir * slideWidth, behavior: 'smooth' });
 }
 
