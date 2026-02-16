@@ -11,11 +11,13 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 | | |
 |---|---|
 | ![Homepage](docs/screenshots/homepage.png) | ![Search Results](docs/screenshots/search_results.png) |
-| **Homepage** — Database statistics and navigation | **Full-Text Search** — Boolean search across 1M+ fields |
-| ![Country Profile](docs/screenshots/country_profile.png) | ![Regional Dashboard](docs/screenshots/regional_dashboard.png) |
-| **Country Profile** — Complete field data by category | **Regional Dashboard** — COCOM regions with choropleth maps |
-| ![Intelligence Dossier](docs/screenshots/dossier.png) | ![Field Time Series](docs/screenshots/field_timeseries.png) |
-| **Intelligence Dossier** — Assessments per ICD 203 standards | **Field Time Series** — Track any field across 36 years |
+| **Homepage** — Database statistics and navigation | **Full-Text Search** — Keyword search across 1M+ fields |
+| ![Boolean Search](docs/screenshots/search_boolean.png) | ![Country Profile](docs/screenshots/country_profile.png) |
+| **Boolean Search** — Exact phrase + AND/OR/NOT operators | **Country Profile** — Complete field data by category |
+| ![Regional Dashboard](docs/screenshots/regional_dashboard.png) | ![Intelligence Dossier](docs/screenshots/dossier.png) |
+| **Regional Dashboard** — COCOM regions with choropleth maps | **Intelligence Dossier** — Assessments per ICD 203 standards |
+| ![Field Time Series](docs/screenshots/field_timeseries.png) | ![Factbook Export](docs/screenshots/country_export.png) |
+| **Field Time Series** — Track any field across 36 years | **Factbook Export** — Print-ready report with parsed fields |
 
 ## Database Statistics
 
