@@ -178,7 +178,7 @@ tr.clickable:hover td { background: rgba(47, 52, 60, 0.4); }
   overflow: hidden; transition: border-color 200ms, box-shadow 200ms;
 }
 .carousel-slide:hover { border-color: #383E47; box-shadow: 0 4px 20px rgba(17, 20, 24, 0.6); }
-.carousel-slide img { width: 100%; height: auto; display: block; }
+.carousel-slide img { width: 100%; height: 400px; display: block; object-fit: cover; object-position: top; }
 .carousel-slide .slide-caption {
   padding: 14px 18px;
   font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.82rem;
@@ -252,6 +252,7 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .data-table { display: block; overflow-x: auto; }
   .carousel-slide { flex: 0 0 92%; }
+  .carousel-slide img { height: 280px; }
   .carousel-arrow { width: 34px; height: 34px; font-size: 0.9rem; }
 }
 @media (max-width: 480px) {
