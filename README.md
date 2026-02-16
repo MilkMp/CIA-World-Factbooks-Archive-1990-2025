@@ -199,7 +199,7 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 | ![Boolean Search](docs/screenshots/search_boolean.png) | ![Country Profile](docs/screenshots/country_profile.png) |
 | **Boolean Search** — Exact phrase + AND/OR/NOT operators | **Country Profile** — Complete field data by category |
 | ![Regional Dashboard](docs/screenshots/regional_dashboard.png) | ![Intelligence Dossier](docs/screenshots/dossier.png) |
-| **Regional Dashboard** — COCOM regions with choropleth maps | **Intelligence Dossier** — Assessments per ICD 203 standards |
+| **Regional Dashboard** — EUCOM region with GDP choropleth | **Intelligence Dossier** — Assessments per ICD 203 standards |
 
 
 
