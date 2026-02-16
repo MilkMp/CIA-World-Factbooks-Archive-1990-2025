@@ -6,18 +6,6 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 
 **[Browse the archive online](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)**
 
-## Screenshots
-
-| | |
-|---|---|
-| ![Homepage](docs/screenshots/homepage.png) | ![Search Results](docs/screenshots/search_results.png) |
-| **Homepage** — Database statistics and navigation | **Full-Text Search** — Keyword search across 1M+ fields |
-| ![Boolean Search](docs/screenshots/search_boolean.png) | ![Country Profile](docs/screenshots/country_profile.png) |
-| **Boolean Search** — Exact phrase + AND/OR/NOT operators | **Country Profile** — Complete field data by category |
-| ![Regional Dashboard](docs/screenshots/regional_dashboard.png) | ![Intelligence Dossier](docs/screenshots/dossier.png) |
-| **Regional Dashboard** — COCOM regions with choropleth maps | **Intelligence Dossier** — Assessments per ICD 203 standards |
-| ![Field Time Series](docs/screenshots/field_timeseries.png) | ![Factbook Export](docs/screenshots/country_export.png) |
-| **Field Time Series** — Track any field across 36 years | **Factbook Export** — Print-ready report with parsed fields |
 
 ## Database Statistics
 
@@ -30,6 +18,17 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 | **Data fields** | 1,071,213 |
 | **Content size** | ~263 MB |
 | **Field name variants** | 1,090 mapped to 414 canonical names |
+
+
+## Data Sources
+
+| Years | Source | Method |
+|-------|--------|--------|
+| 1990-1999 | [Project Gutenberg](https://www.gutenberg.org/) | Plain text parsing (4 format variants across the decade) |
+| 2000 | [Wayback Machine](https://web.archive.org/) | HTML zip download + classic format parser |
+| 2001 | Project Gutenberg | Text fallback (HTML zip was corrupted) |
+| 2002-2020 | Wayback Machine | HTML zip archives from cia.gov, 4 parser generations |
+| 2021-2025 | [factbook/cache.factbook.json](https://github.com/factbook/cache.factbook.json) | Git history with year-end commit snapshots |
 
 ## Year-by-Year Breakdown
 
@@ -72,15 +71,6 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 | 2024 | JSON | 260 | 34,838 |
 | 2025 | JSON | 260 | 32,594 |
 
-## Data Sources
-
-| Years | Source | Method |
-|-------|--------|--------|
-| 1990-1999 | [Project Gutenberg](https://www.gutenberg.org/) | Plain text parsing (4 format variants across the decade) |
-| 2000 | [Wayback Machine](https://web.archive.org/) | HTML zip download + classic format parser |
-| 2001 | Project Gutenberg | Text fallback (HTML zip was corrupted) |
-| 2002-2020 | Wayback Machine | HTML zip archives from cia.gov, 4 parser generations |
-| 2021-2025 | [factbook/cache.factbook.json](https://github.com/factbook/cache.factbook.json) | Git history with year-end commit snapshots |
 
 ## Repository Structure
 
@@ -198,6 +188,19 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 - Internet users growth
 - Countries that appear/disappear over time
 - Consolidated petroleum sub-field view
+
+## Screenshots
+| | |
+|---|---|
+| ![Homepage](docs/screenshots/homepage.png) | ![Search Results](docs/screenshots/search_results.png) |
+| **Homepage** — Database statistics and navigation | **Full-Text Search** — Keyword search across 1M+ fields |
+| ![Boolean Search](docs/screenshots/search_boolean.png) | ![Country Profile](docs/screenshots/country_profile.png) |
+| **Boolean Search** — Exact phrase + AND/OR/NOT operators | **Country Profile** — Complete field data by category |
+| ![Regional Dashboard](docs/screenshots/regional_dashboard.png) | ![Intelligence Dossier](docs/screenshots/dossier.png) |
+| **Regional Dashboard** — COCOM regions with choropleth maps | **Intelligence Dossier** — Assessments per ICD 203 standards |
+| ![Field Time Series](docs/screenshots/field_timeseries.png) | ![Factbook Export](docs/screenshots/country_export.png) |
+| **Field Time Series** — Track any field across 36 years | **Factbook Export** — Print-ready report with parsed fields |
+
 
 ## License
 
