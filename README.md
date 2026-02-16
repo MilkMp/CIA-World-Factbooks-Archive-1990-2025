@@ -103,6 +103,37 @@ docs/
   METHODOLOGY.md             # Complete methodology: parsing, standardization, validation
 ```
 
+## ETL Pipeline & Python Scripts
+
+The raw CIA World Factbook changed format **at least 10 times** between 1990 and 2025. Every script in `etl/` exists because a previous version of the parser broke on a new year's data. The pipeline handles 4 plain-text format variants, 5 HTML layout generations, and a final JSON era — each requiring its own parser.
+
+### Scripts
+
+| Script | Lines | Years | What it does |
+|--------|-------|-------|--------------|
+| `build_archive.py` | 986 | 2000-2020 | Downloads HTML zips from the Wayback Machine, detects which of 5 HTML layouts each year uses, and parses fields. Handles CDX API fallback when downloads fail, filters template/print pages, and deduplicates entries. |
+| `load_gutenberg_years.py` | 1,043 | 1990-2001 | Parses plain-text Gutenberg editions with 4 distinct format variants (tagged, asterisk, at-sign, colon). Includes fuzzy country name matching to handle aliases like "Burma" and "Ivory Coast." |
+| `reload_json_years.py` | 413 | 2021-2025 | Checks out year-end git commits from the factbook/cache.factbook.json repo and loads structured JSON. Strips embedded HTML from content fields. |
+| `build_field_mappings.py` | 783 | All | Maps 1,090 raw field name variants to 414 canonical names using a 7-rule system: identity, dash normalization, CIA renames, consolidation, country-specific entries, noise detection, and manual review. |
+| `classify_entities.py` | 283 | All | Auto-classifies 281 entities into 9 types (sovereign, territory, disputed, etc.) based on Dependency Status and Government Type fields, with hardcoded overrides for edge cases. |
+| `validate_integrity.py` | 296 | All | Read-only validation suite with 9 checks: field count benchmarks, US population/GDP ground truth, year-over-year consistency, source provenance, and NULL detection. |
+
+### Why parsing was so difficult
+
+The CIA never maintained a stable schema. Every few years the HTML layout changed completely, field names were renamed without notice, and entire categories were restructured. Examples:
+
+- **1990-1999 (plain text):** Four different formatting conventions across the decade. 1990-1993 used `Country: Name` headers with indented fields. 1994 introduced tagged markers (`_@_`, `_*_`, `_#_`). 1996 switched to bare section headers with no markers at all. 1999 changed the delimiter scheme again. Each variant required its own regex-based parser.
+
+- **2000-2020 (HTML):** The CIA redesigned the Factbook website at least 5 times. The 2000 edition used `<b>FieldName:</b>` inline formatting. By 2004 it switched to `<td class="FieldLabel">` table layouts. 2008 introduced CollapsiblePanel JavaScript widgets. 2014 changed to expand/collapse `<h2>` sections. 2017 moved to field-anchor `<div>` structures. A parser that worked on 2006 data would produce garbage on 2010 data.
+
+- **2001:** The Wayback Machine's HTML zip for 2001 was corrupted, so parsing fell back to the Project Gutenberg plain-text edition — the only year where the HTML and text pipelines had to swap.
+
+- **Field name drift:** The CIA renamed fields silently over the decades. "GDP - real growth rate" became "Real GDP growth rate." "Telephones" split into "Telephones - fixed lines" and "Telephones - mobile cellular." Oil sub-fields were consolidated into "Petroleum." The `build_field_mappings.py` script maps all 1,090 variants through 7 rule layers to maintain time-series continuity.
+
+- **Country-specific noise:** 1990s editions embedded government body names (parliaments, assemblies, courts) as top-level fields. Dissolved countries (Serbia and Montenegro, Netherlands Antilles) appear and disappear. Turkish Cyprus, Malaysian states, and Netherlands Antilles islands show up as sub-entries that need special handling.
+
+See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) and [docs/ETL_PIPELINE.md](docs/ETL_PIPELINE.md) for the full technical details.
+
 ## How to Restore
 
 ### Prerequisites
