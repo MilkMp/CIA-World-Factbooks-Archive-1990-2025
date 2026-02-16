@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIA World Factbooks Archive 1990-2025</title>
+<style>
+  :root {
+    --bg: #111418;
+    --surface: #1C2127;
+    --border: #2F343C;
+    --text: #C5CBD3;
+    --text-dim: #8F99A8;
+    --accent: #4C90F0;
+    --gold: #D1980B;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+  header {
+    text-align: center;
+    padding: 60px 0 40px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .doc-id {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 2rem;
+    font-weight: 400;
+    color: #E5E8EB;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 30px 0;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--gold);
+    display: block;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 40px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  p { margin-bottom: 12px; color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    margin: 6px 4px;
+    transition: opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.85; text-decoration: none; }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.85rem;
+  }
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--text-dim);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+  }
+  .mono {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.85rem;
+  }
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="doc-id">Public Archive // Unclassified</div>
+  <h1>CIA World Factbooks Archive</h1>
+  <p class="subtitle">1990-2025 &mdash; 36 Years of Global Intelligence Data</p>
+</header>
+
+<div class="stats">
+  <div class="stat-card">
+    <span class="stat-num">36</span>
+    <span class="stat-label">Years (1990-2025)</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-num">281</span>
+    <span class="stat-label">Entities</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-num">1,071,213</span>
+    <span class="stat-label">Data Fields</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-num">414</span>
+    <span class="stat-label">Canonical Fields</span>
+  </div>
+</div>
+
+<div style="text-align:center; margin: 30px 0;">
+  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" class="btn">View on GitHub</a>
+  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases" class="btn btn-outline">Download Data</a>
+</div>
+
+<h2>About</h2>
+<p>
+  The CIA World Factbook was published continuously from 1962 until its discontinuation on
+  <strong>February 4, 2026</strong>. This archive preserves every publicly available edition
+  from 1990 to 2025 in a structured, queryable SQL Server database.
+</p>
+<p>
+  Data was collected from three sources: Project Gutenberg (1990s plain text editions),
+  the Wayback Machine (2000-2020 HTML archives), and the
+  <a href="https://github.com/factbook/cache.factbook.json">factbook/cache.factbook.json</a>
+  GitHub repository (2021-2025 JSON snapshots using year-specific git commits).
+</p>
+
+<h2>Data Sources</h2>
+<table>
+  <thead>
+    <tr><th>Years</th><th>Source</th><th>Format</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1990-1999</td><td>Project Gutenberg</td><td>Plain text (6 format variants)</td></tr>
+    <tr><td>2000-2020</td><td>Wayback Machine</td><td>HTML zip archives (5 parser generations)</td></tr>
+    <tr><td>2021-2025</td><td>GitHub (factbook/cache.factbook.json)</td><td>JSON with year-end git snapshots</td></tr>
+  </tbody>
+</table>
+
+<h2>Entity Types</h2>
+<table>
+  <thead>
+    <tr><th>Type</th><th>Count</th><th>Examples</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Sovereign</td><td>192</td><td>United States, China, France, Brazil</td></tr>
+    <tr><td>Territory</td><td>65</td><td>Guam, Bermuda, French Polynesia</td></tr>
+    <tr><td>Misc</td><td>7</td><td>World, Arctic Ocean, European Union</td></tr>
+    <tr><td>Disputed</td><td>6</td><td>Kosovo, Gaza Strip, West Bank</td></tr>
+    <tr><td>Other</td><td>11</td><td>Hong Kong, Jersey, Antarctica, Marshall Islands</td></tr>
+  </tbody>
+</table>
+
+<h2>Database Schema</h2>
+<table>
+  <thead>
+    <tr><th>Table</th><th>Rows</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="mono">MasterCountries</td><td>281</td><td>Canonical entities with EntityType, ISO codes</td></tr>
+    <tr><td class="mono">Countries</td><td>9,500</td><td>Per-year country records</td></tr>
+    <tr><td class="mono">CountryCategories</td><td>83,599</td><td>Section headings (Geography, Economy, etc.)</td></tr>
+    <tr><td class="mono">CountryFields</td><td>1,071,213</td><td>Individual data fields (~263 MB)</td></tr>
+    <tr><td class="mono">FieldNameMappings</td><td>1,090</td><td>Maps 1,090 variants to 414 canonical names</td></tr>
+  </tbody>
+</table>
+
+<h2>How to Restore</h2>
+<p>
+  The data is provided as SQL INSERT scripts compatible with SQL Server 2017+.
+  The <code>CountryFields</code> table is split into 36 gzipped files by year (~59 MB total compressed).
+</p>
+<ol style="margin-left: 20px; margin-bottom: 16px;">
+  <li>Create a database: <code>CREATE DATABASE CIA_WorldFactbook</code></li>
+  <li>Run <code>schema/create_tables.sql</code></li>
+  <li>Import <code>data/master_countries.sql</code>, then <code>countries.sql</code>, <code>categories.sql</code>, <code>field_name_mappings.sql</code></li>
+  <li>Decompress and import each <code>data/fields/country_fields_YYYY.sql.gz</code></li>
+</ol>
+
+<h2>License</h2>
+<p>
+  The CIA World Factbook is a work of the United States Government and is in the
+  <strong>public domain</strong> (17 U.S.C. &sect; 105). This archive is released under
+  <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0 Universal (Public Domain Dedication)</a>.
+</p>
+
+<footer>
+  <p>CIA World Factbooks Archive 1990-2025 &mdash; A preservation project</p>
+  <p>The CIA World Factbook was discontinued on February 4, 2026</p>
+</footer>
+
+</div>
+</body>
+</html>

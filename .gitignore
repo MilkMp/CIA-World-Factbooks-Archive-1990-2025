@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.bak
+*.log
+.DS_Store
+Thumbs.db
+work/
+text_samples/
+html_samples/
+*.zip
