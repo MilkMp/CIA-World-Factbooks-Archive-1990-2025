@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% set active_page = "analysis-home" %}
+{% block title %}{{ master.CanonicalName if master else 'Not Found' }} — Intelligence Dossier{% endblock %}
+
+{% block content %}
+{% if not master %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // DOSSIER // ERROR</div>
+  <h1>Entity Not Found</h1>
+  <p class="subtitle">No data for code "{{ code }}".</p>
+</div>
+<p><a href="/analysis">Back to Dashboard</a></p>
+
+{% else %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // DOSSIER // {{ master.ISOAlpha2 }} // {{ year }}</div>
+  <h1>{{ master.CanonicalName }}</h1>
+  <p class="subtitle">Intelligence Dossier &mdash; ICD 203/208 Format
+    {% if cocom %} &mdash; {{ cocom_name }} ({{ cocom }}){% endif %}
+  </p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:8px;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/regional" class="btn">Regional Dashboard</a>
+  {% if cocom and cocom != 'OTHER' %}
+  <a href="/analysis/region/{{ cocom }}" class="btn">{{ cocom }} Region</a>
+  {% endif %}
+  <a href="/archive/{{ year }}/{{ master.ISOAlpha2 or code }}" class="btn">Raw Archive Data</a>
+  <a href="/analysis/compare?a={{ master.ISOAlpha2 or code }}" class="btn">Compare</a>
+</div>
+
+{% if sections %}
+{# BLUF #}
+<div class="caveat" style="border-left:3px solid #404854;">
+  <strong>Bottom Line Up Front (BLUF)</strong><br>
+  {{ master.CanonicalName }} is a {{ sections.get('Government & Political', [{}])[0].get('value', 'N/A')[:200] if 'Government & Political' in sections else 'sovereign state' }}.
+  {% if 'Economy' in sections %}
+    {% for f in sections['Economy'] %}
+      {% if f.field == 'GDP (purchasing power parity)' %}
+        GDP (PPP): {{ f.value[:150] }}.
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+  {% if 'Demographics' in sections %}
+    {% for f in sections['Demographics'] %}
+      {% if f.field == 'Population' %}
+        Population: {{ f.value[:100] }}.
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+</div>
+
+{% for section_name, fields in sections.items() %}
+<div class="sec">
+  <span class="sec-title">{{ section_name }}</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="category-block">
+  {% for f in fields %}
+  <div class="field-item">
+    <div class="field-name">
+      {{ f.field }}
+      <span class="badge badge-{{ f.confidence|lower }}" style="margin-left:8px;">{{ f.confidence }}</span>
+    </div>
+    <div class="field-content">{{ f.value }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+{% else %}
+<div class="caveat">
+  <strong>No Data Available</strong><br>
+  No intelligence data found for this entity in the {{ year }} assessment year.
+  Try viewing the <a href="/archive/{{ year }}/{{ master.ISOAlpha2 or code }}">raw archive data</a> instead.
+</div>
+{% endif %}
+
+<div class="caveat">
+  <strong>Classification</strong><br>
+  OPEN SOURCE. Data from CIA World Factbook {{ year }} edition (public domain).
+  Assessment formatted per ICD 203 Analytic Standards and ICD 208 guidance.
+  Confidence levels: <span class="badge badge-high">HIGH</span> = current year data,
+  <span class="badge badge-moderate">MODERATE</span> = within 2 years,
+  <span class="badge badge-low">LOW</span> = older than 2 years.
+  <br><a href="/sources" style="display:inline-block;margin-top:6px;">Full Sources &amp; Methodology &rarr;</a>
+</div>
+{% endif %}
+{% endblock %}

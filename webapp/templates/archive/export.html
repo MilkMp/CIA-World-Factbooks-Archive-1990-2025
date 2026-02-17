@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% set active_page = "export" %}
+{% block title %}Data Export — CIA World Factbook Archive{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">ARCHIVE // DATA EXPORT</div>
+  <h1>Data Export</h1>
+  <p class="subtitle">Download and print country data in multiple formats</p>
+</div>
+
+<hr class="doc-rule double">
+
+{# ── Section 01: Bulk CSV/Excel ── #}
+<div class="sec">
+  <span class="sec-num">01</span>
+  <span class="sec-title">Bulk Export &mdash; All Years (1990&ndash;2025)</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="caveat">
+  <strong>Bulk Export</strong><br>
+  Select a country to download all 36 years of Factbook data in a single file.
+  Each row contains the year, category, field name, and full content text.
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;margin:20px 0;flex-wrap:wrap;">
+  <select id="country-select" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:8px 14px;font-family:-apple-system,'Segoe UI',sans-serif;font-size:0.85rem;min-width:300px;">
+    <option value="">Select a country...</option>
+    {% for c in countries %}
+    <option value="{{ c.CanonicalCode or c.ISOAlpha2 }}">{{ c.CanonicalName }} ({{ c.YearCount }} years)</option>
+    {% endfor %}
+  </select>
+  <a id="bulk-csv-btn" href="#" class="btn" style="opacity:0.4;pointer-events:none;">Download CSV</a>
+  <a id="bulk-xlsx-btn" href="#" class="btn" style="opacity:0.4;pointer-events:none;">Download Excel</a>
+</div>
+
+{# ── Section 02: Formatted Print/PDF ── #}
+<div class="sec">
+  <span class="sec-num">02</span>
+  <span class="sec-title">Formatted Report &mdash; Print / PDF</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="caveat">
+  <strong>Print-Ready Reports</strong><br>
+  Generate a formatted, paginated report styled like the archive pages.
+  Opens in a new tab &mdash; use your browser's print function (Ctrl+P) to save as PDF.
+</div>
+
+<div style="margin:16px 0 8px;">
+  <label style="font-size:0.72rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;">Mode</label>
+</div>
+<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;">
+    <input type="radio" name="print-mode" value="single" checked
+           style="accent-color:#2D72D2;"> One country, all years
+  </label>
+  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;">
+    <input type="radio" name="print-mode" value="range">
+    One country, year range
+  </label>
+  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;">
+    <input type="radio" name="print-mode" value="multi">
+    Multiple countries, one year
+  </label>
+</div>
+
+{# Single country, all years or year range #}
+<div id="print-single" style="display:flex;align-items:center;gap:10px;margin:12px 0;flex-wrap:wrap;">
+  <select id="print-country" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:8px 14px;font-family:-apple-system,'Segoe UI',sans-serif;font-size:0.85rem;min-width:300px;">
+    <option value="">Select a country...</option>
+    {% for c in countries %}
+    <option value="{{ c.CanonicalCode or c.ISOAlpha2 }}">{{ c.CanonicalName }}</option>
+    {% endfor %}
+  </select>
+  <span id="year-range-inputs" style="display:none;align-items:center;gap:6px;">
+    <input id="print-start" type="number" min="1990" max="2025" value="1990"
+           style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:8px 10px;font-size:0.85rem;width:75px;">
+    <span style="color:#5F6B7C;">&ndash;</span>
+    <input id="print-end" type="number" min="1990" max="2025" value="2025"
+           style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:8px 10px;font-size:0.85rem;width:75px;">
+  </span>
+  <a id="print-btn" href="#" class="btn" target="_blank" style="opacity:0.4;pointer-events:none;">Generate Report</a>
+</div>
+
+{# Multiple countries, one year #}
+<div id="print-multi" style="display:none;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+    <label style="font-size:0.78rem;color:#8F99A8;">Year:</label>
+    <input id="multi-year" type="number" min="1990" max="2025" value="2025"
+           style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:8px 10px;font-size:0.85rem;width:75px;">
+  </div>
+  <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+    <select id="multi-countries" multiple size="8"
+            style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:8px 14px;font-family:-apple-system,'Segoe UI',sans-serif;font-size:0.82rem;min-width:300px;">
+      {% for c in countries %}
+      <option value="{{ c.CanonicalCode or c.ISOAlpha2 }}">{{ c.CanonicalName }}</option>
+      {% endfor %}
+    </select>
+    <div>
+      <div style="font-size:0.68rem;color:#5F6B7C;margin-bottom:8px;">Hold Ctrl/Cmd to select multiple</div>
+      <a id="multi-print-btn" href="#" class="btn" target="_blank" style="opacity:0.4;pointer-events:none;">Generate Report</a>
+    </div>
+  </div>
+</div>
+
+{# ── Section 03: Per-Edition ── #}
+<div class="sec">
+  <span class="sec-num">03</span>
+  <span class="sec-title">Per-Edition Export</span>
+  <hr class="sec-rule">
+</div>
+
+<p>To export a single year for a country, navigate to any <a href="/archive">country profile page</a> and use the CSV, Excel, or Export Report buttons.</p>
+
+{# ── Section 04: GitHub ── #}
+<div class="sec">
+  <span class="sec-num">04</span>
+  <span class="sec-title">Raw Data &mdash; GitHub Repository</span>
+  <hr class="sec-rule">
+</div>
+
+<p>The complete archive dataset is available as open-source data on GitHub. The repository contains the full SQL schema, all INSERT scripts (split by year for CountryFields), and the ETL tooling used to parse the original CIA publications.</p>
+
+<div style="margin:16px 0;">
+  <a href="{{ github_repo }}" target="_blank" rel="noopener" class="btn">View on GitHub</a>
+</div>
+
+<table class="data-table" style="max-width:600px;">
+  <thead>
+    <tr><th>Contents</th><th>Format</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Database schema</td><td>SQL Server CREATE scripts</td></tr>
+    <tr><td>All 5 tables</td><td>SQL INSERT scripts (split by year)</td></tr>
+    <tr><td>Field mappings</td><td>1,090 variant &rarr; 414 canonical names</td></tr>
+    <tr><td>Entity classifications</td><td>281 entities with type assignments</td></tr>
+    <tr><td>ETL pipeline</td><td>Python parsers for HTML, text, and JSON editions</td></tr>
+  </tbody>
+</table>
+
+<div style="margin-top:24px;padding:12px 14px;border:1px solid #2F343C;border-radius:4px;background:#1C2127;font-size:0.72rem;color:#5F6B7C;line-height:1.6;">
+  <strong style="color:#8F99A8;text-transform:uppercase;letter-spacing:0.8px;font-size:0.62rem;">Note</strong><br>
+  CSV files use UTF-8 with BOM encoding for Excel compatibility on Windows.
+  Excel files (.xlsx) include formatted headers. All data is public domain (CIA World Factbook).
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Bulk CSV/Excel download ── */
+var sel = document.getElementById('country-select');
+var csvBtn = document.getElementById('bulk-csv-btn');
+var xlsxBtn = document.getElementById('bulk-xlsx-btn');
+sel.addEventListener('change', function() {
+  var code = sel.value;
+  if (code) {
+    csvBtn.href = '/export/bulk/' + code + '/csv';
+    xlsxBtn.href = '/export/bulk/' + code + '/xlsx';
+    csvBtn.style.opacity = '1'; csvBtn.style.pointerEvents = 'auto';
+    xlsxBtn.style.opacity = '1'; xlsxBtn.style.pointerEvents = 'auto';
+  } else {
+    csvBtn.href = '#'; xlsxBtn.href = '#';
+    csvBtn.style.opacity = '0.4'; csvBtn.style.pointerEvents = 'none';
+    xlsxBtn.style.opacity = '0.4'; xlsxBtn.style.pointerEvents = 'none';
+  }
+});
+
+/* ── Print mode switching ── */
+var radios = document.querySelectorAll('input[name="print-mode"]');
+var singleDiv = document.getElementById('print-single');
+var multiDiv = document.getElementById('print-multi');
+var rangeInputs = document.getElementById('year-range-inputs');
+
+radios.forEach(function(r) {
+  r.addEventListener('change', function() {
+    singleDiv.style.display = (r.value === 'multi') ? 'none' : 'flex';
+    multiDiv.style.display = (r.value === 'multi') ? 'block' : 'none';
+    rangeInputs.style.display = (r.value === 'range') ? 'flex' : 'none';
+    updatePrintBtn();
+  });
+});
+
+/* ── Single/range print URL builder ── */
+var printCountry = document.getElementById('print-country');
+var printStart = document.getElementById('print-start');
+var printEnd = document.getElementById('print-end');
+var printBtn = document.getElementById('print-btn');
+
+function getMode() {
+  var checked = document.querySelector('input[name="print-mode"]:checked');
+  return checked ? checked.value : 'single';
+}
+
+function updatePrintBtn() {
+  var code = printCountry.value;
+  if (!code) {
+    printBtn.style.opacity = '0.4'; printBtn.style.pointerEvents = 'none';
+    printBtn.href = '#';
+    return;
+  }
+  var mode = getMode();
+  var url = '/export/print?codes=' + code;
+  if (mode === 'range') {
+    url += '&start=' + printStart.value + '&end=' + printEnd.value;
+  }
+  printBtn.href = url;
+  printBtn.style.opacity = '1'; printBtn.style.pointerEvents = 'auto';
+}
+
+printCountry.addEventListener('change', updatePrintBtn);
+printStart.addEventListener('input', updatePrintBtn);
+printEnd.addEventListener('input', updatePrintBtn);
+
+/* ── Multi-country print URL builder ── */
+var multiCountries = document.getElementById('multi-countries');
+var multiYear = document.getElementById('multi-year');
+var multiBtn = document.getElementById('multi-print-btn');
+
+function updateMultiBtn() {
+  var selected = Array.from(multiCountries.selectedOptions).map(function(o) { return o.value; });
+  if (selected.length === 0) {
+    multiBtn.style.opacity = '0.4'; multiBtn.style.pointerEvents = 'none';
+    multiBtn.href = '#';
+    return;
+  }
+  var yr = multiYear.value;
+  multiBtn.href = '/export/print?codes=' + selected.join(',') + '&start=' + yr + '&end=' + yr;
+  multiBtn.style.opacity = '1'; multiBtn.style.pointerEvents = 'auto';
+}
+
+multiCountries.addEventListener('change', updateMultiBtn);
+multiYear.addEventListener('input', updateMultiBtn);
+</script>
+{% endblock %}

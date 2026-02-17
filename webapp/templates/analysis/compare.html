@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% set active_page = "compare" %}
+{% block title %}Compare Countries — Intelligence Analysis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // COMPARISON // {{ year }}</div>
+  <h1>Head-to-Head Comparison</h1>
+  <p class="subtitle">Side-by-side country intelligence comparison &mdash; {{ year }}</p>
+</div>
+
+<hr class="doc-rule double">
+
+<form class="search-box" method="get" action="/analysis/compare" style="flex-wrap:wrap;">
+  <select name="a" style="min-width:0;flex:1 1 180px;">
+    <option value="">Select Country A...</option>
+    {% for c in all_countries %}
+    <option value="{{ c.CanonicalCode or c.ISOAlpha2 }}" {{ 'selected' if a and (c.ISOAlpha2 == a.upper() or c.CanonicalCode == a.upper()) else '' }}>
+      {{ c.CanonicalName }}
+    </option>
+    {% endfor %}
+  </select>
+  <span style="color:#8F99A8;padding:8px;font-size:0.85rem;">vs</span>
+  <select name="b" style="min-width:0;flex:1 1 180px;">
+    <option value="">Select Country B...</option>
+    {% for c in all_countries %}
+    <option value="{{ c.CanonicalCode or c.ISOAlpha2 }}" {{ 'selected' if b and (c.ISOAlpha2 == b.upper() or c.CanonicalCode == b.upper()) else '' }}>
+      {{ c.CanonicalName }}
+    </option>
+    {% endfor %}
+  </select>
+  <button type="submit">Compare</button>
+</form>
+
+{% if country_a and country_b %}
+<div class="sec">
+  <span class="sec-title">{{ country_a.CanonicalName }} vs {{ country_b.CanonicalName }}</span>
+  <hr class="sec-rule">
+</div>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>{{ country_a.CanonicalName }}</th>
+      <th>{{ country_b.CanonicalName }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for field in compare_fields %}
+    {% if data_a.get(field) or data_b.get(field) %}
+    <tr>
+      <td style="font-weight:600;color:#8F99A8;white-space:nowrap;">{{ field }}</td>
+      <td style="font-size:0.83rem;">{{ data_a.get(field, '—') }}</td>
+      <td style="font-size:0.83rem;">{{ data_b.get(field, '—') }}</td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<div style="margin:16px 0;">
+  <a href="/analysis/dossier/{{ country_a.ISOAlpha2 }}" class="btn">{{ country_a.CanonicalName }} Dossier</a>
+  <a href="/analysis/dossier/{{ country_b.ISOAlpha2 }}" class="btn" style="margin-left:8px;">{{ country_b.CanonicalName }} Dossier</a>
+</div>
+
+{% elif a or b %}
+<div class="caveat">
+  <strong>Incomplete Selection</strong><br>
+  Please select both countries to compare.
+</div>
+{% else %}
+<div class="caveat">
+  <strong>Instructions</strong><br>
+  Select two countries from the dropdowns above and click Compare to see a
+  side-by-side comparison of key intelligence indicators. Data from the {{ year }}
+  CIA World Factbook edition.
+</div>
+{% endif %}
+{% endblock %}

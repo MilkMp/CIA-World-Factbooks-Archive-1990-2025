@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% set active_page = "browse" %}
+{% block title %}Browse Archive — CIA World Factbook Archive{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">ARCHIVE // BROWSE</div>
+  <h1>{% if selected_year is defined and selected_year %}Factbook {{ selected_year }}{% else %}Browse by Year{% endif %}</h1>
+  {% if selected_year is defined and selected_year %}
+  <p class="subtitle">All countries and entities present in the {{ selected_year }} edition</p>
+  {% else %}
+  <p class="subtitle">Select a year to view all country data for that edition</p>
+  {% endif %}
+</div>
+
+<hr class="doc-rule double">
+
+{% if years is not none and not (selected_year is defined and selected_year) %}
+{# Year listing mode #}
+<div class="sec">
+  <span class="sec-num">ALL EDITIONS</span>
+  <span class="sec-title">Available Years</span>
+  <hr class="sec-rule">
+</div>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Year</th>
+      <th>Countries</th>
+      <th>Source</th>
+      <th>Fields</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for y in years %}
+    <tr class="clickable" onclick="location.href='/archive/{{ y.Year }}'">
+      <td><a href="/archive/{{ y.Year }}" style="font-family:Consolas,monospace;font-weight:700;">{{ y.Year }}</a></td>
+      <td class="r">{{ "{:,}".format(y.CountryCount) }}</td>
+      <td class="mono">{{ y.Source or '—' }}</td>
+      <td class="r">{{ "{:,}".format(y.FieldCount) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% elif selected_year is defined and selected_year %}
+{# Country listing for selected year #}
+<div class="year-pills">
+  {% for yr in all_years %}
+  <a href="/archive/{{ yr }}" class="year-pill {{ 'active' if yr == selected_year else '' }}">{{ yr }}</a>
+  {% endfor %}
+</div>
+
+<div class="sec">
+  <span class="sec-num">{{ countries|length }} ENTITIES</span>
+  <span class="sec-title">Countries &amp; Territories</span>
+  <hr class="sec-rule">
+</div>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Country</th>
+      <th>Code</th>
+      <th>Type</th>
+      <th>Source</th>
+      <th>Fields</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in countries %}
+    <tr class="clickable" onclick="location.href='/archive/{{ selected_year }}/{{ c.CanonicalCode or c.ISOAlpha2 or c.Code }}'">
+      <td><a href="/archive/{{ selected_year }}/{{ c.CanonicalCode or c.ISOAlpha2 or c.Code }}">{{ c.CanonicalName }}</a></td>
+      <td class="mono">{{ c.CanonicalCode or c.ISOAlpha2 or c.Code }}</td>
+      <td>{{ c.EntityType or '—' }}</td>
+      <td class="mono">{{ c.Source or '—' }}</td>
+      <td class="r">{{ "{:,}".format(c.FieldCount) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

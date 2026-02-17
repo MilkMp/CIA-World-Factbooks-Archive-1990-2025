@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% set active_page = "analysis" %}
+{% block title %}{{ region_name }} ({{ region }}) — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // {{ region }} // {{ year }}</div>
+  <h1>{{ region_name }}</h1>
+  <p class="subtitle">{{ region }} Regional Assessment &mdash; {{ indicators|length }} countries with data</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;">
+  <a href="/analysis" class="btn">Back to Dashboard</a>
+  <a href="/analysis/threats/{{ region }}" class="btn" style="margin-left:8px;">Threat Environment</a>
+</div>
+
+{% if indicators %}
+<div class="sec">
+  <span class="sec-num">SECTION 01</span>
+  <span class="sec-title">Regional Map</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="margin-bottom:8px;">
+  <label style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:0.75rem;color:#8F99A8;text-transform:uppercase;letter-spacing:1px;">
+    Color by:
+  </label>
+  <select id="region-map-indicator" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:4px 10px;font-size:0.82rem;transition:border-color 0.2s cubic-bezier(0.4,0,0.2,1);">
+    <option value="gdp_percap">GDP Per Capita</option>
+    <option value="gdp_billions">GDP ($B PPP)</option>
+    <option value="population">Population</option>
+    <option value="mil_pct_gdp">Military % GDP</option>
+    <option value="life_exp">Life Expectancy</option>
+  </select>
+</div>
+<div id="region-map" class="chart-container" style="height:clamp(260px, 42vw, 440px);"></div>
+
+<div class="sec">
+  <span class="sec-num">SECTION 02</span>
+  <span class="sec-title">Country Indicators</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Country</th>
+      <th>Population</th>
+      <th>GDP ($B PPP)</th>
+      <th>GDP/Cap</th>
+      <th>Mil % GDP</th>
+      <th>Life Exp</th>
+      <th>Pop Growth</th>
+      <th>Dossier</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in indicators %}
+    <tr>
+      <td><a href="/analysis/dossier/{{ c.iso2 }}">{{ c.name }}</a></td>
+      <td class="r">{% if c.population %}{{ "{:,}".format(c.population) }}{% else %}&mdash;{% endif %}</td>
+      <td class="r">{% if c.gdp_billions %}${{ "{:,.1f}".format(c.gdp_billions) }}{% else %}&mdash;{% endif %}</td>
+      <td class="r">{% if c.gdp_percap %}${{ "{:,}".format(c.gdp_percap) }}{% else %}&mdash;{% endif %}</td>
+      <td class="r">{% if c.mil_pct_gdp %}{{ c.mil_pct_gdp }}%{% else %}&mdash;{% endif %}</td>
+      <td class="r">{% if c.life_exp %}{{ c.life_exp }}{% else %}&mdash;{% endif %}</td>
+      <td class="r">{% if c.pop_growth is not none %}{{ c.pop_growth }}%{% else %}&mdash;{% endif %}</td>
+      <td><a href="/analysis/dossier/{{ c.iso2 }}" class="btn" style="padding:2px 8px;font-size:0.7rem;">View</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{# Charts #}
+<div class="sec">
+  <span class="sec-num">SECTION 03</span>
+  <span class="sec-title">GDP Comparison</span>
+  <hr class="sec-rule">
+</div>
+<div id="gdp-chart" class="chart-container" style="height:clamp(260px,40vw,400px);"></div>
+
+<div class="sec">
+  <span class="sec-num">SECTION 04</span>
+  <span class="sec-title">Military Expenditure (% GDP)</span>
+  <hr class="sec-rule">
+</div>
+<div id="mil-chart" class="chart-container" style="height:clamp(260px,40vw,400px);"></div>
+
+<div class="sec">
+  <span class="sec-num">SECTION 05</span>
+  <span class="sec-title">Life Expectancy</span>
+  <hr class="sec-rule">
+</div>
+<div id="life-chart" class="chart-container" style="height:clamp(260px,40vw,400px);"></div>
+
+{% else %}
+<div class="caveat">
+  <strong>No Data</strong><br>
+  No indicator data available for this region.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if indicators %}
+<script>
+const chartLayout = {
+  paper_bgcolor: '#1C2127',
+  plot_bgcolor: '#1C2127',
+  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
+  margin: { t: 20, r: 20, b: 100, l: 60 },
+  xaxis: { tickangle: -45, gridcolor: '#252A31', fixedrange: true },
+  yaxis: { gridcolor: '#252A31', fixedrange: true },
+};
+
+const data = {{ indicators | tojson }};
+const region = '{{ region }}';
+
+// ── Regional Map ──
+const geoScopes = {
+  EUCOM: 'europe',
+  AFRICOM: 'africa',
+  SOUTHCOM: 'south america',
+  NORTHCOM: 'north america',
+};
+
+const indicatorLabels = {
+  gdp_percap: 'GDP Per Capita ($)',
+  gdp_billions: 'GDP ($B PPP)',
+  population: 'Population',
+  mil_pct_gdp: 'Military % GDP',
+  life_exp: 'Life Expectancy (years)',
+};
+
+/* Color scales — DG2 base → extended palette */
+const indicatorScales = {
+  gdp_percap:   [[0,'#252A31'],[0.25,'#0C5174'],[0.5,'#147EB3'],[0.75,'#3FA6DA'],[1,'#68C1EE']],   /* CERULEAN */
+  gdp_billions: [[0,'#252A31'],[0.25,'#5C4405'],[0.5,'#D1980B'],[0.75,'#F0B726'],[1,'#FBD065']],   /* GOLD */
+  population:   [[0,'#252A31'],[0.25,'#77450D'],[0.5,'#C87619'],[0.75,'#EC9A3C'],[1,'#FBB360']],   /* ORANGE */
+  mil_pct_gdp:  [[0,'#252A31'],[0.25,'#96290D'],[0.5,'#D33D17'],[0.75,'#EB6847'],[1,'#FF9980']],   /* VERMILION */
+  life_exp:     [[0,'#252A31'],[0.2,'#1D7324'],[0.4,'#29A634'],[0.6,'#43BF4D'],[0.8,'#62D96B'],[1,'#72CA9B']], /* FOREST→GREEN */
+};
+
+function renderRegionMap(indicator) {
+  const valid = data.filter(d => d[indicator]);
+  const geoConfig = {
+    bgcolor: '#1C2127',
+    lakecolor: '#111418',
+    landcolor: '#252A31',
+    showframe: false,
+    showcoastlines: true,
+    coastlinecolor: '#111418',
+    countrycolor: '#111418',
+    showcountries: true,
+    showocean: true,
+    oceancolor: '#111418',
+  };
+
+  if (geoScopes[region]) {
+    geoConfig.scope = geoScopes[region];
+  } else {
+    geoConfig.projection = { type: 'natural earth' };
+    geoConfig.fitbounds = 'locations';
+  }
+
+  Plotly.react('region-map', [{
+    type: 'choropleth',
+    locations: valid.map(d => d.iso3),
+    z: valid.map(d => d[indicator]),
+    text: valid.map(d => d.name),
+    hovertemplate: '%{text}<br>' + indicatorLabels[indicator] + ': %{z:,.2f}<extra></extra>',
+    colorscale: indicatorScales[indicator],
+    marker: { line: { color: '#111418', width: 1.2 } },
+    colorbar: {
+      title: { text: indicatorLabels[indicator], font: { color: '#8F99A8', size: 11 } },
+      tickfont: { color: '#8F99A8', size: 10 },
+      bgcolor: 'rgba(0,0,0,0)',
+      outlinecolor: '#2F343C',
+    },
+  }], {
+    geo: geoConfig,
+    paper_bgcolor: '#1C2127',
+    plot_bgcolor: '#1C2127',
+    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif' },
+    margin: { t: 10, b: 10, l: 10, r: 10 },
+    dragmode: false,
+  }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+}
+
+renderRegionMap('gdp_percap');
+
+document.getElementById('region-map-indicator').addEventListener('change', function() {
+  renderRegionMap(this.value);
+});
+
+// Click handler: navigate to country dossier
+document.getElementById('region-map').on('plotly_click', function(eventData) {
+  if (eventData.points && eventData.points.length > 0) {
+    const iso3 = eventData.points[0].location;
+    const match = data.find(d => d.iso3 === iso3);
+    if (match) window.location.href = '/analysis/dossier/' + match.iso2;
+  }
+});
+
+// ── Bar Charts ──
+const gdpData = data.filter(d => d.gdp_billions).sort((a,b) => b.gdp_billions - a.gdp_billions);
+if (gdpData.length) {
+  Plotly.newPlot('gdp-chart', [{
+    x: gdpData.map(d => d.name),
+    y: gdpData.map(d => d.gdp_billions),
+    type: 'bar',
+    marker: { color: '#D1980B' },  /* GOLD3 */
+  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: 'GDP ($B PPP)'}}, {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
+}
+
+const milData = data.filter(d => d.mil_pct_gdp).sort((a,b) => b.mil_pct_gdp - a.mil_pct_gdp);
+if (milData.length) {
+  Plotly.newPlot('mil-chart', [{
+    x: milData.map(d => d.name),
+    y: milData.map(d => d.mil_pct_gdp),
+    type: 'bar',
+    marker: { color: '#D33D17' },  /* VERMILION3 */
+  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: '% of GDP'}}, {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
+}
+
+const lifeData = data.filter(d => d.life_exp).sort((a,b) => a.life_exp - b.life_exp);
+if (lifeData.length) {
+  Plotly.newPlot('life-chart', [{
+    x: lifeData.map(d => d.name),
+    y: lifeData.map(d => d.life_exp),
+    type: 'bar',
+    marker: { color: '#29A634' },  /* FOREST3 */
+  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: 'Years'}}, {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
+}
+</script>
+{% endif %}
+{% endblock %}

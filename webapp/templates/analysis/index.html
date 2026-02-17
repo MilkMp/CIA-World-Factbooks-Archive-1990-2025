@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% set active_page = "analysis-home" %}
+{% block title %}Intelligence Analysis — CIA World Factbook Archive{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // ANALYSIS-OVERVIEW // {{ year }}</div>
+  <h1>Intelligence Analysis</h1>
+  <p class="subtitle">Structured analytical products derived from 36 years of CIA World Factbook data</p>
+</div>
+
+<div class="sec">
+  <span class="sec-num">SECTION 01</span>
+  <span class="sec-title">Why Analysis Matters</span>
+  <hr class="sec-rule">
+</div>
+
+<p>The CIA World Factbook contains over one million data fields across 281 entities and 36 years. Raw data alone tells you very little. What makes this archive useful is applying the same organizational frameworks the U.S. Government uses to classify, compare, and track countries over time.</p>
+
+<p>This analysis section uses three government-standard frameworks to transform raw factbook text into structured intelligence products:</p>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin:20px 0;">
+
+  <div style="background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:18px;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.7rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C; margin-bottom:8px;">Framework</div>
+    <div style="font-size:0.95rem; color:#C5CBD3; font-weight:600; margin-bottom:8px;">COCOM Regional Commands</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.6;">The Department of Defense divides the world into six Unified Combatant Commands (EUCOM, AFRICOM, CENTCOM, INDOPACOM, SOUTHCOM, NORTHCOM). Every sovereign state is assigned to exactly one command. This lets us aggregate and compare regions the way defense analysts do&mdash;not by continent or arbitrary groupings, but by how the U.S. military actually organizes responsibility for the world.</p>
+  </div>
+
+  <div style="background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:18px;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.7rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C; margin-bottom:8px;">Framework</div>
+    <div style="font-size:0.95rem; color:#C5CBD3; font-weight:600; margin-bottom:8px;">Entity Classification</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.6;">Not every entry in the Factbook is a country. The archive classifies 281 entities into 9 types: sovereign states, territories, disputed areas, crown dependencies, freely associated states, special administrative regions, dissolved states, and miscellaneous (oceans, the EU). This classification determines which entities appear in comparative analysis and how they are weighted.</p>
+  </div>
+
+  <div style="background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:18px;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.7rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C; margin-bottom:8px;">Framework</div>
+    <div style="font-size:0.95rem; color:#C5CBD3; font-weight:600; margin-bottom:8px;">Field Standardization</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.6;">The CIA renamed fields silently over 36 years. &ldquo;GDP - real growth rate&rdquo; became &ldquo;Real GDP growth rate.&rdquo; The archive maps 1,090 raw field name variants to 414 canonical names, enabling time-series analysis across the full 1990&ndash;2025 span. Without this, comparing a field from 1995 to 2025 would require knowing every name it has ever had.</p>
+  </div>
+
+</div>
+
+<div class="sec">
+  <span class="sec-num">SECTION 02</span>
+  <span class="sec-title">Geographic Dashboards</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin:20px 0;">
+
+  <a href="/analysis/regional" style="text-decoration:none; display:block; background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:20px; transition:border-color 200ms, transform 200ms;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C;">Geographic</div>
+    <div style="font-size:1rem; color:#C5CBD3; font-weight:600; margin:6px 0 8px;">Regional Dashboard</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.5; margin:0;">Global choropleth map with all six COCOM regions. Aggregate KPIs for population, GDP, military expenditure, and life expectancy. Click any region to drill down into country-level detail.</p>
+  </a>
+
+  <a href="/analysis/timeline" style="text-decoration:none; display:block; background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:20px; transition:border-color 200ms, transform 200ms;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C;">Geographic</div>
+    <div style="font-size:1rem; color:#C5CBD3; font-weight:600; margin:6px 0 8px;">Timeline Map</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.5; margin:0;">Animated choropleth showing how any indicator changed across the world from 1990 to 2025. Play, scrub, and click countries to build multi-country time series charts.</p>
+  </a>
+
+  <a href="/analysis/map-compare" style="text-decoration:none; display:block; background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:20px; transition:border-color 200ms, transform 200ms;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C;">Geographic</div>
+    <div style="font-size:1rem; color:#C5CBD3; font-weight:600; margin:6px 0 8px;">Map Compare</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.5; margin:0;">Side-by-side world maps comparing the same indicator across two different years. Visualize how global patterns shifted over any time period in the archive.</p>
+  </a>
+
+</div>
+
+<div class="sec">
+  <span class="sec-num">SECTION 03</span>
+  <span class="sec-title">Comparative Analysis</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin:20px 0;">
+
+  <a href="/analysis/rankings" style="text-decoration:none; display:block; background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:20px; transition:border-color 200ms, transform 200ms;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C;">Comparative</div>
+    <div style="font-size:1rem; color:#C5CBD3; font-weight:600; margin:6px 0 8px;">Global Rankings</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.5; margin:0;">Pick any indicator, any year &mdash; sortable leaderboard of all 192 sovereign states with sparkline trends showing the last decade of change.</p>
+  </a>
+
+  <a href="/analysis/compare" style="text-decoration:none; display:block; background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:20px; transition:border-color 200ms, transform 200ms;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C;">Comparative</div>
+    <div style="font-size:1rem; color:#C5CBD3; font-weight:600; margin:6px 0 8px;">Compare Countries</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.5; margin:0;">Side-by-side comparison of any two countries. Displays all categorized fields from the latest factbook edition with differences highlighted. Select from all 192 sovereign states.</p>
+  </a>
+
+  <a href="/analysis/communications" style="text-decoration:none; display:block; background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:20px; transition:border-color 200ms, transform 200ms;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C;">Comparative</div>
+    <div style="font-size:1rem; color:#C5CBD3; font-weight:600; margin:6px 0 8px;">Communications</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.5; margin:0;">Global telecommunications and digital connectivity. Internet penetration, mobile cellular subscriptions, fixed lines, and broadband coverage across all countries with regional summaries and digital divide analysis.</p>
+  </a>
+
+</div>
+
+<div class="sec">
+  <span class="sec-num">SECTION 04</span>
+  <span class="sec-title">Temporal Analysis</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin:20px 0;">
+
+  <a href="/analysis/changes" style="text-decoration:none; display:block; background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:20px; transition:border-color 200ms, transform 200ms;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C;">Temporal</div>
+    <div style="font-size:1rem; color:#C5CBD3; font-weight:600; margin:6px 0 8px;">Change Detection</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.5; margin:0;">What changed most? Flag the biggest year-over-year shifts across GDP, population, military spending, and life expectancy. Severity-classified from low to critical.</p>
+  </a>
+
+  <a href="/analysis/dissolved" style="text-decoration:none; display:block; background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:20px; transition:border-color 200ms, transform 200ms;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C;">Temporal</div>
+    <div style="font-size:1rem; color:#C5CBD3; font-weight:600; margin:6px 0 8px;">Dissolved States</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.5; margin:0;">Track how successor states diverged after the breakup of the Soviet Union, Yugoslavia, and Czechoslovakia. Multi-country time series from dissolution to present.</p>
+  </a>
+
+  <a href="/analysis/diff" style="text-decoration:none; display:block; background:#1C2127; border:1px solid #2F343C; border-radius:4px; padding:20px; transition:border-color 200ms, transform 200ms;">
+    <div style="font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.2px; color:#5F6B7C;">Temporal</div>
+    <div style="font-size:1rem; color:#C5CBD3; font-weight:600; margin:6px 0 8px;">Text Diff</div>
+    <p style="font-size:0.82rem; color:#8F99A8; line-height:1.5; margin:0;">Side-by-side comparison of any field between two years. See exactly what the CIA changed in their description &mdash; additions, deletions, and modifications highlighted.</p>
+  </a>
+
+</div>
+
+<div class="sec">
+  <span class="sec-num">SECTION 05</span>
+  <span class="sec-title">Country-Level Products</span>
+  <hr class="sec-rule">
+</div>
+
+<p>In addition to the dashboards above, the analysis section generates per-country intelligence products:</p>
+
+<table class="data-table">
+  <thead>
+    <tr><th>Product</th><th>Description</th><th>Access</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="color:#C5CBD3; font-weight:600;">Intelligence Dossier</td>
+      <td>Single-country assessment following ICD 203 analytic standards. Covers demographics, economy, military capability, infrastructure, and strategic notes. Generated from the latest factbook data.</td>
+      <td style="white-space:nowrap;">/analysis/dossier/{code}</td>
+    </tr>
+    <tr>
+      <td style="color:#C5CBD3; font-weight:600;">Regional Threat Brief</td>
+      <td>COCOM-level assessment of instability indicators: terrorist organizations, disputed territories, military spending outliers, and economic vulnerability across a region.</td>
+      <td style="white-space:nowrap;">/analysis/threats/{region}</td>
+    </tr>
+    <tr>
+      <td style="color:#C5CBD3; font-weight:600;">Field Time Series</td>
+      <td>Track any single field (population, GDP, military spending, etc.) across all 36 years for a specific country. Uses the 414 canonical field mappings for cross-year continuity.</td>
+      <td style="white-space:nowrap;">/archive/field/{code}/{field}</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sec">
+  <span class="sec-num">SECTION 06</span>
+  <span class="sec-title">Future Analysis Modules</span>
+  <hr class="sec-rule">
+</div>
+
+<p>The structured archive supports additional analytical lenses that can be built as dedicated dashboards:</p>
+
+<table class="data-table">
+  <thead>
+    <tr><th>Module</th><th>Focus</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="color:#C5CBD3; font-weight:600;">Economic Analysis</td>
+      <td>GDP trajectories, trade partner networks, debt-to-GDP trends, purchasing power parity shifts across 36 years. Identify economic convergence and divergence patterns.</td>
+      <td><span style="font-family:Consolas,monospace; font-size:0.72rem; color:#5F6B7C;">PLANNED</span></td>
+    </tr>
+    <tr>
+      <td style="color:#C5CBD3; font-weight:600;">Demographic Analysis</td>
+      <td>Population pyramids, urbanization rates, literacy trends, migration patterns. Track how 281 entities evolved demographically over three decades.</td>
+      <td><span style="font-family:Consolas,monospace; font-size:0.72rem; color:#5F6B7C;">PLANNED</span></td>
+    </tr>
+    <tr>
+      <td style="color:#C5CBD3; font-weight:600;">Military &amp; Security</td>
+      <td>Force structure comparisons, defense spending as share of GDP, nuclear capability indicators, alliance membership evolution.</td>
+      <td><span style="font-family:Consolas,monospace; font-size:0.72rem; color:#5F6B7C;">PLANNED</span></td>
+    </tr>
+    <tr>
+      <td style="color:#C5CBD3; font-weight:600;">Infrastructure &amp; Energy</td>
+      <td>Electricity generation, petroleum production/consumption, internet penetration, transportation networks. Resource dependency analysis.</td>
+      <td><span style="font-family:Consolas,monospace; font-size:0.72rem; color:#5F6B7C;">PLANNED</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="margin-top:24px; padding:12px 14px; border:1px solid #2F343C; border-radius:4px; background:#1C2127; font-size:0.72rem; color:#5F6B7C; line-height:1.6;">
+  <strong style="color:#8F99A8; text-transform:uppercase; letter-spacing:0.8px; font-size:0.62rem;">Methodology</strong><br>
+  All analysis is derived from the CIA World Factbook (public domain, OSINT). COCOM boundaries follow the DoD Unified Command Plan. Entity classifications follow U.S. Government recognition standards. Numeric values are extracted from text fields using standardized parsing patterns and mapped through 414 canonical field definitions for cross-year consistency. Analysis follows ICD 203 analytic standards where applicable.
+  <a href="/sources" style="display:inline-block; margin-top:6px;">Full Sources &amp; Methodology &rarr;</a>
+</div>
+
+{% endblock %}

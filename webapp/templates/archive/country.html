@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% set active_page = "browse" %}
+{% block title %}{{ country.CanonicalName if country else 'Not Found' }} ({{ year }}) — Archive{% endblock %}
+
+{% block content %}
+{% if not country %}
+<div class="page-header">
+  <div class="doc-id">ARCHIVE // ERROR</div>
+  <h1>Country Not Found</h1>
+  <p class="subtitle">No data found for code "{{ code }}" in year {{ year }}.</p>
+</div>
+<p><a href="/archive/{{ year }}">Back to {{ year }} archive</a></p>
+
+{% else %}
+{# Print-only header — visible only in PDF export #}
+<div class="print-header" style="display:none;">
+  <div style="text-align:center;font-family:Consolas,'Courier New',monospace;font-size:7pt;color:#666;letter-spacing:2px;text-transform:uppercase;border-bottom:1pt solid #999;padding-bottom:4pt;margin-bottom:12pt;">
+    CIA WORLD FACTBOOK ARCHIVE &mdash; {{ country.CanonicalName }} &mdash; {{ year }} EDITION
+  </div>
+</div>
+
+<div class="page-header">
+  <div class="doc-id">ARCHIVE // {{ country.ISOAlpha2 or country.Code }} // {{ year }}</div>
+  <h1>{{ country.CanonicalName }}</h1>
+  <p class="subtitle">{{ year }} Edition &mdash; {{ country.EntityType or 'Entity' }}</p>
+</div>
+
+<hr class="doc-rule double">
+
+{# Year navigation #}
+<div class="year-pills">
+  {% for yr in other_years %}
+  <a href="/archive/{{ yr }}/{{ country.ISOAlpha2 or code }}" class="year-pill {{ 'active' if yr == year else '' }}">{{ yr }}</a>
+  {% endfor %}
+</div>
+
+<div class="action-bar">
+  <a href="/analysis/dossier/{{ country.ISOAlpha2 or code }}" class="btn">View Intelligence Dossier</a>
+  <a href="/archive/{{ year }}" class="btn">Back to {{ year }}</a>
+  <button onclick="exportPDF()" class="btn export-btn" title="Export as PDF (Ctrl+P)">Export Report</button>
+  <a href="/export/{{ country.ISOAlpha2 or code }}/{{ year }}/csv" class="btn" title="Download as CSV">CSV</a>
+  <a href="/export/{{ country.ISOAlpha2 or code }}/{{ year }}/xlsx" class="btn" title="Download as Excel">Excel</a>
+  <a href="/export/print?codes={{ country.ISOAlpha2 or code }}" class="btn" target="_blank" title="Print all years as formatted report">Print All Years</a>
+</div>
+
+{# Categories and fields #}
+{% for cat_name, fields in categories.items() %}
+<div class="sec">
+  <span class="sec-title">{{ cat_name }}</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="category-block">
+  {% for f in fields %}
+  <div class="field-item">
+    <div class="field-name">
+      {{ f.CanonicalName or f.FieldName }}
+      {% if f.CanonicalName and f.CanonicalName != f.FieldName %}
+      <span style="color:#3d6a94;font-size:0.7rem;margin-left:8px;">({{ f.FieldName }})</span>
+      {% endif %}
+      <a href="/archive/field/{{ country.ISOAlpha2 or code }}/{{ f.CanonicalName or f.FieldName }}"
+         style="font-size:0.7rem;margin-left:8px;" title="View time series">[time series]</a>
+    </div>
+    <div class="field-content">{{ f.Content }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+{% if not categories %}
+<div class="caveat">
+  <strong>No Data</strong><br>
+  No field data was found for this country in {{ year }}.
+</div>
+{% endif %}
+
+{# Print-only footer #}
+<div class="print-footer" style="display:none;">
+  <div style="border-top:1pt solid #999;margin-top:18pt;padding-top:6pt;font-family:Consolas,'Courier New',monospace;font-size:7pt;color:#666;text-align:center;letter-spacing:1px;">
+    Source: CIA World Factbook {{ year }} &mdash; Archived at cia-factbook-archive &mdash; {{ categories|length }} categories, {{ categories.values()|map('length')|sum }} fields
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Export PDF helper ── */
+function exportPDF() {
+  /* Temporarily set a clean title so Chrome's print header shows
+     "Iran (2025) — CIA World Factbook Archive" instead of the tab title + URL */
+  var orig = document.title;
+  document.title = '{{ country.CanonicalName }} ({{ year }}) — CIA World Factbook Archive';
+  window.print();
+  /* Restore after print dialog closes */
+  setTimeout(function() { document.title = orig; }, 500);
+}
+
+/* ── Search term highlighting ── */
+(function() {
+  const q = new URLSearchParams(window.location.search).get('q');
+  if (!q) return;
+
+  /* Parse boolean query into individual search terms */
+  var phrases = [];
+  // 1. Extract quoted phrases first (keep as units)
+  var stripped = q.replace(/"([^"]+)"/g, function(_, p) {
+    phrases.push(p.trim());
+    return ' ';
+  });
+  // 2. Split remainder on whitespace, discard operators and parens
+  var OPERATORS = {AND:1, OR:1, NOT:1};
+  stripped.split(/\s+/).forEach(function(tok) {
+    if (!tok) return;
+    var clean = tok.replace(/^[-(]+|[)]+$/g, '');
+    if (!clean || OPERATORS[clean.toUpperCase()]) return;
+    phrases.push(clean);
+  });
+  if (phrases.length === 0) return;
+
+  // 3. Build alternation regex from all terms
+  var parts = phrases.map(function(t) {
+    return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  });
+  const re = new RegExp('(' + parts.join('|') + ')', 'gi');
+  const hits = [];
+
+  document.querySelectorAll('.field-content, .field-name, .sec-title').forEach(function(el) {
+    if (!re.test(el.textContent)) { re.lastIndex = 0; return; }
+    re.lastIndex = 0;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach(function(node) {
+      if (!re.test(node.textContent)) { re.lastIndex = 0; return; }
+      re.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      node.textContent.replace(re, function(match, p1, offset) {
+        if (offset > last) frag.appendChild(document.createTextNode(node.textContent.slice(last, offset)));
+        const mark = document.createElement('mark');
+        mark.className = 'search-hit';
+        mark.textContent = match;
+        frag.appendChild(mark);
+        hits.push(mark);
+        last = offset + match.length;
+        return match;
+      });
+      if (last < node.textContent.length) frag.appendChild(document.createTextNode(node.textContent.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  });
+
+  if (hits.length > 0) {
+    var cur = 0;
+    function goTo(i) {
+      hits[cur].style.outline = '';
+      cur = (i + hits.length) % hits.length;
+      hits[cur].style.outline = '2px solid #F0B726';
+      hits[cur].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      counter.textContent = (cur + 1) + ' / ' + hits.length;
+    }
+
+    var banner = document.createElement('div');
+    banner.className = 'search-banner';
+
+    var counter = document.createElement('span');
+    counter.style.cssText = 'font-variant-numeric:tabular-nums;min-width:60px;text-align:center;';
+    counter.textContent = '1 / ' + hits.length;
+
+    var label = document.createElement('span');
+    label.innerHTML = ' for \u201c' + q.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '\u201d';
+
+    var prev = document.createElement('button');
+    prev.className = 'search-nav';
+    prev.innerHTML = '\u25B2';
+    prev.title = 'Previous match';
+    prev.onclick = function() { goTo(cur - 1); };
+
+    var next = document.createElement('button');
+    next.className = 'search-nav';
+    next.innerHTML = '\u25BC';
+    next.title = 'Next match';
+    next.onclick = function() { goTo(cur + 1); };
+
+    var dismiss = document.createElement('button');
+    dismiss.className = 'dismiss';
+    dismiss.innerHTML = '\u00d7';
+    dismiss.onclick = function() { banner.remove(); };
+
+    banner.appendChild(prev);
+    banner.appendChild(counter);
+    banner.appendChild(next);
+    banner.appendChild(label);
+    banner.appendChild(dismiss);
+
+    var main = document.querySelector('.main-content');
+    main.insertBefore(banner, main.firstChild);
+    hits[0].style.outline = '2px solid #F0B726';
+    hits[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+})();
+</script>
+{% endblock %}

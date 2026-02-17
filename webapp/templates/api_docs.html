@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+{% set active_page = "api-docs" %}
+{% block title %}API Documentation — CIA World Factbook Archive{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">REFERENCE // API-DOCUMENTATION</div>
+  <h1>API Documentation</h1>
+  <p class="subtitle">JSON endpoints for programmatic access to 36 years of CIA World Factbook data</p>
+</div>
+
+<hr class="doc-rule double">
+
+{# ── Section 01: Overview ── #}
+<div class="sec">
+  <span class="sec-num">01</span>
+  <span class="sec-title">Overview</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:18px;margin:16px 0;line-height:1.7;">
+  <p style="font-size:0.88rem;color:#C5CBD3;margin:0 0 12px;">All API endpoints return JSON. No authentication is required. The base URL is:</p>
+  <code style="display:block;background:#252A31;border:1px solid #383E47;border-radius:3px;padding:10px 14px;font-size:0.82rem;color:#2D72D2;margin-bottom:12px;">https://cia-factbook-archive.fly.dev</code>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0;">
+    FastAPI also provides auto-generated interactive documentation at
+    <a href="/docs">/docs</a> (Swagger UI) and <a href="/redoc">/redoc</a> (ReDoc).
+    The endpoints below are the public API surface.
+  </p>
+</div>
+
+{# ── Section 02: Archive Endpoints ── #}
+<div class="sec">
+  <span class="sec-num">02</span>
+  <span class="sec-title">Archive Endpoints</span>
+  <hr class="sec-rule">
+</div>
+
+{# GET /api/years #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/years</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">List all available years with country count and field count per year.</p>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/years
+  </div>
+</div>
+
+{# GET /api/archive/{year} #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/archive/{year}</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">List all countries in a specific year with ISO codes and entity types.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>year</code></td><td>int</td><td>Year (1990&ndash;2025)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/archive/2025
+  </div>
+</div>
+
+{# GET /api/archive/{year}/{code} #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/archive/{year}/{code}</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Full country profile for a specific year. Returns all categories and fields.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>year</code></td><td>int</td><td>Year (1990&ndash;2025)</td></tr>
+      <tr><td><code>code</code></td><td>string</td><td>ISO Alpha-2 code (e.g. US, CN, RU)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/archive/2025/US
+  </div>
+</div>
+
+{# GET /api/field/{code}/{field_name} #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/field/{code}/{field_name}</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Time series for a specific field across all available years.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>code</code></td><td>string</td><td>ISO Alpha-2 code</td></tr>
+      <tr><td><code>field_name</code></td><td>string</td><td>Canonical field name (e.g. Population)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/field/US/Population
+  </div>
+</div>
+
+{# GET /api/search #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/search</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Full-text search across all 1,071,213 fields. Supports boolean operators (AND, OR, NOT), phrase matching, and year filtering.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>q</code></td><td>string</td><td>Search query (required)</td></tr>
+      <tr><td><code>year_start</code></td><td>int</td><td>Filter: start year (optional)</td></tr>
+      <tr><td><code>year_end</code></td><td>int</td><td>Filter: end year (optional)</td></tr>
+      <tr><td><code>page</code></td><td>int</td><td>Page number, 50 results per page (default: 1)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl "https://cia-factbook-archive.fly.dev/api/search?q=nuclear&amp;year_start=2000"
+  </div>
+</div>
+
+{# GET /api/fields #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/fields</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">List all 414 canonical field names with variant counts.</p>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/fields
+  </div>
+</div>
+
+{# GET /api/archive/fields/{code} #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/archive/fields/{code}</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">List all canonical field names available for a specific country (across all years).</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>code</code></td><td>string</td><td>ISO Alpha-2 code</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/archive/fields/US
+  </div>
+</div>
+
+{# ── Section 03: Country Endpoints ── #}
+<div class="sec">
+  <span class="sec-num">03</span>
+  <span class="sec-title">Country Endpoints</span>
+  <hr class="sec-rule">
+</div>
+
+{# GET /api/countries #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/countries</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">All 281 master country entities with canonical names, ISO codes, and entity type classification.</p>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/countries
+  </div>
+</div>
+
+{# GET /api/countries/{code} #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/countries/{code}</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Single country details including all year appearances and category counts.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>code</code></td><td>string</td><td>ISO Alpha-2 code</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/countries/US
+  </div>
+</div>
+
+{# ── Section 04: Analysis Endpoints ── #}
+<div class="sec">
+  <span class="sec-num">04</span>
+  <span class="sec-title">Analysis Endpoints</span>
+  <hr class="sec-rule">
+</div>
+
+{# GET /api/analysis/regions #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/analysis/regions</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Summary statistics for all six COCOM regions (population, GDP, military, life expectancy).</p>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/analysis/regions
+  </div>
+</div>
+
+{# GET /api/analysis/region/{cocom} #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/analysis/region/{cocom}</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Country-level indicators for all nations in a specific COCOM region.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>cocom</code></td><td>string</td><td>COCOM code (EUCOM, AFRICOM, CENTCOM, INDOPACOM, SOUTHCOM, NORTHCOM)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/analysis/region/EUCOM
+  </div>
+</div>
+
+{# GET /api/analysis/map-data #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/analysis/map-data</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Choropleth map data for all countries. Returns ISO3 codes, indicator values, and metadata for Plotly map rendering.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>indicator</code></td><td>string</td><td>Indicator key (population, gdp_percap, life_exp, etc.)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl "https://cia-factbook-archive.fly.dev/api/analysis/map-data?indicator=gdp_percap"
+  </div>
+</div>
+
+{# GET /api/analysis/map-data/{year} #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/analysis/map-data/{year}</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Choropleth data for a specific year and indicator. Used by timeline and map compare features.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>year</code></td><td>int</td><td>Year (1990&ndash;2025)</td></tr>
+      <tr><td><code>indicator</code></td><td>string</td><td>Indicator key (query param)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl "https://cia-factbook-archive.fly.dev/api/analysis/map-data/2025?indicator=population"
+  </div>
+</div>
+
+{# GET /api/analysis/timeseries #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/analysis/timeseries</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Parsed numeric time series for a country and indicator across all available years.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>code</code></td><td>string</td><td>ISO Alpha-2 code</td></tr>
+      <tr><td><code>indicator</code></td><td>string</td><td>Indicator key</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl "https://cia-factbook-archive.fly.dev/api/analysis/timeseries?code=US&amp;indicator=population"
+  </div>
+</div>
+
+{# GET /api/analysis/dossier/{code} #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/analysis/dossier/{code}</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Structured intelligence dossier for a country. Returns demographics, economy, military, infrastructure, and strategic assessment data.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>code</code></td><td>string</td><td>ISO Alpha-2 code</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/analysis/dossier/CN
+  </div>
+</div>
+
+{# GET /api/analysis/comms-data/{year} #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/analysis/comms-data/{year}</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Communications infrastructure data for all countries in a given year. Internet users, mobile subscriptions, fixed lines, and broadband.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>year</code></td><td>int</td><td>Year (1990&ndash;2025)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl https://cia-factbook-archive.fly.dev/api/analysis/comms-data/2025
+  </div>
+</div>
+
+{# GET /api/analysis/rankings #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/analysis/rankings</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Ranked leaderboard of all sovereign states for any indicator and year.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>indicator</code></td><td>string</td><td>Indicator key (population, gdp_percap, life_exp, etc.)</td></tr>
+      <tr><td><code>year</code></td><td>int</td><td>Year (default: latest)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl "https://cia-factbook-archive.fly.dev/api/analysis/rankings?indicator=gdp_percap&amp;year=2025"
+  </div>
+</div>
+
+{# GET /api/analysis/changes #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/analysis/changes</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Year-over-year change detection across 6 core indicators. Returns percentage changes with severity classification.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>year</code></td><td>int</td><td>Comparison year (default: latest)</td></tr>
+      <tr><td><code>indicator</code></td><td>string</td><td>Filter by indicator key (optional)</td></tr>
+      <tr><td><code>region</code></td><td>string</td><td>Filter by COCOM region (optional)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl "https://cia-factbook-archive.fly.dev/api/analysis/changes?year=2025&amp;indicator=gdp_billions"
+  </div>
+</div>
+
+{# GET /api/analysis/dissolved/{group} #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/api/analysis/dissolved/{group}</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Time series data for all successor states of a dissolved federation.</p>
+  <table class="data-table" style="margin:8px 0;">
+    <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>group</code></td><td>string</td><td>Group key: soviet_union, yugoslavia, czechoslovakia</td></tr>
+      <tr><td><code>indicator</code></td><td>string</td><td>Indicator key (default: population)</td></tr>
+    </tbody>
+  </table>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl "https://cia-factbook-archive.fly.dev/api/analysis/dissolved/soviet_union?indicator=gdp_percap"
+  </div>
+</div>
+
+{# ── Section 05: Export Endpoints ── #}
+<div class="sec">
+  <span class="sec-num">05</span>
+  <span class="sec-title">Export Endpoints</span>
+  <hr class="sec-rule">
+</div>
+
+{# Export routes #}
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/export/{code}/{year}/csv</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Download all fields for a country-year as a CSV file.</p>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl -O https://cia-factbook-archive.fly.dev/export/US/2025/csv
+  </div>
+</div>
+
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/export/{code}/{year}/xlsx</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Download all fields for a country-year as an Excel (.xlsx) file.</p>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl -O https://cia-factbook-archive.fly.dev/export/US/2025/xlsx
+  </div>
+</div>
+
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/export/bulk/{code}/csv</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Bulk export: all years of data for a country as a single CSV file.</p>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl -O https://cia-factbook-archive.fly.dev/export/bulk/US/csv
+  </div>
+</div>
+
+<div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;margin:12px 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <span style="background:#2D72D2;color:#fff;font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;">GET</span>
+    <code style="font-size:0.82rem;color:#C5CBD3;">/export/bulk/{code}/xlsx</code>
+  </div>
+  <p style="font-size:0.82rem;color:#8F99A8;margin:0 0 10px;">Bulk export: all years of data for a country as a single Excel (.xlsx) file.</p>
+  <div style="background:#252A31;border-radius:3px;padding:8px 12px;font-size:0.75rem;color:#ABB3BF;font-family:Consolas,monospace;">
+    curl -O https://cia-factbook-archive.fly.dev/export/bulk/US/xlsx
+  </div>
+</div>
+
+{# ── Section 06: Indicator Keys ── #}
+<div class="sec">
+  <span class="sec-num">06</span>
+  <span class="sec-title">Indicator Keys Reference</span>
+  <hr class="sec-rule">
+</div>
+
+<p style="font-size:0.82rem;color:#8F99A8;margin-bottom:12px;">The following indicator keys are accepted by analysis endpoints (<code>indicator</code> parameter):</p>
+
+<table class="data-table">
+  <thead>
+    <tr><th>Key</th><th>CIA Factbook Field</th><th>Unit</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>population</code></td><td>Population</td><td>Count</td></tr>
+    <tr><td><code>gdp_billions</code></td><td>Real GDP (purchasing power parity)</td><td>$B</td></tr>
+    <tr><td><code>gdp_percap</code></td><td>Real GDP per capita</td><td>$</td></tr>
+    <tr><td><code>life_exp</code></td><td>Life expectancy at birth</td><td>Years</td></tr>
+    <tr><td><code>mil_pct_gdp</code></td><td>Military expenditures</td><td>% GDP</td></tr>
+    <tr><td><code>pop_growth</code></td><td>Population growth rate</td><td>%</td></tr>
+    <tr><td><code>birth_rate</code></td><td>Birth rate</td><td>/1,000</td></tr>
+    <tr><td><code>death_rate</code></td><td>Death rate</td><td>/1,000</td></tr>
+    <tr><td><code>internet_pct</code></td><td>Internet users</td><td>%</td></tr>
+    <tr><td><code>mobile_per100</code></td><td>Telephones - mobile cellular</td><td>/100</td></tr>
+    <tr><td><code>unemployment</code></td><td>Unemployment rate</td><td>%</td></tr>
+    <tr><td><code>inflation</code></td><td>Inflation rate (consumer prices)</td><td>%</td></tr>
+  </tbody>
+</table>
+
+{# ── Methodology ── #}
+<div class="caveat">
+  <strong>Terms of Use</strong><br>
+  The CIA World Factbook is a work of the United States Government and is in the public domain (17 U.S.C. &sect; 105).
+  This API is provided as-is with no rate limits or authentication. Please be respectful of shared resources.
+  For bulk data access, consider downloading the SQL dumps from the
+  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025">GitHub repository</a>.
+</div>
+{% endblock %}

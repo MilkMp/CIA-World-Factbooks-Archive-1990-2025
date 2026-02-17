@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+{% set active_page = "analysis" %}
+{% block title %}Regional Dashboard — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+/* ── Dark Theme — Neutral Grayscale ── */
+
+.dash-page {
+  font-family: -apple-system, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  line-height: 1.28581;
+}
+
+/* ── KPI Strip ── */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi-card {
+  background: #1C2127;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  padding: 16px 14px;
+  text-align: center;
+  box-shadow: 0 0 0 1px rgba(17,20,24,0.4), 0 1px 2px rgba(17,20,24,0.4);
+  transition: border-color 0.25s cubic-bezier(0.4, 1, 0.75, 0.9),
+              box-shadow 0.3s cubic-bezier(0.4, 1, 0.75, 0.9),
+              transform 0.25s cubic-bezier(0, 0, 0.2, 1);
+}
+.kpi-card:hover {
+  border-color: #383E47;
+  box-shadow: 0 0 0 1px rgba(17,20,24,0.4), 0 4px 12px rgba(17,20,24,0.5);
+  transform: translateY(-1px);
+}
+.kpi-card .val {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #C5CBD3;
+  line-height: 1.15;
+}
+.kpi-card .label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #5F6B7C;
+  margin-top: 6px;
+}
+
+/* ── Map Panel ── */
+.map-panel {
+  background: #1C2127;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 0 1px rgba(17,20,24,0.4), 0 2px 4px rgba(17,20,24,0.4);
+  overflow: hidden;
+  transition: box-shadow 0.3s cubic-bezier(0.4, 1, 0.75, 0.9);
+}
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #252A31;
+  border-bottom: 1px solid #2F343C;
+}
+.map-toolbar label {
+  font-size: 0.7rem;
+  color: #8F99A8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.map-toolbar select {
+  background: #1C2127;
+  border: 1px solid #383E47;
+  border-radius: 3px;
+  color: #C5CBD3;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  transition: border-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+              box-shadow 0.2s cubic-bezier(0.4, 1, 0.75, 0.9);
+}
+.map-toolbar select:focus {
+  border-color: #8F99A8;
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(143, 153, 168, 0.4);
+}
+.map-body {
+  padding: 0;
+}
+.map-body .chart-container {
+  border: none;
+  margin: 0;
+  background: #1C2127;
+}
+
+/* ── Section Header ── */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 24px 0 12px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #5F6B7C;
+}
+.section-head::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid #2F343C;
+}
+
+/* ── Region Grid ── */
+.region-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.region-card {
+  background: #1C2127;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 0 1px rgba(17,20,24,0.4), 0 1px 2px rgba(17,20,24,0.4);
+  transition: border-color 0.25s cubic-bezier(0.4, 1, 0.75, 0.9),
+              box-shadow 0.3s cubic-bezier(0.4, 1, 0.75, 0.9),
+              transform 0.25s cubic-bezier(0, 0, 0.2, 1);
+  will-change: transform;
+}
+.region-card:hover {
+  border-color: #383E47;
+  box-shadow: 0 0 0 1px rgba(17,20,24,0.4), 0 4px 12px rgba(17,20,24,0.5);
+  transform: translateY(-2px);
+}
+.region-card.active {
+  border-color: #ABB3BF;
+  box-shadow: 0 0 0 1px rgba(171,179,191,0.3), 0 4px 12px rgba(17,20,24,0.5);
+}
+.region-card { cursor: pointer; }
+
+/* Region card header */
+.rc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.rc-code {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #C5CBD3;
+  letter-spacing: 0.5px;
+}
+.rc-badge {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.68rem;
+  color: #5F6B7C;
+  background: #252A31;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid #2F343C;
+}
+.rc-name {
+  font-size: 0.68rem;
+  color: #5F6B7C;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #252A31;
+}
+
+/* Metric grid inside each card */
+.rc-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex: 1;
+}
+.rc-metric .num {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.88rem;
+  color: #ABB3BF;
+  font-weight: 600;
+}
+.rc-metric .tag {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #5F6B7C;
+  margin-top: 2px;
+}
+
+/* Action row */
+.rc-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #252A31;
+}
+.rc-actions a {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #ABB3BF;
+  padding: 4px 10px;
+  border: 1px solid #2F343C;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: background-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+              border-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+              color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+              transform 0.15s cubic-bezier(0, 0, 0.2, 1);
+}
+.rc-actions a:hover {
+  background: #252A31;
+  border-color: #404854;
+  color: #C5CBD3;
+  text-decoration: none;
+}
+.rc-actions a:active {
+  transform: translateY(1px);
+}
+
+/* ── Methodology Footer ── */
+.methodology-note {
+  font-size: 0.72rem;
+  color: #5F6B7C;
+  line-height: 1.6;
+  padding: 12px 14px;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  background: #1C2127;
+}
+.methodology-note strong {
+  color: #8F99A8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-size: 0.62rem;
+}
+
+@media (max-width: 960px) {
+  .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+  .region-grid { grid-template-columns: repeat(2, 1fr); }
+  .map-panel { margin: 0 -8px; }
+}
+@media (max-width: 640px) {
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .kpi-card { padding: 12px 10px; }
+  .kpi-card .val { font-size: 1.3rem; }
+  .region-grid { grid-template-columns: 1fr; }
+  .region-card:hover { transform: none; }
+  .rc-metrics { gap: 8px; }
+  .rc-metric .num { font-size: 0.8rem; }
+  .map-toolbar { flex-wrap: wrap; gap: 6px; }
+}
+@media (max-width: 480px) {
+  .kpi-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-page">
+
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // COCOM-OVERVIEW // {{ year }}</div>
+  <h1>Regional Intelligence Dashboard</h1>
+  <p class="subtitle">DoD Unified Combatant Command regions &mdash; {{ year }} assessment</p>
+</div>
+
+<!-- ── Global KPIs ── -->
+<div class="kpi-strip">
+  <div class="kpi-card">
+    <div class="val">{{ global_kpi.entities }}</div>
+    <div class="label">Entities Tracked</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ "{:,.1f}".format(global_kpi.population / 1e9) if global_kpi.population else '—' }}B</div>
+    <div class="label">Global Population</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">${{ "{:,.0f}".format(global_kpi.gdp / 1e3) if global_kpi.gdp else '—' }}T</div>
+    <div class="label">Global GDP (PPP)</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ global_kpi.life_exp if global_kpi.life_exp else '—' }}</div>
+    <div class="label">Avg Life Expectancy</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ global_kpi.mil_pct if global_kpi.mil_pct else '—' }}%</div>
+    <div class="label">Avg Military % GDP</div>
+  </div>
+</div>
+
+<!-- ── Global Map ── -->
+<div class="section-head">Global Overview</div>
+<div class="map-panel">
+  <div class="map-toolbar">
+    <label>Color by:</label>
+    <select id="map-indicator">
+      <option value="gdp_billions">GDP ($B PPP)</option>
+      <option value="population">Population</option>
+      <option value="mil_pct_gdp">Military % GDP</option>
+      <option value="gdp_percap">GDP Per Capita</option>
+      <option value="life_exp">Life Expectancy</option>
+    </select>
+  </div>
+  <div class="map-body">
+    <div id="world-map" class="chart-container" style="height:clamp(280px, 45vw, 480px);"></div>
+  </div>
+</div>
+
+<!-- ── COCOM Region Cards ── -->
+<div class="section-head">Regional Commands</div>
+<div class="region-grid">
+  {% for s in summaries %}
+  <div class="region-card" data-region="{{ s.region }}">
+    <div class="rc-header">
+      <span class="rc-code">{{ s.region }}</span>
+      <span class="rc-badge">{{ s.data_count }}/{{ s.country_count }}</span>
+    </div>
+    <div class="rc-name">{{ s.region_name }}</div>
+    <div class="rc-metrics">
+      <div class="rc-metric">
+        <div class="num">{% if s.total_pop %}{% if s.total_pop >= 1e9 %}{{ "{:,.1f}".format(s.total_pop / 1e9) }}B{% else %}{{ "{:,.0f}".format(s.total_pop / 1e6) }}M{% endif %}{% else %}&mdash;{% endif %}</div>
+        <div class="tag">Population</div>
+      </div>
+      <div class="rc-metric">
+        <div class="num">{% if s.total_gdp %}${{ "{:,.0f}".format(s.total_gdp) }}B{% else %}&mdash;{% endif %}</div>
+        <div class="tag">GDP (PPP)</div>
+      </div>
+      <div class="rc-metric">
+        <div class="num">{% if s.avg_mil_pct %}{{ s.avg_mil_pct }}%{% else %}&mdash;{% endif %}</div>
+        <div class="tag">Avg Mil % GDP</div>
+      </div>
+      <div class="rc-metric">
+        <div class="num">{% if s.avg_life_exp %}{{ s.avg_life_exp }}{% else %}&mdash;{% endif %}</div>
+        <div class="tag">Avg Life Exp</div>
+      </div>
+    </div>
+    <div class="rc-actions">
+      <a href="/analysis/region/{{ s.region }}">Region</a>
+      <a href="/analysis/threats/{{ s.region }}">Threats</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ── Methodology ── -->
+<div class="methodology-note">
+  <strong>Methodology</strong><br>
+  Analysis follows ICD 203 analytic standards. Data sourced from the {{ year }}
+  CIA World Factbook (public domain, OSINT). COCOM boundaries follow the DoD
+  Unified Command Plan. Numeric values parsed from text fields using
+  standardized extraction patterns.
+  <a href="/sources" style="display:inline-block;margin-top:6px;">Full Sources &amp; Methodology &rarr;</a>
+</div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const mapData = {{ map_data | tojson }};
+
+const indicatorLabels = {
+  gdp_billions: 'GDP ($B PPP)',
+  population: 'Population',
+  mil_pct_gdp: 'Military % GDP',
+  gdp_percap: 'GDP Per Capita ($)',
+  life_exp: 'Life Expectancy (years)',
+};
+
+/* Color scales — DG2 base → extended palette */
+const indicatorScales = {
+  gdp_billions: [[0,'#252A31'],[0.25,'#5C4405'],[0.5,'#D1980B'],[0.75,'#F0B726'],[1,'#FBD065']],   /* GOLD */
+  population:   [[0,'#252A31'],[0.25,'#77450D'],[0.5,'#C87619'],[0.75,'#EC9A3C'],[1,'#FBB360']],   /* ORANGE */
+  mil_pct_gdp:  [[0,'#252A31'],[0.25,'#96290D'],[0.5,'#D33D17'],[0.75,'#EB6847'],[1,'#FF9980']],   /* VERMILION */
+  gdp_percap:   [[0,'#252A31'],[0.25,'#0C5174'],[0.5,'#147EB3'],[0.75,'#3FA6DA'],[1,'#68C1EE']],   /* CERULEAN */
+  life_exp:     [[0,'#252A31'],[0.2,'#1D7324'],[0.4,'#29A634'],[0.6,'#43BF4D'],[0.8,'#62D96B'],[1,'#72CA9B']], /* FOREST→GREEN */
+};
+
+function renderMap(indicator, highlightRegion) {
+  const valid = mapData.filter(d => d[indicator]);
+
+  // Dim non-selected countries when a region is active
+  const borderColors = valid.map(d =>
+    highlightRegion && d.cocom !== highlightRegion ? '#111418' : '#111418'
+  );
+  const borderWidths = valid.map(d =>
+    highlightRegion && d.cocom === highlightRegion ? 2.5 : 0.8
+  );
+
+  const traces = [{
+    type: 'choropleth',
+    locations: valid.map(d => d.iso3),
+    z: valid.map(d => d[indicator]),
+    text: valid.map(d => d.name + ' (' + d.cocom + ')'),
+    hovertemplate: '%{text}<br>' + indicatorLabels[indicator] + ': %{z:,.2f}<extra></extra>',
+    colorscale: indicatorScales[indicator],
+    marker: { line: { color: borderColors, width: borderWidths } },
+    colorbar: {
+      title: { text: indicatorLabels[indicator], font: { color: '#8F99A8', size: 11 } },
+      tickfont: { color: '#8F99A8', size: 10 },
+      bgcolor: 'rgba(0,0,0,0)',
+      outlinecolor: '#2F343C',
+    },
+  }];
+
+  // Add highlight outline trace for the selected region
+  if (highlightRegion) {
+    const regionData = valid.filter(d => d.cocom === highlightRegion);
+    traces.push({
+      type: 'choropleth',
+      locations: regionData.map(d => d.iso3),
+      z: regionData.map(() => 1),
+      text: regionData.map(d => d.name),
+      hoverinfo: 'skip',
+      showscale: false,
+      colorscale: [[0, 'rgba(171,179,191,0.08)'], [1, 'rgba(171,179,191,0.08)']],
+      marker: { line: { color: '#C5CBD3', width: 2.5 } },
+    });
+  }
+
+  Plotly.react('world-map', traces, {
+    geo: {
+      bgcolor: '#1C2127',
+      lakecolor: '#111418',
+      landcolor: highlightRegion ? '#1A1E24' : '#252A31',
+      showframe: false,
+      showcoastlines: true,
+      coastlinecolor: '#111418',
+      countrycolor: '#111418',
+      showcountries: true,
+      projection: { type: 'natural earth' },
+      showocean: true,
+      oceancolor: '#111418',
+    },
+    paper_bgcolor: '#1C2127',
+    plot_bgcolor: '#1C2127',
+    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
+    margin: { t: 8, b: 8, l: 8, r: 8 },
+    dragmode: false,
+  }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+}
+
+let currentIndicator = 'gdp_billions';
+let activeRegion = null;
+
+renderMap(currentIndicator);
+
+document.getElementById('map-indicator').addEventListener('change', function() {
+  currentIndicator = this.value;
+  renderMap(currentIndicator, activeRegion);
+});
+
+document.getElementById('world-map').on('plotly_click', function(eventData) {
+  if (eventData.points && eventData.points.length > 0) {
+    const iso3 = eventData.points[0].location;
+    const match = mapData.find(d => d.iso3 === iso3);
+    if (match) window.location.href = '/analysis/dossier/' + match.iso2;
+  }
+});
+
+/* ── Region card click → highlight on map ── */
+const regionCards = document.querySelectorAll('.region-card[data-region]');
+regionCards.forEach(card => {
+  card.addEventListener('click', function(e) {
+    // Don't intercept clicks on the action links
+    if (e.target.closest('.rc-actions')) return;
+
+    const region = this.dataset.region;
+    if (activeRegion === region) {
+      // Toggle off
+      activeRegion = null;
+      regionCards.forEach(c => c.classList.remove('active'));
+    } else {
+      activeRegion = region;
+      regionCards.forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+    }
+    renderMap(currentIndicator, activeRegion);
+  });
+});
+</script>
+{% endblock %}

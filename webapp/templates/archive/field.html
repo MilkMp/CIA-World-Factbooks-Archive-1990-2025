@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% set active_page = "browse" %}
+{% block title %}{{ field_name }} — {{ master.CanonicalName if master else code }} — Archive{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+{% if not master %}
+<div class="page-header">
+  <div class="doc-id">ARCHIVE // FIELD // ERROR</div>
+  <h1>Country Not Found</h1>
+  <p class="subtitle">No entity found for code "{{ code }}".</p>
+</div>
+
+{% else %}
+<div class="page-header">
+  <div class="doc-id">ARCHIVE // {{ master.ISOAlpha2 }} // TIME-SERIES</div>
+  <h1>{{ field_name }}</h1>
+  <p class="subtitle">{{ master.CanonicalName }} &mdash; {{ records|length }} years of data</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;">
+  <a href="/archive/{{ records[-1].Year if records else 2023 }}/{{ master.ISOAlpha2 or code }}" class="btn">
+    Back to Country Profile
+  </a>
+</div>
+
+{% if records %}
+<div id="chart" class="chart-container" style="min-height:320px;"></div>
+
+<div class="sec">
+  <span class="sec-title">Historical Values</span>
+  <hr class="sec-rule">
+</div>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Year</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in records %}
+    <tr>
+      <td class="mono">{{ r.Year }}</td>
+      <td>{{ r.Content[:500] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% else %}
+<div class="caveat">
+  <strong>No Data</strong><br>
+  No records found for this field.
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if records %}
+<script>
+(function() {
+  const data = {{ records | tojson }};
+  const years = data.map(r => r.Year);
+
+  /* ── Numeric extraction ──
+     We try specific patterns first (dollars, percentages, "total population:").
+     The generic fallback (any 4+ digit number) is only used if the content is
+     SHORT (< 200 chars), which filters out long prose paragraphs where
+     embedded numbers are not the primary value. */
+  const values = data.map(r => {
+    const text = r.Content || '';
+    let m = text.match(/\$([\d,.]+)\s*(trillion|billion|million)?/i);
+    if (m) {
+      let v = parseFloat(m[1].replace(/,/g, ''));
+      if (m[2] && m[2].toLowerCase() === 'trillion') v *= 1000;
+      else if (m[2] && m[2].toLowerCase() === 'million') v /= 1000;
+      return v;
+    }
+    m = text.match(/([\d,.]+)%/);
+    if (m) return parseFloat(m[1].replace(/,/g, ''));
+    m = text.match(/total population:\s*([\d.]+)/);
+    if (m) return parseFloat(m[1]);
+    m = text.match(/total:\s*([\d,.]+)/);
+    if (m) return parseFloat(m[1].replace(/,/g, ''));
+    // Generic number — only for short (primarily numeric) content
+    if (text.length < 200) {
+      m = text.match(/([\d,]{4,})/);
+      if (m) return parseFloat(m[1].replace(/,/g, ''));
+    }
+    return null;
+  });
+
+  // Need at least 30% of values to be numeric with some variation
+  const numeric = values.filter(v => v !== null);
+  const pctNumeric = numeric.length / values.length;
+  const chartEl = document.getElementById('chart');
+
+  if (numeric.length < 2 || pctNumeric < 0.3) {
+    chartEl.style.minHeight = 'auto';
+    chartEl.innerHTML =
+      '<p style="padding:16px;color:#5F6B7C;font-size:0.8rem;">This field contains descriptive text. See the table below for historical values.</p>';
+    return;
+  }
+
+  // Check if all values are identical (no meaningful variation)
+  const unique = new Set(numeric);
+  if (unique.size === 1) {
+    chartEl.style.minHeight = 'auto';
+    chartEl.innerHTML =
+      '<p style="padding:16px;color:#5F6B7C;font-size:0.8rem;">All extracted values are identical (' + numeric[0].toLocaleString() + '). See the table below for details.</p>';
+    return;
+  }
+
+  Plotly.newPlot('chart', [{
+    x: years,
+    y: values,
+    type: 'scatter',
+    mode: 'lines+markers',
+    line: { color: '#2D72D2', width: 2 },
+    marker: { size: 6, color: '#2D72D2' },
+    connectgaps: true,
+  }], {
+    paper_bgcolor: '#1C2127',
+    plot_bgcolor: '#1C2127',
+    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
+    xaxis: { title: 'Year', gridcolor: '#252A31', dtick: 5 },
+    yaxis: { title: '{{ field_name }}', gridcolor: '#252A31' },
+    margin: { t: 20, r: 20, b: 50, l: 80 },
+    height: 320,
+  }, { responsive: true, displayModeBar: false });
+})();
+</script>
+{% endif %}
+{% endblock %}

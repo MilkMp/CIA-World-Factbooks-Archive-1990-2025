@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% set active_page = "search" %}
+{% block title %}Search — CIA World Factbook Archive{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">ARCHIVE // FULL-TEXT-SEARCH</div>
+  <h1>Search the Archive</h1>
+  <p class="subtitle">Full-text search across all country fields and editions (1990&ndash;2025) &mdash; supports Library of Congress boolean syntax</p>
+</div>
+
+<hr class="doc-rule double">
+
+<form class="search-box" method="get" action="/search" style="flex-wrap:wrap;">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search the archive (e.g., nuclear, &quot;border dispute&quot;, oil production -refinery)...">
+  <select name="year_start" title="From year">
+    <option value="0">From: All</option>
+    {% for yr in all_years %}
+    <option value="{{ yr }}" {{ 'selected' if yr == year_start else '' }}>{{ yr }}</option>
+    {% endfor %}
+  </select>
+  <select name="year_end" title="To year">
+    <option value="0">To: All</option>
+    {% for yr in all_years %}
+    <option value="{{ yr }}" {{ 'selected' if yr == year_end else '' }}>{{ yr }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">Search</button>
+</form>
+
+{% if q %}
+<div class="sec">
+  <span class="sec-num">{{ "{:,}".format(total) }} RESULTS</span>
+  <span class="sec-title">Search Results for &ldquo;{{ q }}&rdquo;{% if total_pages > 1 %} &mdash; Page {{ page }} of {{ total_pages }}{% endif %}</span>
+  <hr class="sec-rule">
+</div>
+
+{% if results %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Year</th>
+      <th>Country</th>
+      <th>Category</th>
+      <th>Field</th>
+      <th>Content Preview</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in results %}
+    <tr class="clickable" onclick="location.href='/archive/{{ r.Year }}/{{ r.CanonicalCode or r.ISOAlpha2 or r.Code }}?q={{ q|urlencode }}'">
+      <td class="mono">{{ r.Year }}</td>
+      <td><a href="/archive/{{ r.Year }}/{{ r.CanonicalCode or r.ISOAlpha2 or r.Code }}?q={{ q|urlencode }}">{{ r.Name }}</a></td>
+      <td>{{ r.CategoryTitle }}</td>
+      <td>{{ r.FieldName }}</td>
+      <td style="font-size:0.8rem;max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        {{ r.ContentPreview[:200] }}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if total_pages > 1 %}
+<div class="search-pager">
+  {% if page > 1 %}
+  <a href="/search?q={{ q|urlencode }}&year_start={{ year_start }}&year_end={{ year_end }}&page={{ page - 1 }}" class="pager-btn">&larr; Previous</a>
+  {% else %}
+  <span class="pager-btn disabled">&larr; Previous</span>
+  {% endif %}
+
+  <span class="pager-info">
+    Page
+    <select onchange="location.href='/search?q={{ q|urlencode }}&year_start={{ year_start }}&year_end={{ year_end }}&page='+this.value">
+      {% for p in range(1, total_pages + 1) %}
+      <option value="{{ p }}" {{ 'selected' if p == page else '' }}>{{ p }}</option>
+      {% endfor %}
+    </select>
+    of {{ total_pages }}
+    <span class="pager-total">({{ "{:,}".format(total) }} results)</span>
+  </span>
+
+  {% if page < total_pages %}
+  <a href="/search?q={{ q|urlencode }}&year_start={{ year_start }}&year_end={{ year_end }}&page={{ page + 1 }}" class="pager-btn">Next &rarr;</a>
+  {% else %}
+  <span class="pager-btn disabled">Next &rarr;</span>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="caveat">
+  <strong>No Results</strong><br>
+  No fields matched your search query. Try a broader term or different year.
+</div>
+{% endif %}
+
+{% else %}
+<div class="caveat" style="max-width:820px;">
+  <strong>Search the Archive</strong><br>
+  Enter any keyword to search across 1,071,213 fields spanning 36 years of CIA World Factbook editions.
+  Plain keyword searches work as expected &mdash; just type and go.
+</div>
+
+<div class="sec">
+  <span class="sec-num">01</span>
+  <span class="sec-title">Quick Search</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:24px;">
+  <a href="/search?q=nuclear" class="query-example">nuclear</a>
+  <a href="/search?q=oil+production" class="query-example">oil production</a>
+  <a href="/search?q=terrorist" class="query-example">terrorist</a>
+  <a href="/search?q=border+dispute" class="query-example">border dispute</a>
+  <a href="/search?q=uranium" class="query-example">uranium</a>
+  <a href="/search?q=human+trafficking" class="query-example">human trafficking</a>
+</div>
+
+<div class="sec">
+  <span class="sec-num">02</span>
+  <span class="sec-title">Boolean Operators (LC / Z39.58 Standard)</span>
+  <hr class="sec-rule">
+</div>
+
+<table class="data-table" style="max-width:880px;">
+  <thead>
+    <tr><th style="width:200px;">Operator</th><th style="width:300px;">Example</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>term</code></td>
+      <td class="mono">nuclear</td>
+      <td>Fields containing the term</td>
+    </tr>
+    <tr>
+      <td><code>AND</code> (implicit)</td>
+      <td class="mono">nuclear weapons</td>
+      <td>Both terms must appear &mdash; default operator between words</td>
+    </tr>
+    <tr>
+      <td><code>OR</code></td>
+      <td class="mono">nuclear OR atomic</td>
+      <td>Either term matches &mdash; evaluated before AND per LC convention</td>
+    </tr>
+    <tr>
+      <td><code>NOT</code> / <code>-</code></td>
+      <td class="mono">nuclear NOT power<br>nuclear -power</td>
+      <td>Exclude results containing the term</td>
+    </tr>
+    <tr>
+      <td><code>"&thinsp;exact phrase&thinsp;"</code></td>
+      <td class="mono">"border dispute"</td>
+      <td>Exact phrase match &mdash; preserves word order and spacing</td>
+    </tr>
+    <tr>
+      <td><code>(&thinsp;)&thinsp;</code> grouping</td>
+      <td class="mono">(nuclear OR atomic) AND weapons</td>
+      <td>Parentheses override default operator precedence</td>
+    </tr>
+    <tr>
+      <td><code>?</code> / <code>*</code> truncation</td>
+      <td class="mono">nucl? &nbsp; terror*</td>
+      <td>Wildcard &mdash; matches any characters (truncation)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sec" style="margin-top:24px;">
+  <span class="sec-num">03</span>
+  <span class="sec-title">Example Queries</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px;margin-bottom:20px;">
+  <a href="/search?q=nuclear+weapons+-power" class="query-example">nuclear weapons -power</a>
+  <a href="/search?q=%22border+dispute%22+OR+%22territorial+claim%22" class="query-example">"border dispute" OR "territorial claim"</a>
+  <a href="/search?q=(nuclear+OR+atomic)+AND+weapons" class="query-example">(nuclear OR atomic) AND weapons</a>
+  <a href="/search?q=%22ballistic+missile%22+OR+%22cruise+missile%22" class="query-example">"ballistic missile" OR "cruise missile"</a>
+  <a href="/search?q=oil+production+-refin*" class="query-example">oil production -refin*</a>
+  <a href="/search?q=terrorist+OR+extremist+-former" class="query-example">terrorist OR extremist -former</a>
+  <a href="/search?q=%22South+China+Sea%22" class="query-example">"South China Sea"</a>
+  <a href="/search?q=uranium+OR+plutonium+OR+enrichment" class="query-example">uranium OR plutonium OR enrichment</a>
+  <a href="/search?q=%22human+trafficking%22+NOT+%22former+tier%22" class="query-example">"human trafficking" NOT "former tier"</a>
+  <a href="/search?q=(Iran+OR+%22North+Korea%22)+AND+nuclear" class="query-example">(Iran OR "North Korea") AND nuclear</a>
+</div>
+
+<div class="caveat" style="max-width:880px;">
+  <strong>Standard Reference</strong><br>
+  &bull; Boolean syntax follows the Library of Congress Catalog convention (ANSI/NISO Z39.58)<br>
+  &bull; <strong>Operator precedence:</strong> OR is evaluated first, then AND and NOT (left-to-right) &mdash; use parentheses to override<br>
+  &bull; All searches are case-insensitive and match within individual field content<br>
+  &bull; Multiple space-separated terms are AND&rsquo;d by default<br>
+  &bull; Use year range filters to narrow results to specific Factbook editions
+</div>
+{% endif %}
+{% endblock %}

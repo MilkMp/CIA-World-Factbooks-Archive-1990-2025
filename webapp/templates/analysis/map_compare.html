@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+{% set active_page = "map-compare" %}
+{% block title %}Map Compare — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  .compare-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .compare-controls label {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #5F6B7C;
+  }
+  .compare-controls select {
+    background: #1C2127;
+    border: 1px solid #383E47;
+    border-radius: 3px;
+    color: #C5CBD3;
+    padding: 7px 12px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 100ms cubic-bezier(0.4, 1, 0.75, 0.9),
+                box-shadow 100ms cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .compare-controls select:focus {
+    border-color: #ABB3BF;
+    box-shadow: 0 0 0 1px rgba(171, 179, 191, 0.3);
+  }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .compare-panel {
+    background: #1C2127;
+    border: 1px solid #2F343C;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 200ms cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .compare-panel:hover { border-color: #383E47; }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid #252A31;
+    background: #1C2127;
+  }
+  .panel-year {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #C5CBD3;
+  }
+  .panel-stat {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.7rem;
+    color: #5F6B7C;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .panel-stat span {
+    color: #8F99A8;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-weight: 600;
+  }
+  .map-container {
+    width: 100%;
+    min-height: 380px;
+  }
+  .compare-loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #5F6B7C;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.82rem;
+  }
+  .compare-loading.active { display: flex; }
+
+  /* Delta table */
+  .delta-section {
+    margin-top: 8px;
+  }
+  .delta-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .delta-table th {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    text-align: left;
+    padding: 7px 12px;
+    border-bottom: 1px solid #383E47;
+    color: #8F99A8;
+    font-weight: 600;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .delta-table td {
+    padding: 5px 12px;
+    border-bottom: 1px solid #252A31;
+    color: #ABB3BF;
+  }
+  .delta-table td.mono {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #C5CBD3;
+    text-align: right;
+  }
+  .delta-table tr {
+    transition: background-color 100ms cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .delta-table tr:hover td { background: rgba(47, 52, 60, 0.3); }
+  .delta-pos { color: #29A634; }
+  .delta-neg { color: #CD4246; }
+  .delta-zero { color: #5F6B7C; }
+  .indicator-pills {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .indicator-pill {
+    display: inline-block;
+    padding: 5px 12px;
+    background: #1C2127;
+    border: 1px solid #2F343C;
+    border-radius: 3px;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.78rem;
+    color: #8F99A8;
+    cursor: pointer;
+    transition: background-color 100ms cubic-bezier(0.4, 1, 0.75, 0.9),
+                border-color 100ms cubic-bezier(0.4, 1, 0.75, 0.9),
+                color 100ms cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .indicator-pill:hover, .indicator-pill.active {
+    background: #252A31;
+    border-color: #383E47;
+    color: #C5CBD3;
+  }
+
+  @media (max-width: 960px) {
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE ANALYSIS // MAP COMPARISON</div>
+  <h1>Map Compare</h1>
+  <p class="subtitle">Side-by-side choropleth comparison across any two Factbook editions</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div class="compare-controls">
+  <div>
+    <label>Year A</label><br>
+    <select id="year-a">
+      {% for y in years %}
+      <option value="{{ y }}" {{ 'selected' if y == 2003 }}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label>Year B</label><br>
+    <select id="year-b">
+      {% for y in years %}
+      <option value="{{ y }}" {{ 'selected' if y == years[-1] }}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label>Indicator</label><br>
+    <div class="indicator-pills">
+      <span class="indicator-pill active" data-ind="population">Population</span>
+      <span class="indicator-pill" data-ind="gdp_billions">GDP ($B PPP)</span>
+      <span class="indicator-pill" data-ind="gdp_percap">GDP Per Capita</span>
+      <span class="indicator-pill" data-ind="mil_pct_gdp">Military % GDP</span>
+      <span class="indicator-pill" data-ind="life_exp">Life Expectancy</span>
+    </div>
+  </div>
+</div>
+
+<div class="compare-loading" id="loading">Loading map data&hellip;</div>
+
+<div class="compare-grid">
+  <div class="compare-panel">
+    <div class="panel-header">
+      <span class="panel-year" id="label-a">2003</span>
+      <span class="panel-stat" id="stat-a"></span>
+    </div>
+    <div class="map-container" id="map-a"></div>
+  </div>
+  <div class="compare-panel">
+    <div class="panel-header">
+      <span class="panel-year" id="label-b">{{ years[-1] }}</span>
+      <span class="panel-stat" id="stat-b"></span>
+    </div>
+    <div class="map-container" id="map-b"></div>
+  </div>
+</div>
+
+<!-- Delta table — biggest changes -->
+<div class="sec">
+  <span class="sec-num">01</span>
+  <span class="sec-title">Largest Changes</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="delta-section">
+  <table class="delta-table" id="delta-table">
+    <thead>
+      <tr>
+        <th>Country</th>
+        <th style="text-align:right">Year A</th>
+        <th style="text-align:right">Year B</th>
+        <th style="text-align:right">Change</th>
+        <th style="text-align:right">% Change</th>
+      </tr>
+    </thead>
+    <tbody id="delta-body"></tbody>
+  </table>
+</div>
+
+<div class="caveat" style="margin-top:24px;border-left:3px solid #404854;">
+  <strong>Methodology</strong><br>
+  Maps use identical color scales anchored to the combined min/max across both years
+  for fair visual comparison. Numeric values are extracted from Factbook text using
+  pattern-based parsers. Countries without data for a given year are excluded.
+  <br><br>
+  <strong>Pre-1992 Note:</strong> For 1990&ndash;1991, the Soviet Union and Yugoslavia
+  are shown as single entities spanning their successor states&rsquo; territories.
+  Indicator values represent the aggregate (e.g., total Soviet population), not
+  individual republic data. The CIA published &ldquo;NA&rdquo; for many economic and
+  military indicators for newly independent states in 1992&ndash;1993.
+  <a href="/sources" style="display:inline-block;margin-top:4px;font-size:0.72rem;">
+    Sources &amp; Methodology &rarr;
+  </a>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const cache = {};
+const yearA = document.getElementById('year-a');
+const yearB = document.getElementById('year-b');
+const loading = document.getElementById('loading');
+const pills = document.querySelectorAll('.indicator-pill');
+let currentIndicator = 'population';
+
+const indicatorLabels = {
+  population: 'Population',
+  gdp_billions: 'GDP ($B PPP)',
+  gdp_percap: 'GDP Per Capita ($)',
+  mil_pct_gdp: 'Military % GDP',
+  life_exp: 'Life Expectancy (yrs)',
+};
+
+const indicatorScales = {
+  population: [[0,'#77450D'],[0.15,'#935610'],[0.3,'#C87619'],[0.5,'#EC9A3C'],[0.7,'#FBB360'],[1,'#FBD065']],
+  gdp_billions: [[0,'#5C4405'],[0.15,'#866103'],[0.3,'#D1980B'],[0.5,'#F0B726'],[0.7,'#FBD065'],[1,'#FBD065']],
+  mil_pct_gdp: [[0,'#96290D'],[0.2,'#B83211'],[0.4,'#D33D17'],[0.6,'#EB6847'],[0.8,'#FF9980'],[1,'#FF9980']],
+  gdp_percap: [[0,'#0C5174'],[0.15,'#0F6894'],[0.3,'#147EB3'],[0.5,'#3FA6DA'],[0.7,'#68C1EE'],[1,'#68C1EE']],
+  life_exp: [[0,'#1D7324'],[0.15,'#238C2C'],[0.3,'#29A634'],[0.5,'#43BF4D'],[0.7,'#62D96B'],[1,'#72CA9B']],
+};
+
+const indicatorFormats = {
+  population: v => v >= 1e9 ? (v/1e9).toFixed(2) + 'B' : v >= 1e6 ? (v/1e6).toFixed(1) + 'M' : v.toLocaleString(),
+  gdp_billions: v => '$' + v.toFixed(0) + 'B',
+  gdp_percap: v => '$' + v.toLocaleString(undefined, {maximumFractionDigits:0}),
+  mil_pct_gdp: v => v.toFixed(2) + '%',
+  life_exp: v => v.toFixed(1) + ' yrs',
+};
+
+async function fetchYear(year) {
+  if (cache[year]) return cache[year];
+  const res = await fetch('/api/analysis/map-data/' + year);
+  const data = await res.json();
+  cache[year] = data;
+  return data;
+}
+
+function renderMap(divId, data, indicator, zmin, zmax) {
+  const valid = data.filter(d => d[indicator] != null);
+  Plotly.react(divId, [{
+    type: 'choropleth',
+    locations: valid.map(d => d.iso3),
+    z: valid.map(d => d[indicator]),
+    zmin: zmin,
+    zmax: zmax,
+    text: valid.map(d => d.name),
+    hovertemplate: '%{text}<br>' + indicatorLabels[indicator] + ': %{z:,.2f}<extra></extra>',
+    colorscale: indicatorScales[indicator],
+    marker: { line: { color: '#111418', width: 0.8 } },
+    colorbar: {
+      title: { text: indicatorLabels[indicator], font: { color: '#8F99A8', size: 10 } },
+      tickfont: { color: '#8F99A8', size: 9 },
+      bgcolor: 'rgba(0,0,0,0)',
+      outlinecolor: '#2F343C',
+      len: 0.6,
+    },
+  }], {
+    geo: {
+      bgcolor: '#1C2127',
+      lakecolor: '#111418',
+      landcolor: '#252A31',
+      showframe: false,
+      showcoastlines: true,
+      coastlinecolor: '#111418',
+      countrycolor: '#111418',
+      showcountries: true,
+      projection: { type: 'natural earth' },
+      showocean: true,
+      oceancolor: '#111418',
+    },
+    paper_bgcolor: '#1C2127',
+    plot_bgcolor: '#1C2127',
+    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
+    margin: { t: 4, b: 4, l: 4, r: 4 },
+    dragmode: false,
+  }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+}
+
+function buildDeltaTable(dataA, dataB, indicator) {
+  const mapA = {};
+  dataA.forEach(d => { if (d[indicator] != null) mapA[d.iso3] = d; });
+  const fmt = indicatorFormats[indicator];
+  const deltas = [];
+  dataB.forEach(d => {
+    if (d[indicator] != null && mapA[d.iso3]) {
+      const vA = mapA[d.iso3][indicator];
+      const vB = d[indicator];
+      const change = vB - vA;
+      const pct = vA !== 0 ? ((vB - vA) / Math.abs(vA)) * 100 : null;
+      deltas.push({ name: d.name, vA, vB, change, pct });
+    }
+  });
+  deltas.sort((a, b) => Math.abs(b.pct || 0) - Math.abs(a.pct || 0));
+
+  const tbody = document.getElementById('delta-body');
+  tbody.innerHTML = '';
+  deltas.slice(0, 20).forEach(d => {
+    const cls = d.change > 0 ? 'delta-pos' : d.change < 0 ? 'delta-neg' : 'delta-zero';
+    const sign = d.change > 0 ? '+' : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${d.name}</td>
+      <td class="mono">${fmt(d.vA)}</td>
+      <td class="mono">${fmt(d.vB)}</td>
+      <td class="mono ${cls}">${sign}${fmt(d.change)}</td>
+      <td class="mono ${cls}">${d.pct != null ? sign + d.pct.toFixed(1) + '%' : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updatePanelStats(data, indicator, statEl) {
+  const valid = data.filter(d => d[indicator] != null);
+  statEl.textContent = valid.length + ' countries reporting';
+}
+
+async function update() {
+  const yA = parseInt(yearA.value);
+  const yB = parseInt(yearB.value);
+  document.getElementById('label-a').textContent = yA;
+  document.getElementById('label-b').textContent = yB;
+
+  loading.classList.add('active');
+
+  const [dataA, dataB] = await Promise.all([fetchYear(yA), fetchYear(yB)]);
+
+  // Compute shared scale from combined data
+  const allVals = [...dataA, ...dataB]
+    .map(d => d[currentIndicator])
+    .filter(v => v != null);
+  const zmin = Math.min(...allVals);
+  const zmax = Math.max(...allVals);
+
+  renderMap('map-a', dataA, currentIndicator, zmin, zmax);
+  renderMap('map-b', dataB, currentIndicator, zmin, zmax);
+  updatePanelStats(dataA, currentIndicator, document.getElementById('stat-a'));
+  updatePanelStats(dataB, currentIndicator, document.getElementById('stat-b'));
+  buildDeltaTable(dataA, dataB, currentIndicator);
+
+  loading.classList.remove('active');
+}
+
+yearA.addEventListener('change', update);
+yearB.addEventListener('change', update);
+
+pills.forEach(pill => {
+  pill.addEventListener('click', () => {
+    pills.forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    currentIndicator = pill.dataset.ind;
+    update();
+  });
+});
+
+// Initial render
+update();
+</script>
+{% endblock %}

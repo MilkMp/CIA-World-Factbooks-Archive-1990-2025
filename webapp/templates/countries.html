@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% set active_page = "countries" %}
+{% block title %}Country Dictionary — CIA World Factbook Archive{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">REFERENCE // COUNTRY-DICTIONARY</div>
+  <h1>Country &amp; Entity Dictionary</h1>
+  <p class="subtitle">{{ total }} entities tracked across all editions</p>
+</div>
+
+<hr class="doc-rule double">
+
+<form class="search-box" method="get" action="/countries">
+  <input type="text" name="q" value="{{ q }}" placeholder="Filter by name...">
+  <button type="submit">Filter</button>
+  {% if q %}
+  <a href="/countries" class="btn">Clear</a>
+  {% endif %}
+</form>
+
+{% for entity_type, countries in groups.items() %}
+<div class="sec">
+  <span class="sec-title">{{ entity_type | upper }}</span>
+  <span style="color:#3d6a94;font-size:0.75rem;margin-left:12px;">{{ countries|length }} entities</span>
+  <hr class="sec-rule">
+</div>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>FIPS</th>
+      <th>ISO-2</th>
+      <th>ISO-3</th>
+      <th>Years</th>
+      <th>Coverage</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in countries %}
+    <tr class="clickable" onclick="location.href='/archive/{{ c.LastYear or 2023 }}/{{ c.CanonicalCode or c.ISOAlpha2 }}'">
+      <td><a href="/archive/{{ c.LastYear or 2023 }}/{{ c.CanonicalCode or c.ISOAlpha2 }}">{{ c.CanonicalName }}</a></td>
+      <td class="mono">{{ c.CanonicalCode or '—' }}</td>
+      <td class="mono">{{ c.ISOAlpha2 or '—' }}</td>
+      <td class="mono">{{ c.ISOAlpha3 or '—' }}</td>
+      <td class="mono">{% if c.FirstYear %}{{ c.FirstYear }}–{{ c.LastYear }}{% else %}—{% endif %}</td>
+      <td class="r">{{ c.YearCount }} yr{{ 's' if c.YearCount != 1 else '' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endfor %}
+{% endblock %}

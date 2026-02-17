@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% set active_page = "dissolved" %}
+{% block title %}Dissolved States — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // DISSOLVED-STATES // {{ year }}</div>
+  <h1>Dissolved States Tracker</h1>
+  <p class="subtitle">How successor states diverged after the breakup of Cold War-era federations</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:8px;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/rankings" class="btn">Global Rankings</a>
+</div>
+
+{# ── Indicator selector ── #}
+<div style="display:flex;align-items:center;gap:12px;margin:16px 0;flex-wrap:wrap;">
+  <label style="font-size:0.72rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;">Indicator</label>
+  <select id="indicator-select" onchange="window.location.href='/analysis/dissolved?indicator='+this.value" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+    {% for key, label in indicators.items() %}
+    <option value="{{ key }}" {{ 'selected' if key == indicator else '' }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+{% set sec_num = [1] %}
+{% for group_key, group in groups.items() %}
+{# ── Section per dissolved state ── #}
+<div class="sec">
+  <span class="sec-num">{{ '%02d' % sec_num[0] }}</span>
+  <span class="sec-title">{{ group.label }}</span>
+  <hr class="sec-rule">
+</div>
+
+{# Summary strip #}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:#2F343C;border:1px solid #2F343C;border-radius:4px;margin:16px 0;">
+  <div style="background:#1C2127;padding:14px 18px;text-align:center;">
+    <div style="font-size:1.4rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">{{ group.dissolution_year }}</div>
+    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Dissolution Year</div>
+  </div>
+  <div style="background:#1C2127;padding:14px 18px;text-align:center;">
+    <div style="font-size:1.4rem;font-weight:700;color:#2D72D2;font-variant-numeric:tabular-nums;">{{ group.successor_count }}</div>
+    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Successor States</div>
+  </div>
+  <div style="background:#1C2127;padding:14px 18px;text-align:center;">
+    <div style="font-size:1.4rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">{{ group.series|length }}</div>
+    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">With Data</div>
+  </div>
+</div>
+
+{# Multi-line time series chart #}
+<div id="chart-{{ group_key }}" style="height:clamp(300px,35vw,450px);"></div>
+
+{# Current values table #}
+{% if group.series %}
+<table class="data-table" style="margin-top:16px;">
+  <thead>
+    <tr>
+      <th>Country</th>
+      <th class="r">Latest Value</th>
+      <th class="r">Data Points</th>
+      <th style="width:100px;">Trend</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in group.series %}
+    <tr>
+      <td><a href="/analysis/dossier/{{ s.iso2 }}">{{ s.name }}</a></td>
+      <td class="r" style="font-variant-numeric:tabular-nums;">
+        {% if s.data %}{{ '{:,.2f}'.format(s.data[-1].value) }}{% else %}&mdash;{% endif %}
+      </td>
+      <td class="r" style="color:#5F6B7C;">{{ s.data|length }}</td>
+      <td>
+        {% if s.data|length > 1 %}
+        {% set vals = s.data|map(attribute='value')|list %}
+        {% set vmin = vals|min %}
+        {% set vmax = vals|max %}
+        {% set vrange = vmax - vmin if vmax != vmin else 1 %}
+        <svg width="80" height="20" style="vertical-align:middle;">
+          <polyline fill="none" stroke="#3FA6DA" stroke-width="1.5"
+            points="{% for v in vals %}{{ (loop.index0 / (vals|length - 1)) * 78 + 1 }},{{ 19 - ((v - vmin) / vrange) * 17 }} {% endfor %}" />
+        </svg>
+        {% else %}
+        <span style="color:#5F6B7C;">&mdash;</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if sec_num.append(sec_num.pop() + 1) %}{% endif %}
+{% endfor %}
+
+{# ── Methodology ── #}
+<div class="caveat">
+  <strong>Methodology</strong><br>
+  Tracks successor states of three dissolved federations: the Soviet Union (dissolved 1991, 15 successors),
+  Yugoslavia (dissolved 1991, 6 successors), and Czechoslovakia (dissolved 1992, 2 successors).
+  Pre-dissolution data is stored under the parent state&rsquo;s ISO code in the archive.
+  Values are parsed from CIA World Factbook text fields using standardized extraction patterns.
+  <br><a href="/sources" style="display:inline-block;margin-top:6px;">Full Sources &amp; Methodology &rarr;</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CHART_COLORS = [
+  '#2D72D2', '#29A634', '#D1980B', '#CD4246', '#9D3F9D',
+  '#00B3A4', '#DB2C6F', '#43BF4D', '#F5498B', '#FFC940',
+  '#634DBF', '#FF6E4A', '#2EE6D6', '#8ABBFF', '#FF7373',
+];
+const chartLayout = {
+  paper_bgcolor: '#1C2127', plot_bgcolor: '#1C2127',
+  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
+  xaxis: { gridcolor: '#252A31', fixedrange: true, dtick: 5 },
+  yaxis: { gridcolor: '#252A31', fixedrange: true },
+  legend: { orientation: 'h', y: -0.15, x: 0.5, xanchor: 'center', font: { size: 10 } },
+  margin: { t: 8, r: 20, b: 60, l: 80 },
+  hovermode: 'x unified',
+};
+
+{% for group_key, group in groups.items() %}
+(function() {
+  const series = {{ group.series | tojson }};
+  const traces = series.map(function(s, i) {
+    return {
+      type: 'scatter', mode: 'lines+markers',
+      name: s.name,
+      x: s.data.map(function(d) { return d.year; }),
+      y: s.data.map(function(d) { return d.value; }),
+      line: { color: CHART_COLORS[i % CHART_COLORS.length], width: 2 },
+      marker: { size: 3 },
+      hovertemplate: s.name + ': %{y:,.2f}<extra></extra>',
+    };
+  });
+  Plotly.newPlot('chart-{{ group_key }}', traces,
+    Object.assign({}, chartLayout),
+    { responsive: true, displayModeBar: false }
+  );
+})();
+{% endfor %}
+</script>
+{% endblock %}

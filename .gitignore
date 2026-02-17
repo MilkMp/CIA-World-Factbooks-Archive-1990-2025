@@ -10,3 +10,8 @@ work/
 text_samples/
 html_samples/
 *.zip
+.claude/
+data/factbook.db
+samples/
+notebooks/
+*.ipynb

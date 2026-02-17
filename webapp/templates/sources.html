@@ -1,0 +1,524 @@
+{% extends "base.html" %}
+{% set active_page = "sources" %}
+{% block title %}Sources &amp; Methodology{% endblock %}
+
+{% block head %}
+<style>
+.sources-layout { display: flex; gap: 28px; }
+.sources-toc {
+  position: sticky;
+  top: 16px;
+  align-self: flex-start;
+  min-width: 200px;
+  max-width: 220px;
+  flex-shrink: 0;
+  padding: 14px 0;
+}
+.sources-toc-label {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #404854;
+  margin-bottom: 10px;
+  padding: 0 10px;
+}
+.sources-toc a {
+  display: block;
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  color: #5F6B7C;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.4;
+  transition: color 100ms, border-color 100ms;
+}
+.sources-toc a:hover { color: #ABB3BF; border-left-color: #383E47; }
+.sources-toc a.active { color: #C5CBD3; border-left-color: #C5CBD3; }
+.sources-body { flex: 1; min-width: 0; }
+@media (max-width: 960px) {
+  .sources-layout { flex-direction: column; }
+  .sources-toc {
+    position: static;
+    max-width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid #2F343C;
+    margin-bottom: 16px;
+  }
+  .sources-toc-label { display: none; }
+  .sources-toc a { border-left: none; padding: 4px 8px; font-size: 0.65rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">REFERENCE // SOURCES &amp; METHODOLOGY</div>
+  <h1>Sources &amp; Methodology</h1>
+  <p class="subtitle">External references, classification standards, and analytic framework used in this archive</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div class="sources-layout">
+
+<nav class="sources-toc" id="sources-toc">
+  <div class="sources-toc-label">Contents</div>
+  <a href="#primary-data">01 Primary Data Source</a>
+  <a href="#analytic-standards">02 Analytic Standards</a>
+  <a href="#regional-framework">03 Regional Framework</a>
+  <a href="#country-groupings">04 Country Groupings</a>
+  <a href="#methodology">05 Archive Construction</a>
+  <a href="#data-processing">06 Data Processing</a>
+  <a href="#classification">07 Classification</a>
+  <a href="#repository">08 Data Repository</a>
+</nav>
+
+<div class="sources-body">
+
+<div class="caveat" style="border-left:3px solid #404854;">
+  <strong>Disclosure</strong><br>
+  This archive presents public-domain data from the CIA World Factbook. All analytic frameworks,
+  regional groupings, and classification standards referenced below originate from official
+  U.S. Government publications and internationally recognized bodies. This project is not
+  affiliated with the Central Intelligence Agency or the U.S. Government.
+</div>
+
+<!-- ── Primary Data Source ── -->
+<div class="sec" id="primary-data">
+  <span class="sec-num">01</span>
+  <span class="sec-title">Primary Data Source</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="category-block">
+  <div class="field-item">
+    <div class="field-name">CIA World Factbook</div>
+    <div class="field-content">All country data in this archive is sourced from the CIA World Factbook, a public-domain
+publication of the Central Intelligence Agency. The Factbook provides intelligence on the
+history, people, government, economy, energy, geography, environment, communications,
+transportation, military, terrorism, and transnational issues for 266 world entities.
+
+Published annually since 1962; this archive covers the 1990&ndash;2025 editions (36 years).
+
+Publisher: Central Intelligence Agency, United States Government
+Classification: OPEN SOURCE // PUBLIC DOMAIN
+URL: https://www.cia.gov/the-world-factbook/</div>
+  </div>
+</div>
+
+<!-- ── Analytic Standards ── -->
+<div class="sec" id="analytic-standards">
+  <span class="sec-num">02</span>
+  <span class="sec-title">Analytic Standards</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="category-block">
+  <div class="field-item">
+    <div class="field-name">ICD 203 &mdash; Analytic Standards</div>
+    <div class="field-content">Intelligence Community Directive 203, "Analytic Standards," establishes the standards
+for analytic products produced by the Intelligence Community. This archive formats its
+dossier pages following ICD 203 principles including sourcing transparency, distinguishing
+between underlying intelligence and analytic judgment, and incorporating analysis of
+alternatives.
+
+Issuing Authority: Director of National Intelligence (DNI)
+Effective: 2 January 2015
+Reference: https://www.dni.gov/files/documents/ICD/ICD-203.pdf</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">ICD 208 &mdash; Maximizing the Utility of Analytic Products</div>
+    <div class="field-content">Intelligence Community Directive 208 provides guidance on the write-for-maximum-utility
+standard, influencing how intelligence assessments are structured and presented. Dossier
+formatting in this archive follows ICD 208 principles for clear, structured presentation.
+
+Issuing Authority: Director of National Intelligence (DNI)
+Effective: 17 December 2008
+Reference: https://www.dni.gov/files/documents/ICD/ICD-208.pdf</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Confidence Levels</div>
+    <div class="field-content">This archive assigns confidence levels to data fields based on recency, following
+the general framework of ICD 203 confidence assessments adapted for structured data:
+
+  HIGH &mdash; Data from the current assessment year (0&ndash;1 years old)
+  MODERATE &mdash; Data within 2&ndash;3 years of the assessment year
+  LOW &mdash; Data older than 4 years from the assessment year
+
+Note: These confidence levels reflect data freshness only, not analytic confidence
+in the traditional intelligence sense. The CIA World Factbook updates fields on
+varying schedules; some fields may carry older data in recent editions.</div>
+  </div>
+</div>
+
+<!-- ── Regional Framework ── -->
+<div class="sec" id="regional-framework">
+  <span class="sec-num">03</span>
+  <span class="sec-title">Regional Framework &mdash; Unified Command Plan</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="category-block">
+  <div class="field-item">
+    <div class="field-name">DoD Unified Command Plan (UCP)</div>
+    <div class="field-content">This archive organizes countries by U.S. Department of Defense Combatant Command (COCOM)
+areas of responsibility as defined in the Unified Command Plan. The UCP is a classified
+document signed by the President; however, COCOM area-of-responsibility boundaries are
+publicly available through DoD publications and official command websites.
+
+The six geographic combatant commands used in this archive:
+
+  EUCOM &mdash; U.S. European Command (50 countries, Europe &amp; Eurasia)
+  CENTCOM &mdash; U.S. Central Command (21 countries, Middle East &amp; Central/South Asia)
+  INDOPACOM &mdash; U.S. Indo-Pacific Command (36 countries, Asia-Pacific &amp; Indian Ocean)
+  AFRICOM &mdash; U.S. Africa Command (53 countries, Africa)
+  SOUTHCOM &mdash; U.S. Southern Command (31 countries, Central &amp; South America, Caribbean)
+  NORTHCOM &mdash; U.S. Northern Command (5 countries, North America)
+
+Issuing Authority: President of the United States / Secretary of Defense
+Current Version: 2024 (most recent publicly acknowledged revision)
+Reference: https://www.defense.gov/Spotlights/Unified-Command-Plan/</div>
+  </div>
+</div>
+
+<!-- ── Country Groupings ── -->
+<div class="sec" id="country-groupings">
+  <span class="sec-num">04</span>
+  <span class="sec-title">Country Groupings &mdash; Time Series Presets</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="category-block">
+  <div class="field-item">
+    <div class="field-name">P5 (UNSC Permanent Members)</div>
+    <div class="field-content">United States, China, Russia, United Kingdom, France
+
+The five permanent members of the United Nations Security Council with veto power,
+established by Article 23 of the UN Charter (1945). Sometimes referred to as the
+"Permanent Five" or "P5."
+
+Source: Charter of the United Nations, Chapter V, Article 23
+Reference: https://www.un.org/en/about-us/un-charter/chapter-5</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">G7 (Group of Seven)</div>
+    <div class="field-content">United States, United Kingdom, Germany, France, Japan, Italy, Canada
+
+An intergovernmental political and economic forum of seven major advanced economies.
+The G7 does not have a formal charter; membership has been stable since Canada joined
+in 1976 (Russia participated as G8 from 1997 to 2014).
+
+Source: G7 official communications
+Reference: https://www.g7germany.de/g7-en/g7-and-g20/what-is-the-g7-</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">BRICS</div>
+    <div class="field-content">China, India, Brazil, Russia, South Africa
+
+Originally coined as "BRIC" by Goldman Sachs economist Jim O'Neill (2001) to describe
+four emerging economies. South Africa joined in 2010. The grouping formalized through
+annual summits beginning in 2009. In 2024, the grouping expanded (BRICS+) to include
+Egypt, Ethiopia, Iran, Saudi Arabia, and the UAE, though this archive uses the original
+five for the preset.
+
+Source: BRICS Joint Statistical Publication; Johannesburg II Declaration (2023)
+Reference: https://brics2024.gob.ru/en</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">NATO Select</div>
+    <div class="field-content">United States, United Kingdom, Germany, France, Turkey, Poland, Norway
+
+A representative sample of NATO member states selected by military expenditure,
+geographic coverage, and strategic importance. NATO has 32 member states as of 2024
+(after Finland and Sweden accession). The full membership list is publicly available.
+
+Source: North Atlantic Treaty (Washington Treaty, 1949); NATO official member list
+Reference: https://www.nato.int/cps/en/natohq/nato_countries.htm</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Near-Peer Competitors</div>
+    <div class="field-content">China, Russia
+
+Terminology from the U.S. National Defense Strategy (NDS). The 2022 NDS identifies
+the People's Republic of China as "the most consequential strategic competitor" and
+the Russian Federation as an "acute threat." The 2018 NDS used the term "great power
+competition" to describe strategic rivalry with both nations.
+
+Source: 2022 National Defense Strategy of the United States of America
+Issuing Authority: U.S. Department of Defense
+Reference: https://www.defense.gov/National-Defense-Strategy/</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Regional Powers</div>
+    <div class="field-content">India, Brazil, Turkey, Saudi Arabia, Iran, Indonesia
+
+States with significant military, economic, and political influence within their
+respective regions but not classified as global "great powers" in U.S. strategic
+documents. This grouping draws from international relations scholarship and aligns
+with how these states are discussed in the National Security Strategy and Defense
+Intelligence Agency threat assessments.
+
+Sources:
+  &bull; National Security Strategy of the United States (2022)
+  &bull; DIA Worldwide Threat Assessment
+  &bull; Academic consensus in international relations (e.g., Buzan &amp; W&aelig;ver,
+    "Regions and Powers," Cambridge University Press, 2003)</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Africa Top 5 (by Population)</div>
+    <div class="field-content">Nigeria, Ethiopia, Egypt, Democratic Republic of the Congo, Tanzania
+
+The five most populous countries on the African continent, as reported in the
+CIA World Factbook. This grouping is derived directly from Factbook population data.</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Indo-Pacific</div>
+    <div class="field-content">Japan, South Korea, Australia, India, Indonesia, Thailand, Philippines
+
+Key partner nations and allies within the U.S. Indo-Pacific Command (INDOPACOM) area
+of responsibility. Selection reflects the nations most frequently referenced in the
+Indo-Pacific Strategy of the United States (2022).
+
+Source: Indo-Pacific Strategy of the United States (February 2022)
+Issuing Authority: The White House
+Reference: https://www.whitehouse.gov/briefing-room/speeches-remarks/2022/02/11/fact-sheet-indo-pacific-strategy-of-the-united-states/</div>
+  </div>
+</div>
+
+<!-- ── Archive Construction ── -->
+<div class="sec" id="methodology">
+  <span class="sec-num">05</span>
+  <span class="sec-title">Archive Construction Methodology</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="caveat" style="border-left:3px solid #404854;">
+  <strong>Overview</strong><br>
+  The CIA World Factbook has been published in different formats over 36 years. Building a unified
+  archive required acquiring data from three distinct sources, writing format-specific parsers for
+  each era, and then normalizing the results into a single relational schema. The ETL pipeline ran
+  in seven sequential steps, each building on the previous.
+</div>
+
+<div class="category-block">
+  <div class="field-item">
+    <div class="field-name">Step 1 &mdash; HTML Editions (2000&ndash;2020)</div>
+    <div class="field-content">Source: CIA World Factbook zip archives retrieved from the Internet Archive Wayback Machine.
+Each annual edition was published as a downloadable .zip containing one HTML file per country.
+
+The CIA changed their HTML structure five times across these 21 years, requiring five distinct parsers:
+
+  2000 &mdash; Classic format: &lt;b&gt;FieldName:&lt;/b&gt; followed by plain text (parse_classic)
+  2001&ndash;2008 &mdash; Table-based format: &lt;td class="FieldLabel"&gt; cells in nested tables (parse_table_format)
+  2009&ndash;2014 &mdash; CollapsiblePanel divs with JavaScript show/hide sections (parse_collapsiblepanel_format)
+  2015&ndash;2017 &mdash; Expand/collapse h2 sections with anchor-based navigation (parse_expandcollapse_format)
+  2018&ndash;2020 &mdash; Modern field-anchor divs with structured class names (parse_modern_format)
+
+Each parser uses BeautifulSoup to extract country name, FIPS code, categories, field names, and
+content text. HTML entities and tags are stripped from content. A known-good Wayback Machine
+timestamp was identified for each year to ensure consistent, complete snapshots.</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Step 2 &mdash; Text Editions (1990&ndash;2001)</div>
+    <div class="field-content">Source: CIA World Factbook plain-text files from Project Gutenberg (public domain ebooks).
+
+The text editions used four markup conventions across the decade:
+
+  1990 &mdash; "Old" format: country names on bare lines, sections marked with " - ", fields with "Field: value"
+  1991&ndash;1992 &mdash; "Tagged" format: _@_ country delimiters, _*_ section markers, _#_ field markers
+  1993&ndash;1994 &mdash; "Asterisk" format: *Country Name headers, section names on standalone lines
+  1995&ndash;2000 &mdash; "At-sign" format: @Country Name delimiters with inline field: value pairs
+  2001 &mdash; "Equals" format: fallback text parser for the 2001 edition where HTML was incomplete
+
+Each text is downloaded from Project Gutenberg by ebook number (e.g., 1990 = Ebook #14,
+1994 = Ebook #180). The parser splits the monolithic text file into country blocks, then
+extracts categories, field names, and content using format-specific regex patterns. The 1990
+and 2001 overlap years (available in both HTML and text) allow cross-validation.</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Step 3 &mdash; JSON Editions (2021&ndash;2025)</div>
+    <div class="field-content">Source: github.com/factbook/cache.factbook.json &mdash; a community-maintained mirror that cached
+the CIA Factbook API as structured JSON files. The repository was auto-updated weekly (every
+Thursday) from August 2021 until the CIA discontinued the online Factbook in February 2026.
+
+To obtain year-specific snapshots rather than a single point-in-time dump, the ETL uses git
+history: for each target year, it checks out the last commit before January 1 of the following
+year (e.g., the 2023 snapshot uses the last commit before 2024-01-01). Each JSON file contains
+one country with categories and fields as nested objects. HTML tags embedded in JSON values are
+stripped during loading.</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Step 4 &mdash; Country Identity Standardization (MasterCountries)</div>
+    <div class="field-content">The CIA World Factbook uses FIPS 10-4 country codes (a U.S. Government standard), not the
+internationally used ISO 3166-1 codes. Many FIPS codes differ from their ISO equivalents
+(e.g., FIPS "CH" = China, but ISO "CH" = Switzerland). Country names also changed across
+editions (e.g., "Burma" vs. "Myanmar," "Zaire" vs. "Democratic Republic of the Congo").
+
+The standardization process built a MasterCountries table that serves as the single source
+of identity for all 281 entities across all 36 years:
+
+  1. Name cleanup &mdash; Corrected garbage names from HTML parsing failures and updated
+     historical names to modern official names
+  2. Code deduplication &mdash; Merged duplicate FIPS codes where the same country appeared
+     under different codes across editions
+  3. FIPS-to-ISO crosswalk &mdash; Added ISO Alpha-2 codes using the NGA Geopolitical Entities
+     and Codes (GEC) standard, sourced from the authoritative crosswalk at
+     github.com/mysociety/gaze (derived from NGA GEC data). This maps all 281 FIPS codes
+     to their ISO 3166-1 equivalents where one exists
+  4. Identity linking &mdash; Every year-specific country record in the Countries table is linked
+     to its MasterCountryID via foreign key, enabling cross-year queries (e.g., track China's
+     GDP across all 36 years regardless of which code or name variant was used that year)
+
+The result is a schema where:
+  CanonicalCode = original FIPS 10-4 code (preserved for provenance)
+  ISOAlpha2 = ISO 3166-1 Alpha-2 code (used for international compatibility)
+  CanonicalName = standardized modern name
+  MasterCountryID = stable integer key linking all years together</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Step 5 &mdash; Entity Classification</div>
+    <div class="field-content">The Factbook covers 281 entities, not all of which are sovereign nations. An automated
+classifier reads each entity's "Dependency status" and "Government type" fields across all
+36 years to assign a type:
+
+  sovereign &mdash; Independent state (195 entities)
+  territory &mdash; Dependency, overseas territory, unincorporated territory
+  disputed &mdash; Disputed sovereignty (Kosovo, West Bank, Gaza Strip, etc.)
+  freely_associated &mdash; Self-governing in free association with another state
+  special_admin &mdash; Special Administrative Region (Hong Kong, Macau)
+  crown_dependency &mdash; Crown dependency of the UK (Jersey, Guernsey, Isle of Man)
+  antarctic &mdash; Antarctic territory or claim
+  misc &mdash; Oceans, World entry, European Union
+  dissolved &mdash; Historical entity that no longer exists
+
+A set of hardcoded overrides handles entities where auto-classification fails (e.g., oceans,
+disputed territories). The classifier runs in read-only mode first for manual review, then
+writes to the database with an --apply flag.</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Step 6 &mdash; Field Name Canonicalization</div>
+    <div class="field-content">Across 36 years, the CIA used 1,090 distinct field name variants. Many refer to the same
+concept (e.g., "GDP (purchasing power parity)" vs. "GDP - purchasing power parity" vs.
+"National product"). The field mapping pipeline normalizes these to 414 canonical names
+using three rule layers:
+
+  Rule 1 &mdash; Exact match: field already matches a modern canonical name (no change needed)
+  Rule 2 &mdash; Normalization: strip punctuation and formatting differences (parentheses vs. dashes)
+  Rule 3 &mdash; Known CIA renames: a lookup table of ~120 historical-to-modern name mappings
+
+An IsNoise flag marks 43 metadata and formatting artifacts (e.g., "Header", "Definition",
+"note") that should be excluded from search results and analysis. Original field names are
+preserved in the database; mappings live in a separate FieldNameMappings lookup table.</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Step 7 &mdash; SQLite Export</div>
+    <div class="field-content">The canonical source database is SQL Server. For the web application, the entire schema
+is exported to a single SQLite file (data/factbook.db). The export script copies all five
+tables (MasterCountries, Countries, CountryCategories, CountryFields, FieldNameMappings)
+with identical structure. A full-text search index (FTS5) is built on CountryFields.Content
+for fast keyword search across 1,071,213 field entries. The final SQLite database is ~314 MB.</div>
+  </div>
+</div>
+
+<!-- ── Data Processing ── -->
+<div class="sec" id="data-processing">
+  <span class="sec-num">06</span>
+  <span class="sec-title">Data Processing &amp; Numeric Extraction</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="category-block">
+  <div class="field-item">
+    <div class="field-name">Numeric Extraction</div>
+    <div class="field-content">The CIA World Factbook publishes data as natural-language text. This archive uses
+pattern-based parsers to extract numeric values for visualization and comparison:
+
+  &bull; Population: regex extraction of numbers with 5+ digits from text
+  &bull; GDP (PPP): dollar-amount parsing handling "$X trillion" and "$X billion" formats
+  &bull; Military expenditure: percentage-of-GDP extraction from "X% of GDP" patterns
+  &bull; GDP per capita: dollar-amount extraction from "$X,XXX" patterns
+  &bull; Life expectancy: extraction from "total population: X.X years" pattern
+  &bull; Growth rates: signed percentage extraction from "X.X%" patterns
+
+All parsers return NULL for fields where no valid number can be extracted, rather
+than imputing or estimating values. Visualization tools display "&mdash;" for missing data.</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Entity Deduplication</div>
+    <div class="field-content">The Factbook uses varying country codes and names across editions. This archive
+maintains a MasterCountries table that maps all historical variants to canonical
+entities. Where ISO Alpha-2 codes are shared by multiple entities (e.g., GB is used
+by United Kingdom, Guernsey, Jersey, and Isle of Man), queries filter by
+EntityType = 'sovereign' for country-level analysis.</div>
+  </div>
+  <div class="field-item">
+    <div class="field-name">Field Name Canonicalization</div>
+    <div class="field-content">Factbook field names vary across editions (e.g., "GDP (purchasing power parity)" vs
+"GDP - purchasing power parity"). A FieldNameMappings table maps all historical field
+names to canonical names, with an IsNoise flag to exclude metadata and formatting artifacts.</div>
+  </div>
+</div>
+
+<!-- ── Classification ── -->
+<div class="sec" id="classification">
+  <span class="sec-num">07</span>
+  <span class="sec-title">Classification &amp; Disclaimer</span>
+  <hr class="sec-rule">
+</div>
+
+<div class="caveat">
+  <strong>Classification</strong><br>
+  OPEN SOURCE. All data in this archive originates from the CIA World
+  Factbook, a public-domain U.S. Government publication. No classified or controlled
+  unclassified information (CUI) is contained in this archive. The intelligence community
+  formatting (ICD 203/208 structure, COCOM organization, confidence badges) is used for
+  presentation purposes and does not imply access to classified sources or methods.
+</div>
+
+<div class="sec" id="repository">
+  <span class="sec-num">08</span>
+  <span class="sec-title">Data Repository</span>
+  <hr class="sec-rule">
+</div>
+
+<p>The complete archive dataset is available as open-source data on GitHub. The repository contains the full SQL schema, INSERT scripts for all five tables (split by year for CountryFields), field mapping definitions, and the ETL pipeline used to parse the original CIA publications from 1990 to 2025.</p>
+
+<p style="margin:12px 0;">
+  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank" rel="noopener" class="btn">View on GitHub</a>
+  <a href="/export" class="btn" style="margin-left:8px;">Data Export (CSV/Excel)</a>
+</p>
+
+</div><!-- /sources-body -->
+</div><!-- /sources-layout -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  var toc = document.getElementById('sources-toc');
+  if (!toc) return;
+  var links = toc.querySelectorAll('a[href^="#"]');
+  var sections = [];
+  links.forEach(function(a) {
+    var el = document.querySelector(a.getAttribute('href'));
+    if (el) sections.push({ link: a, el: el });
+  });
+  function update() {
+    var scrollY = window.scrollY || document.documentElement.scrollTop;
+    var current = null;
+    for (var i = sections.length - 1; i >= 0; i--) {
+      if (sections[i].el.offsetTop - 80 <= scrollY) { current = sections[i]; break; }
+    }
+    links.forEach(function(a) { a.classList.remove('active'); });
+    if (current) current.link.classList.add('active');
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+{% endblock %}

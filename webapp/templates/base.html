@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CIA World Factbook Archive{% endblock %}</title>
+  <meta name="description" content="36 years of CIA World Factbook data (1990-2025). Search, browse, compare, and export 1,071,213 fields across 281 entities.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="CIA World Factbook Archive">
+  <meta property="og:description" content="36 years of structured intelligence data. Search, browse, compare, and export 1,071,213 fields across 281 entities (1990-2025).">
+  <meta property="og:image" content="https://cia-factbook-archive.fly.dev/static/og-image.png">
+  <meta property="og:url" content="https://cia-factbook-archive.fly.dev">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CIA World Factbook Archive">
+  <meta name="twitter:description" content="36 years of structured intelligence data (1990-2025). 281 entities, 1,071,213 fields.">
+  <meta name="twitter:image" content="https://cia-factbook-archive.fly.dev/static/og-image.png">
+  <link rel="stylesheet" href="/static/css/intel-theme.css?v=7">
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<div class="banner">OPEN SOURCE INTELLIGENCE</div>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sidebar-title">Factbook Archive</div>
+    <a href="/" class="{{ 'active' if active_page == 'home' else '' }}">Home</a>
+    <a href="/countries" class="{{ 'active' if active_page == 'countries' else '' }}">Country Dictionary</a>
+
+    <div class="nav-section">The Archive</div>
+    <a href="/archive/library" class="{{ 'active' if active_page == 'library' else '' }}">Library</a>
+    <a href="/archive" class="{{ 'active' if active_page == 'browse' else '' }}">Browse by Year</a>
+    <a href="/search" class="{{ 'active' if active_page == 'search' else '' }}">Search Fields</a>
+    <a href="/export" class="{{ 'active' if active_page == 'export' else '' }}">Data Export</a>
+
+    <div class="nav-section">Intelligence Analysis</div>
+    <a href="/analysis" class="{{ 'active' if active_page == 'analysis-home' else '' }}">Overview</a>
+    <div style="font-size:0.55rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1.2px;padding:10px 16px 2px;font-weight:600;">Geographic</div>
+    <a href="/analysis/regional" class="{{ 'active' if active_page == 'analysis' else '' }}">Regional Dashboard</a>
+    <a href="/analysis/timeline" class="{{ 'active' if active_page == 'timeline' else '' }}">Timeline Map</a>
+    <a href="/analysis/map-compare" class="{{ 'active' if active_page == 'map-compare' else '' }}">Map Compare</a>
+    <div style="font-size:0.55rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1.2px;padding:10px 16px 2px;font-weight:600;">Comparative</div>
+    <a href="/analysis/rankings" class="{{ 'active' if active_page == 'rankings' else '' }}">Global Rankings</a>
+    <a href="/analysis/compare" class="{{ 'active' if active_page == 'compare' else '' }}">Compare Countries</a>
+    <a href="/analysis/communications" class="{{ 'active' if active_page == 'communications' else '' }}">Communications</a>
+    <div style="font-size:0.55rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1.2px;padding:10px 16px 2px;font-weight:600;">Temporal</div>
+    <a href="/analysis/changes" class="{{ 'active' if active_page == 'changes' else '' }}">Change Detection</a>
+    <a href="/analysis/dissolved" class="{{ 'active' if active_page == 'dissolved' else '' }}">Dissolved States</a>
+    <a href="/analysis/diff" class="{{ 'active' if active_page == 'diff' else '' }}">Text Diff</a>
+
+    <div class="nav-section">Reference</div>
+    <a href="/api" class="{{ 'active' if active_page == 'api-docs' else '' }}">API Documentation</a>
+    <a href="/sources" class="{{ 'active' if active_page == 'sources' else '' }}">Sources &amp; Methodology</a>
+    <a href="/about" class="{{ 'active' if active_page == 'about' else '' }}">About</a>
+  </nav>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+<footer>
+  <img src="/static/img/cow_reading_book.png" alt="" class="footer-logo">
+  <span>CIA World Factbook Archive</span> &mdash;
+  <a href="/">Home</a>
+  <a href="/countries">Countries</a>
+  <a href="/archive">The Archive</a>
+  <a href="/analysis">Analysis</a>
+  <a href="/sources">Sources</a>
+  <a href="/about">About</a>
+  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank" rel="noopener">GitHub</a>
+  <br>
+  <span style="margin-top:6px;display:inline-block;">
+    Data sourced from the CIA World Factbook (public domain). This project is not affiliated with the CIA or U.S. Government.
+  </span>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

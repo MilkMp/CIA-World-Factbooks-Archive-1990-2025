@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% set active_page = "analysis" %}
+{% block title %}Threat Environment — {{ region_name }} ({{ region }}){% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // THREATS // {{ region }} // {{ year }}</div>
+  <h1>Threat Environment: {{ region_name }}</h1>
+  <p class="subtitle">{{ region }} threat summary &mdash; {{ threats|length }} countries assessed</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/regional" class="btn">Regional Dashboard</a>
+  <a href="/analysis/region/{{ region }}" class="btn" style="margin-left:8px;">{{ region }} Overview</a>
+</div>
+
+{% if threats %}
+{% for country in threats %}
+{% set has_threats = country.get('Terrorist group(s)') or country.get('Illicit drugs') or country.get('Trafficking in persons') or country.get('Disputes - international') or country.get('Refugees and internally displaced persons') %}
+{% if has_threats %}
+<div class="sec">
+  <span class="sec-title">
+    <a href="/analysis/dossier/{{ country.iso2 }}">{{ country.name }}</a>
+  </span>
+  <hr class="sec-rule">
+</div>
+
+<div class="category-block">
+  {% if country.get('Terrorist group(s)') %}
+  <div class="field-item">
+    <div class="field-name">Terrorist Groups <span class="badge badge-high" style="margin-left:6px;">FBI TIER 1</span></div>
+    <div class="field-content">{{ country['Terrorist group(s)'] }}</div>
+  </div>
+  {% endif %}
+
+  {% if country.get('Illicit drugs') %}
+  <div class="field-item">
+    <div class="field-name">Illicit Drugs</div>
+    <div class="field-content">{{ country['Illicit drugs'] }}</div>
+  </div>
+  {% endif %}
+
+  {% if country.get('Trafficking in persons') %}
+  <div class="field-item">
+    <div class="field-name">Trafficking in Persons</div>
+    <div class="field-content">{{ country['Trafficking in persons'] }}</div>
+  </div>
+  {% endif %}
+
+  {% if country.get('Disputes - international') %}
+  <div class="field-item">
+    <div class="field-name">International Disputes</div>
+    <div class="field-content">{{ country['Disputes - international'] }}</div>
+  </div>
+  {% endif %}
+
+  {% if country.get('Refugees and internally displaced persons') %}
+  <div class="field-item">
+    <div class="field-name">Refugees / IDPs</div>
+    <div class="field-content">{{ country['Refugees and internally displaced persons'] }}</div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endfor %}
+
+{% else %}
+<div class="caveat">
+  <strong>No Threat Data</strong><br>
+  No threat environment data available for this region.
+</div>
+{% endif %}
+
+<div class="caveat">
+  <strong>Assessment Note</strong><br>
+  Threat categories aligned with FBI/DOJ reporting standards. Tier 1 threats include
+  counterterrorism, counterintelligence, cyber, and WMD proliferation.
+  Data sourced from CIA World Factbook {{ year }} (OPEN SOURCE // OSINT).
+</div>
+{% endblock %}

@@ -1,0 +1,786 @@
+{% extends "base.html" %}
+{% set active_page = "timeline" %}
+{% block title %}Timeline Map — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  .timeline-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+  .timeline-controls label {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.75rem;
+    color: #8F99A8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .timeline-controls select {
+    background: #1C2127;
+    border: 1px solid #383E47;
+    border-radius: 3px;
+    color: #C5CBD3;
+    padding: 4px 10px;
+    font-size: 0.82rem;
+    transition: border-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .timeline-controls select:focus {
+    border-color: #8F99A8;
+    outline: none;
+    box-shadow: 0 0 0 1px rgba(143, 153, 168, 0.4);
+  }
+  .year-slider {
+    flex: 1;
+    min-width: 200px;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #2F343C;
+    border-radius: 3px;
+    outline: none;
+    transition: background-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .year-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ABB3BF;
+    cursor: pointer;
+    border: 2px solid #111418;
+    box-shadow: 0 1px 4px rgba(17, 20, 24, 0.5);
+    transition: background-color 0.15s cubic-bezier(0.4, 1, 0.75, 0.9),
+                transform 0.15s cubic-bezier(0, 0, 0.2, 1),
+                box-shadow 0.2s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .year-slider::-webkit-slider-thumb:hover {
+    background: #C5CBD3;
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(17, 20, 24, 0.6);
+  }
+  .year-slider::-webkit-slider-thumb:active {
+    transform: scale(0.95);
+  }
+  .year-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ABB3BF;
+    cursor: pointer;
+    border: 2px solid #111418;
+    box-shadow: 0 1px 4px rgba(17, 20, 24, 0.5);
+  }
+  .year-display {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #C5CBD3;
+    min-width: 60px;
+    text-align: center;
+    transition: color 0.3s cubic-bezier(0.4, 1, 0.75, 0.9),
+                transform 0.3s cubic-bezier(0, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .year-display.transitioning {
+    opacity: 0.4;
+    transform: scale(0.92);
+  }
+  .play-btn {
+    background: #252A31;
+    border: 1px solid #383E47;
+    border-radius: 3px;
+    color: #C5CBD3;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    transition: background-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+                border-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+                color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+                box-shadow 0.25s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .play-btn:hover {
+    background: #383E47;
+    color: #FFFFFF;
+    box-shadow: 0 1px 4px rgba(17, 20, 24, 0.4);
+  }
+  .play-btn:active {
+    transform: translateY(1px);
+  }
+  .play-btn.playing {
+    background: #404854;
+    border-color: #5F6B7C;
+    color: #FFFFFF;
+  }
+  .loading-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(17, 20, 24, 0.75);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.85rem;
+    color: #8F99A8;
+    z-index: 10;
+  }
+
+  /* ── Country Comparison Section ── */
+  .ts-section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 32px 0 14px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #5F6B7C;
+  }
+  .ts-section-head::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid #2F343C;
+  }
+
+  .ts-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .ts-controls select {
+    background: #1C2127;
+    border: 1px solid #383E47;
+    border-radius: 3px;
+    color: #C5CBD3;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    flex: 1;
+    max-width: 280px;
+    min-width: 160px;
+    transition: border-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .ts-controls select:focus {
+    border-color: #8F99A8;
+    outline: none;
+    box-shadow: 0 0 0 1px rgba(143, 153, 168, 0.4);
+  }
+  .ts-add-btn {
+    background: #252A31;
+    border: 1px solid #383E47;
+    border-radius: 3px;
+    color: #C5CBD3;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    transition: background-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+                border-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+                color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .ts-add-btn:hover { background: #383E47; color: #FFFFFF; }
+  .ts-add-btn:active { transform: translateY(1px); }
+
+  .ts-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+    min-height: 30px;
+  }
+  .ts-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #252A31;
+    border: 1px solid #383E47;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    color: #C5CBD3;
+    transition: border-color 0.15s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .ts-chip .swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .ts-chip .remove {
+    background: none;
+    border: none;
+    color: #5F6B7C;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0 2px;
+    line-height: 1;
+    transition: color 0.15s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .ts-chip .remove:hover { color: #C5CBD3; }
+
+  .ts-presets {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .ts-preset {
+    background: #1C2127;
+    border: 1px solid #2F343C;
+    border-radius: 3px;
+    color: #8F99A8;
+    padding: 3px 10px;
+    font-size: 0.68rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    transition: background-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+                border-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9),
+                color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .ts-preset:hover { background: #252A31; border-color: #383E47; color: #C5CBD3; }
+
+  /* ── Dual-Panel Layout ── */
+  .dual-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 16px;
+  }
+  .panel {
+    background: #1C2127;
+    border: 1px solid #2F343C;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s cubic-bezier(0.4, 1, 0.75, 0.9);
+  }
+  .panel:hover {
+    border-color: #383E47;
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: #1C2127;
+    border-bottom: 1px solid #2F343C;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #5F6B7C;
+  }
+  .panel-body {
+    flex: 1;
+    padding: 12px;
+    position: relative;
+  }
+  .panel-body .chart-container {
+    height: 100%;
+    min-height: 380px;
+  }
+
+  /* ── Right Panel: Time Series Controls ── */
+  .ts-panel-controls {
+    padding: 10px 16px;
+    border-bottom: 1px solid #252A31;
+    background: rgba(28, 33, 39, 0.6);
+  }
+
+  @media (max-width: 1200px) {
+    .dual-panel { grid-template-columns: 1fr; }
+    .panel-body .chart-container { min-height: 320px; }
+  }
+  @media (max-width: 800px) {
+    .timeline-controls { gap: 10px; }
+    .year-display { font-size: 1.4rem; min-width: 50px; }
+    .year-slider { min-width: 120px; }
+    .ts-controls select { max-width: 100%; }
+    .panel-body .chart-container { min-height: 280px; }
+  }
+  @media (max-width: 480px) {
+    .timeline-controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .timeline-controls label { margin-bottom: -4px; }
+    .year-display { font-size: 1.6rem; order: -1; }
+    .year-slider { min-width: 100%; }
+    .play-btn { align-self: flex-start; }
+    .ts-controls { flex-direction: column; align-items: stretch; }
+    .ts-controls select { max-width: 100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // TIMELINE // 1990-2025</div>
+  <h1>Time Series World Map</h1>
+  <p class="subtitle">Watch global indicators evolve across 36 years of CIA World Factbook data</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+  <a href="/analysis" class="btn">Back to Dashboard</a>
+  <div style="flex:1;"></div>
+  <label style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:0.7rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;">Indicator:</label>
+  <select id="tl-indicator" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:5px 10px;font-size:0.82rem;">
+    <option value="gdp_billions">GDP ($B PPP)</option>
+    <option value="population">Population</option>
+    <option value="mil_pct_gdp">Military % GDP</option>
+    <option value="gdp_percap">GDP Per Capita</option>
+    <option value="life_exp" selected>Life Expectancy</option>
+  </select>
+</div>
+
+<div class="dual-panel">
+
+  <!-- ══════ LEFT PANEL: Animated World Map ══════ -->
+  <div class="panel">
+    <div class="panel-header">
+      Global Map
+      <div style="flex:1;"></div>
+      <div class="year-display" id="year-display">{{ years[0] }}</div>
+    </div>
+    <div class="panel-body">
+      <div id="timeline-map" class="chart-container"></div>
+      <div id="loading" class="loading-overlay" style="display:none;">Loading data...</div>
+    </div>
+    <div style="padding:8px 16px 10px; border-top:1px solid #252A31; display:flex; align-items:center; gap:12px;">
+      <button id="play-btn" class="play-btn">Play</button>
+      <input type="range" id="year-slider" class="year-slider"
+             min="0" max="{{ years|length - 1 }}" value="0" step="1">
+    </div>
+  </div>
+
+  <!-- ══════ RIGHT PANEL: Country Time Series ══════ -->
+  <div class="panel">
+    <div class="panel-header">
+      Country Time Series
+    </div>
+    <div class="ts-panel-controls">
+      <div class="ts-controls" style="margin-bottom:8px;">
+        <select id="ts-country-select" style="flex:1;min-width:120px;">
+          {% for c in countries %}
+          <option value="{{ c.ISOAlpha2 }}">{{ c.CanonicalName }}</option>
+          {% endfor %}
+        </select>
+        <button class="ts-add-btn" id="ts-add-btn">+ Add</button>
+      </div>
+      <div class="ts-presets">
+        <button class="ts-preset" data-countries="US,CN,RU,GB,FR">P5</button>
+        <button class="ts-preset" data-countries="US,GB,DE,FR,JP,IT,CA">G7</button>
+        <button class="ts-preset" data-countries="CN,IN,BR,RU,ZA">BRICS</button>
+        <button class="ts-preset" data-countries="US,GB,DE,FR,TR,PL,NO">NATO</button>
+        <button class="ts-preset" data-countries="CN,RU">Near-Peer</button>
+        <button class="ts-preset" data-countries="IN,BR,TR,SA,IR,ID">Regional</button>
+        <button class="ts-preset" data-countries="NG,ET,EG,CD,TZ">Africa</button>
+        <button class="ts-preset" data-countries="JP,KR,AU,IN,ID,TH,PH">Indo-Pacific</button>
+      </div>
+      <div class="ts-chips" id="ts-chips"></div>
+    </div>
+    <div class="panel-body">
+      <div id="ts-chart" class="chart-container"></div>
+    </div>
+  </div>
+
+  <!-- ══════ USAGE — spans both columns ══════ -->
+  <div style="grid-column:1/-1; display:flex; gap:24px; padding:10px 16px; background:#1C2127; border:1px solid #2F343C; border-radius:6px; font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.72rem; color:#5F6B7C; line-height:1.5;">
+    <span><strong style="color:#8F99A8;">Play</strong> or drag slider to animate</span>
+    <span><strong style="color:#8F99A8;">Click</strong> a country on the map to add it to the time series</span>
+    <span><strong style="color:#8F99A8;">Indicator</strong> dropdown controls both panels</span>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const years = {{ years | tojson }};
+const slider = document.getElementById('year-slider');
+const yearDisplay = document.getElementById('year-display');
+const indicatorSelect = document.getElementById('tl-indicator');
+const playBtn = document.getElementById('play-btn');
+const loading = document.getElementById('loading');
+
+const indicatorLabels = {
+  gdp_billions: 'GDP ($B PPP)',
+  population: 'Population',
+  mil_pct_gdp: 'Military % GDP',
+  gdp_percap: 'GDP Per Capita ($)',
+  life_exp: 'Life Expectancy (years)',
+};
+
+/* Color scales — DG2 base → extended palette */
+const indicatorScales = {
+  gdp_billions: [[0,'#252A31'],[0.25,'#5C4405'],[0.5,'#D1980B'],[0.75,'#F0B726'],[1,'#FBD065']],   /* GOLD */
+  population:   [[0,'#252A31'],[0.25,'#77450D'],[0.5,'#C87619'],[0.75,'#EC9A3C'],[1,'#FBB360']],   /* ORANGE */
+  mil_pct_gdp:  [[0,'#252A31'],[0.25,'#96290D'],[0.5,'#D33D17'],[0.75,'#EB6847'],[1,'#FF9980']],   /* VERMILION */
+  gdp_percap:   [[0,'#252A31'],[0.25,'#0C5174'],[0.5,'#147EB3'],[0.75,'#3FA6DA'],[1,'#68C1EE']],   /* CERULEAN */
+  life_exp:     [[0,'#252A31'],[0.2,'#1D7324'],[0.4,'#29A634'],[0.6,'#43BF4D'],[0.8,'#62D96B'],[1,'#72CA9B']], /* FOREST→GREEN */
+};
+
+// Cache fetched data per year
+const cache = {};
+let currentData = [];
+let playing = false;
+let playTimer = null;
+let mapInitialized = false;
+const TRANSITION_MS = 900;
+const FRAME_INTERVAL = 1500;
+
+async function fetchYear(year) {
+  if (cache[year]) return cache[year];
+  loading.style.display = 'flex';
+  const res = await fetch('/api/analysis/map-data/' + year);
+  const data = await res.json();
+  cache[year] = data;
+  loading.style.display = 'none';
+  return data;
+}
+
+/* Prefetch upcoming years so playback is seamless */
+function prefetch(startIdx, count) {
+  for (let i = 1; i <= count; i++) {
+    const futureIdx = (startIdx + i) % years.length;
+    const futureYear = years[futureIdx];
+    if (!cache[futureYear]) {
+      fetch('/api/analysis/map-data/' + futureYear)
+        .then(r => r.json())
+        .then(d => { cache[futureYear] = d; });
+    }
+  }
+}
+
+function buildTrace(data, indicator) {
+  const valid = data.filter(d => d[indicator]);
+  return {
+    type: 'choropleth',
+    locations: valid.map(d => d.iso3),
+    z: valid.map(d => d[indicator]),
+    text: valid.map(d => d.name + ' (' + d.cocom + ')'),
+    hovertemplate: '%{text}<br>' + indicatorLabels[indicator] + ': %{z:,.2f}<extra></extra>',
+    colorscale: indicatorScales[indicator],
+    marker: { line: { color: '#111418', width: 1.2 } },
+    colorbar: {
+      orientation: 'h',
+      x: 0.5,
+      xanchor: 'center',
+      y: -0.02,
+      yanchor: 'top',
+      len: 0.4,
+      thickness: 6,
+      title: { text: '', font: { size: 0 } },
+      tickfont: { color: '#5F6B7C', size: 8 },
+      bgcolor: 'rgba(0,0,0,0)',
+      outlinecolor: 'rgba(0,0,0,0)',
+      ticks: 'outside',
+      ticklen: 2,
+      nticks: 4,
+    },
+  };
+}
+
+const mapLayout = {
+  geo: {
+    bgcolor: 'rgba(0,0,0,0)',
+    lakecolor: '#111418',
+    landcolor: '#252A31',
+    showframe: false,
+    showcoastlines: true,
+    coastlinecolor: '#111418',
+    countrycolor: '#111418',
+    showcountries: true,
+    projection: { type: 'natural earth' },
+    showocean: true,
+    oceancolor: '#111418',
+  },
+  paper_bgcolor: 'rgba(0,0,0,0)',
+  plot_bgcolor: 'rgba(0,0,0,0)',
+  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
+  margin: { t: 10, b: 28, l: 10, r: 10 },
+  dragmode: false,
+};
+
+function renderTimelineMap(data, indicator, smooth) {
+  currentData = data;
+  const trace = buildTrace(data, indicator);
+
+  if (!mapInitialized) {
+    Plotly.react('timeline-map', [trace], mapLayout,
+      { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+    mapInitialized = true;
+    return;
+  }
+
+  if (smooth) {
+    /* Animate: smoothly interpolate colors between frames */
+    Plotly.animate('timeline-map', {
+      data: [trace],
+      layout: {},
+    }, {
+      transition: { duration: TRANSITION_MS, easing: 'cubic-in-out' },
+      frame: { duration: TRANSITION_MS, redraw: true },
+    });
+  } else {
+    Plotly.react('timeline-map', [trace], mapLayout,
+      { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+  }
+}
+
+/* Animate the year counter */
+function setYearDisplay(year) {
+  yearDisplay.classList.add('transitioning');
+  setTimeout(function() {
+    yearDisplay.textContent = year;
+    yearDisplay.classList.remove('transitioning');
+  }, 150);
+}
+
+async function updateYear(idx, smooth) {
+  const year = years[idx];
+  slider.value = idx;
+  if (smooth) {
+    setYearDisplay(year);
+  } else {
+    yearDisplay.textContent = year;
+  }
+  const data = await fetchYear(year);
+  renderTimelineMap(data, indicatorSelect.value, smooth);
+}
+
+// Slider events — instant on drag for responsiveness
+slider.addEventListener('input', function() {
+  updateYear(parseInt(this.value), false);
+});
+
+// Indicator change
+indicatorSelect.addEventListener('change', function() {
+  const idx = parseInt(slider.value);
+  const year = years[idx];
+  if (cache[year]) {
+    renderTimelineMap(cache[year], this.value, false);
+  } else {
+    updateYear(idx, false);
+  }
+});
+
+// Play/pause with smooth transitions and prefetching
+playBtn.addEventListener('click', function() {
+  if (playing) {
+    clearTimeout(playTimer);
+    playing = false;
+    playBtn.textContent = 'Play';
+    playBtn.classList.remove('playing');
+  } else {
+    playing = true;
+    playBtn.textContent = 'Pause';
+    playBtn.classList.add('playing');
+    let idx = parseInt(slider.value);
+
+    /* Prefetch the first batch */
+    prefetch(idx, 5);
+
+    function tick() {
+      if (!playing) return;
+      idx++;
+      if (idx >= years.length) idx = 0;
+      updateYear(idx, true);
+      /* Prefetch ahead during playback */
+      prefetch(idx, 4);
+      playTimer = setTimeout(tick, FRAME_INTERVAL);
+    }
+    playTimer = setTimeout(tick, 200);
+  }
+});
+
+// Initial load
+updateYear(0, false);
+
+// ════════════════════════════════════════════════════════
+// Country Time Series — Interactive Line Chart
+// ════════════════════════════════════════════════════════
+
+/* Extended palette for multi-line charts */
+const tsColors = [
+  '#2D72D2','#D33D17','#29A634','#D1980B','#9D3F9D',  /* BLUE3, VERMILION3, FOREST3, GOLD3, VIOLET3 */
+  '#00A396','#DB2C6F','#7961DB','#8EB125','#147EB3',  /* TURQUOISE3, ROSE3, INDIGO3, LIME3, CERULEAN3 */
+];
+
+const tsCountrySelect = document.getElementById('ts-country-select');
+const tsAddBtn = document.getElementById('ts-add-btn');
+const tsChips = document.getElementById('ts-chips');
+let tsSelected = []; // [{iso2, name, color}]
+let tsColorIdx = 0;
+let tsFetching = false;
+
+function tsGetColor() {
+  const c = tsColors[tsColorIdx % tsColors.length];
+  tsColorIdx++;
+  return c;
+}
+
+function tsRenderChips() {
+  tsChips.innerHTML = '';
+  tsSelected.forEach((c, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'ts-chip';
+    chip.innerHTML = '<span class="swatch" style="background:' + c.color + '"></span>' +
+      c.name +
+      '<button class="remove" data-idx="' + i + '">&times;</button>';
+    tsChips.appendChild(chip);
+  });
+  tsChips.querySelectorAll('.remove').forEach(btn => {
+    btn.addEventListener('click', function() {
+      tsSelected.splice(parseInt(this.dataset.idx), 1);
+      tsRenderChips();
+      tsFetchAndRender();
+    });
+  });
+}
+
+async function tsFetchAndRender() {
+  if (!tsSelected.length) {
+    Plotly.react('ts-chart', [], {
+      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: '#5F6B7C', family: '-apple-system, Segoe UI, sans-serif', size: 12 },
+      xaxis: { visible: false }, yaxis: { visible: false },
+      annotations: [{
+        text: 'Click a country on the map or add one above',
+        xref: 'paper', yref: 'paper', x: 0.5, y: 0.5,
+        showarrow: false,
+        font: { size: 13, color: '#5F6B7C' },
+      }],
+      margin: { t: 20, b: 20, l: 20, r: 20 },
+    }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+    return;
+  }
+
+  if (tsFetching) return;
+  tsFetching = true;
+
+  const indicator = indicatorSelect.value;
+  const codes = tsSelected.map(c => c.iso2).join(',');
+  const res = await fetch('/api/analysis/timeseries?indicator=' + indicator + '&countries=' + codes);
+  const data = await res.json();
+  tsFetching = false;
+
+  // Group by country
+  const byCountry = {};
+  data.forEach(d => {
+    if (!byCountry[d.iso2]) byCountry[d.iso2] = { name: d.name, years: [], values: [] };
+    byCountry[d.iso2].years.push(d.year);
+    byCountry[d.iso2].values.push(d.value);
+  });
+
+  // Build Plotly traces
+  const traces = tsSelected.map(c => {
+    const series = byCountry[c.iso2];
+    if (!series) return null;
+    return {
+      x: series.years,
+      y: series.values,
+      name: series.name,
+      type: 'scatter',
+      mode: 'lines+markers',
+      line: { color: c.color, width: 2.5 },
+      marker: { size: 4, color: c.color },
+      hovertemplate: '%{x}: %{y:,.2f}<extra>' + series.name + '</extra>',
+    };
+  }).filter(Boolean);
+
+  Plotly.react('ts-chart', traces, {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
+    xaxis: {
+      title: { text: 'Year', font: { size: 10, color: '#5F6B7C' } },
+      gridcolor: '#252A31',
+      dtick: 5,
+      tickfont: { color: '#8F99A8', size: 9 },
+      fixedrange: true,
+    },
+    yaxis: {
+      title: { text: indicatorLabels[indicator], font: { size: 10, color: '#5F6B7C' } },
+      gridcolor: '#252A31',
+      tickfont: { color: '#8F99A8', size: 9 },
+      fixedrange: true,
+    },
+    legend: { visible: false },
+    margin: { t: 8, b: 40, l: 60, r: 12 },
+    dragmode: false,
+    hovermode: 'x unified',
+    hoverlabel: {
+      bgcolor: '#252A31',
+      bordercolor: '#383E47',
+      font: { color: '#C5CBD3', size: 11 },
+    },
+  }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+}
+
+function tsAddCountry(iso2) {
+  if (tsSelected.find(c => c.iso2 === iso2)) return;
+  const opt = tsCountrySelect.querySelector('option[value="' + iso2 + '"]');
+  if (!opt) return;
+  tsSelected.push({ iso2: iso2, name: opt.textContent.trim(), color: tsGetColor() });
+  tsRenderChips();
+  tsFetchAndRender();
+}
+
+// Add button
+tsAddBtn.addEventListener('click', function() {
+  tsAddCountry(tsCountrySelect.value);
+});
+
+// Preset buttons
+document.querySelectorAll('.ts-preset').forEach(btn => {
+  btn.addEventListener('click', function() {
+    tsSelected = [];
+    tsColorIdx = 0;
+    const codes = this.dataset.countries.split(',');
+    codes.forEach(code => {
+      const opt = tsCountrySelect.querySelector('option[value="' + code + '"]');
+      if (opt) {
+        tsSelected.push({ iso2: code, name: opt.textContent.trim(), color: tsGetColor() });
+      }
+    });
+    tsRenderChips();
+    tsFetchAndRender();
+  });
+});
+
+// When indicator changes, also update the time series chart
+indicatorSelect.addEventListener('change', function() {
+  if (tsSelected.length) tsFetchAndRender();
+});
+
+// Also allow clicking a country on the map to add it to the time series
+document.getElementById('timeline-map').on('plotly_click', function(eventData) {
+  if (eventData.points && eventData.points.length > 0) {
+    const iso3 = eventData.points[0].location;
+    const match = currentData.find(d => d.iso3 === iso3);
+    if (match) tsAddCountry(match.iso2);
+  }
+});
+
+// Initialize with default "Great Powers (P5)"
+['US','CN','RU','GB','FR'].forEach(code => tsAddCountry(code));
+</script>
+{% endblock %}

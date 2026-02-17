@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% set active_page = "library" %}
+{% block title %}Digital Library — CIA World Factbook Archive{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">ARCHIVE // DIGITAL-LIBRARY</div>
+  <h1>The Archive</h1>
+  <p class="subtitle">{{ total }} entities across {{ stats.total_years }} editions of the CIA World Factbook</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-value">{{ "{:,}".format(total) }}</div>
+    <div class="stat-label">Entities</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ stats.total_years }}</div>
+    <div class="stat-label">Editions</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ "{:,}".format(stats.total_fields) }}</div>
+    <div class="stat-label">Fields</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ entity_groups|length }}</div>
+    <div class="stat-label">Entity Types</div>
+  </div>
+</div>
+
+<div style="margin:16px 0;">
+  <a href="/archive" class="btn">Browse by Year</a>
+  <a href="/countries" class="btn">Country Dictionary</a>
+</div>
+
+{# ── Section 01: Browse the Library ── #}
+<div class="sec">
+  <span class="sec-num">SECTION 01</span>
+  <span class="sec-title">Browse the Library</span>
+  <hr class="sec-rule">
+</div>
+
+{# Search + type filter bar #}
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0;">
+  <div style="flex:1;min-width:200px;max-width:320px;">
+    <input type="text" id="entity-filter" placeholder="Filter by name or code..."
+           style="width:100%;background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:8px 14px;font-family:-apple-system,'Segoe UI',sans-serif;font-size:0.85rem;outline:none;">
+  </div>
+  <div class="type-filters" id="type-filters">
+    <button class="type-filter-btn active" data-type="all">All</button>
+    {% for entity_type in entity_groups %}
+    <button class="type-filter-btn" data-type="{{ entity_type|lower }}">{{ entity_type }} <span style="font-size:0.6rem;color:#5F6B7C;">({{ entity_groups[entity_type]|length }})</span></button>
+    {% endfor %}
+  </div>
+</div>
+
+<div id="no-results" style="display:none;margin:32px 0;text-align:center;color:#5F6B7C;font-size:0.88rem;">
+  No entities match your filter.
+</div>
+
+{# Entity cards grouped by type #}
+{% for entity_type, entities in entity_groups.items() %}
+<div class="entity-type-section" data-type="{{ entity_type|lower }}">
+  <div style="display:flex;align-items:baseline;gap:10px;margin:20px 0 8px;">
+    <span class="entity-type-badge">{{ entity_type }}</span>
+    <span style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:0.72rem;color:#5F6B7C;" class="type-count">{{ entities|length }} entities</span>
+  </div>
+
+  <div class="entity-grid">
+    {% for e in entities %}
+    <a href="/archive/{{ e.LastYear }}/{{ e.CanonicalCode or e.ISOAlpha2 }}"
+       class="entity-card"
+       data-name="{{ e.CanonicalName|lower }}"
+       data-code="{{ (e.CanonicalCode or e.ISOAlpha2 or '')|lower }}">
+      {% if e.ISOAlpha2 %}
+      <img src="https://flagcdn.com/w40/{{ e.ISOAlpha2|lower }}.png"
+           srcset="https://flagcdn.com/w80/{{ e.ISOAlpha2|lower }}.png 2x"
+           width="32" height="24" alt="{{ e.ISOAlpha2 }}"
+           loading="lazy"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="entity-card-fallback" style="display:none">{{ e.ISOAlpha2 }}</div>
+      {% else %}
+      <div class="entity-card-fallback" style="display:flex">{{ e.CanonicalCode or '&mdash;' }}</div>
+      {% endif %}
+      <div class="entity-card-info">
+        <div class="entity-card-name">{{ e.CanonicalName }}</div>
+        <div class="entity-card-meta">{{ e.ISOAlpha2 or e.CanonicalCode or '' }} &middot; {{ e.FirstYear }}&ndash;{{ e.LastYear }} &middot; {{ e.YearCount }} yr{{ 's' if e.YearCount != 1 else '' }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+<div class="caveat">
+  <strong>About the Library</strong><br>
+  All {{ total }} entities are drawn from the CIA World Factbook editions spanning 1990 to 2025.
+  Entity classifications (sovereign, territory, disputed, etc.) follow U.S. Government recognition standards.
+  Flag images are loaded from <a href="https://flagcdn.com" target="_blank" rel="noopener">flagcdn.com</a>.
+  Click any entity to view its most recent factbook profile.
+  <br><a href="/sources" style="display:inline-block;margin-top:6px;">Full Sources &amp; Methodology &rarr;</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  var filterInput = document.getElementById('entity-filter');
+  var typeFilters = document.getElementById('type-filters');
+  var sections = document.querySelectorAll('.entity-type-section');
+  var noResults = document.getElementById('no-results');
+  var activeType = 'all';
+
+  /* ── Text filter ── */
+  filterInput.addEventListener('input', function() {
+    applyFilters();
+  });
+
+  /* ── Type filter buttons ── */
+  typeFilters.addEventListener('click', function(e) {
+    var btn = e.target.closest('.type-filter-btn');
+    if (!btn) return;
+    typeFilters.querySelectorAll('.type-filter-btn').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    btn.classList.add('active');
+    activeType = btn.getAttribute('data-type');
+    applyFilters();
+  });
+
+  function applyFilters() {
+    var query = filterInput.value.toLowerCase().trim();
+    var totalVisible = 0;
+
+    sections.forEach(function(section) {
+      var sectionType = section.getAttribute('data-type');
+      var typeMatch = (activeType === 'all' || sectionType === activeType);
+
+      if (!typeMatch) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = '';
+      var cards = section.querySelectorAll('.entity-card');
+      var visibleInSection = 0;
+
+      cards.forEach(function(card) {
+        var name = card.getAttribute('data-name') || '';
+        var code = card.getAttribute('data-code') || '';
+        var match = !query || name.indexOf(query) !== -1 || code.indexOf(query) !== -1;
+        card.style.display = match ? '' : 'none';
+        if (match) visibleInSection++;
+      });
+
+      /* Update count in section header */
+      var countEl = section.querySelector('.type-count');
+      if (countEl) {
+        countEl.textContent = visibleInSection + ' entit' + (visibleInSection === 1 ? 'y' : 'ies');
+      }
+
+      /* Hide section if no cards visible */
+      if (visibleInSection === 0) {
+        section.style.display = 'none';
+      }
+
+      totalVisible += visibleInSection;
+    });
+
+    noResults.style.display = totalVisible === 0 ? '' : 'none';
+  }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% set active_page = "diff" %}
+{% block title %}Text Diff — Intelligence Analysis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // TEXT-DIFF{% if country_name %} // {{ country_name|upper }}{% endif %}</div>
+  <h1>Text Diff</h1>
+  <p class="subtitle">Compare how the CIA described any field between two years</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:8px;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/changes" class="btn">Change Detection</a>
+</div>
+
+{# ── Controls ── #}
+<div class="sec">
+  <span class="sec-num">01</span>
+  <span class="sec-title">Select Comparison</span>
+  <hr class="sec-rule">
+</div>
+
+<form method="get" action="/analysis/diff" style="display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:16px 0;">
+  <div>
+    <label style="display:block;font-size:0.68rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Country</label>
+    <select name="code" id="country-select" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;min-width:200px;">
+      <option value="">Select a country</option>
+      {% for c in countries %}
+      <option value="{{ c.ISOAlpha2 }}" {{ 'selected' if c.ISOAlpha2 == code else '' }}>{{ c.CanonicalName }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label style="display:block;font-size:0.68rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Field</label>
+    <select name="field" id="field-select" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;min-width:240px;">
+      <option value="">Select a field</option>
+    </select>
+  </div>
+  <div>
+    <label style="display:block;font-size:0.68rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Year A</label>
+    <select name="year_a" id="year-a" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+      {% for y in all_years %}
+      <option value="{{ y }}" {{ 'selected' if y == year_a else '' }}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label style="display:block;font-size:0.68rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Year B</label>
+    <select name="year_b" id="year-b" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+      {% for y in all_years %}
+      <option value="{{ y }}" {{ 'selected' if y == year_b else '' }}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="btn" style="height:34px;">Compare</button>
+</form>
+
+{% if diff %}
+{# ── Section 02: Diff Output ── #}
+<div class="sec">
+  <span class="sec-num">02</span>
+  <span class="sec-title">{{ country_name }} &mdash; {{ field }} ({{ year_a }} vs {{ year_b }})</span>
+  <hr class="sec-rule">
+</div>
+
+{# Legend #}
+<div style="display:flex;gap:16px;margin:12px 0;font-size:0.72rem;">
+  <span><span style="display:inline-block;width:12px;height:12px;background:#1A3324;border:1px solid #29A634;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Added</span>
+  <span><span style="display:inline-block;width:12px;height:12px;background:#3B1A1A;border:1px solid #CD4246;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Removed</span>
+  <span><span style="display:inline-block;width:12px;height:12px;background:#3D2E0A;border:1px solid #D1980B;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Changed</span>
+  <span style="color:#5F6B7C;"><span style="display:inline-block;width:12px;height:12px;background:#1C2127;border:1px solid #383E47;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Unchanged</span>
+</div>
+
+{# Side-by-side diff #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#2F343C;border:1px solid #2F343C;border-radius:4px;margin:16px 0;">
+  <div style="background:#252A31;padding:10px 14px;font-size:0.72rem;color:#8F99A8;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">{{ year_a }}</div>
+  <div style="background:#252A31;padding:10px 14px;font-size:0.72rem;color:#8F99A8;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">{{ year_b }}</div>
+  {% for d in diff %}
+  {% if d.tag == 'equal' %}
+  <div style="background:#1C2127;padding:10px 14px;font-size:0.82rem;color:#8F99A8;line-height:1.6;">{{ d.a }}</div>
+  <div style="background:#1C2127;padding:10px 14px;font-size:0.82rem;color:#8F99A8;line-height:1.6;">{{ d.b }}</div>
+  {% elif d.tag == 'replace' %}
+  <div style="background:#3D2E0A;padding:10px 14px;font-size:0.82rem;color:#D1980B;line-height:1.6;border-left:3px solid #D1980B;">{{ d.a or '&mdash;' }}</div>
+  <div style="background:#3D2E0A;padding:10px 14px;font-size:0.82rem;color:#D1980B;line-height:1.6;border-left:3px solid #D1980B;">{{ d.b or '&mdash;' }}</div>
+  {% elif d.tag == 'delete' %}
+  <div style="background:#3B1A1A;padding:10px 14px;font-size:0.82rem;color:#CD4246;line-height:1.6;border-left:3px solid #CD4246;">{{ d.a }}</div>
+  <div style="background:#1C2127;padding:10px 14px;font-size:0.82rem;color:#5F6B7C;font-style:italic;">Removed</div>
+  {% elif d.tag == 'insert' %}
+  <div style="background:#1C2127;padding:10px 14px;font-size:0.82rem;color:#5F6B7C;font-style:italic;">Not present</div>
+  <div style="background:#1A3324;padding:10px 14px;font-size:0.82rem;color:#29A634;line-height:1.6;border-left:3px solid #29A634;">{{ d.b }}</div>
+  {% endif %}
+  {% endfor %}
+</div>
+
+{# Raw text fallback #}
+<details style="margin-top:16px;">
+  <summary style="cursor:pointer;font-size:0.72rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:0.8px;">Show Raw Text</summary>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
+    <div>
+      <div style="font-size:0.68rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">{{ year_a }}</div>
+      <div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:12px;font-size:0.82rem;color:#ABB3BF;line-height:1.7;white-space:pre-wrap;">{{ text_a or 'No data available for this year.' }}</div>
+    </div>
+    <div>
+      <div style="font-size:0.68rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">{{ year_b }}</div>
+      <div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:12px;font-size:0.82rem;color:#ABB3BF;line-height:1.7;white-space:pre-wrap;">{{ text_b or 'No data available for this year.' }}</div>
+    </div>
+  </div>
+</details>
+
+{% elif code and field and year_a and year_b %}
+<div style="margin:32px 0;text-align:center;color:#5F6B7C;font-size:0.88rem;">
+  No data found for this combination. Try different years or a different field.
+</div>
+{% else %}
+<div style="margin:32px 0;text-align:center;color:#5F6B7C;font-size:0.88rem;">
+  Select a country, field, and two years to compare.
+</div>
+{% endif %}
+
+{# ── Methodology ── #}
+<div class="caveat">
+  <strong>Methodology</strong><br>
+  Compares the raw text content of any CIA World Factbook field between two editions.
+  Text is split on sentence boundaries and compared using sequence matching.
+  Differences are classified as additions (new text), deletions (removed text),
+  and replacements (modified text). Field names are resolved through the 414 canonical name mappings.
+  <br><a href="/sources" style="display:inline-block;margin-top:6px;">Full Sources &amp; Methodology &rarr;</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Populate field dropdown via AJAX when country changes */
+var countrySelect = document.getElementById('country-select');
+var fieldSelect = document.getElementById('field-select');
+var currentField = '{{ field }}';
+
+function loadFields(code) {
+  if (!code) {
+    fieldSelect.innerHTML = '<option value="">Select a field</option>';
+    return;
+  }
+  fieldSelect.innerHTML = '<option value="">Loading fields...</option>';
+  fetch('/api/archive/fields/' + encodeURIComponent(code))
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(fields) {
+      if (!fields || !fields.length) {
+        fieldSelect.innerHTML = '<option value="">No fields found</option>';
+        return;
+      }
+      var html = '<option value="">Select a field (' + fields.length + ' available)</option>';
+      fields.forEach(function(f) {
+        var sel = (f === currentField) ? ' selected' : '';
+        html += '<option value="' + f + '"' + sel + '>' + f + '</option>';
+      });
+      fieldSelect.innerHTML = html;
+    })
+    .catch(function(err) {
+      fieldSelect.innerHTML = '<option value="">Error loading fields</option>';
+      console.error('Failed to load fields:', err);
+    });
+}
+
+countrySelect.addEventListener('change', function() {
+  currentField = '';
+  loadFields(this.value);
+});
+
+/* Load fields on page load if country is pre-selected */
+if (countrySelect.value) {
+  loadFields(countrySelect.value);
+}
+</script>
+{% endblock %}

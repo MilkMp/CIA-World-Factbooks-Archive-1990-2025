@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% set active_page = "communications" %}
+{% block title %}Communications Infrastructure — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // COMMUNICATIONS // {{ year }}</div>
+  <h1>Communications Infrastructure Analysis</h1>
+  <p class="subtitle">Global telecommunications and digital connectivity assessment &mdash; {{ year }} data</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:8px;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/regional" class="btn">Regional Dashboard</a>
+  <a href="/analysis/map-compare" class="btn">Map Compare</a>
+  <a href="/analysis/timeline" class="btn">Timeline</a>
+</div>
+
+{# ── Section 01: Global Choropleth ── #}
+<div class="sec">
+  <span class="sec-num">01</span>
+  <span class="sec-title">Global Connectivity Map</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap;">
+  <label style="font-size:0.72rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;">Indicator</label>
+  <select id="indicator-select" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+    <option value="internet_pct" selected>Internet Users (% of population)</option>
+    <option value="mobile_per100">Mobile Cellular (per 100 inhabitants)</option>
+    <option value="fixed_per100">Fixed Lines (per 100 inhabitants)</option>
+    <option value="broadband_per100">Broadband (per 100 inhabitants)</option>
+  </select>
+</div>
+
+<div id="comms-map" style="height:clamp(300px,45vw,480px);"></div>
+
+{# ── Section 02: Regional Summary ── #}
+<div class="sec">
+  <span class="sec-num">02</span>
+  <span class="sec-title">Regional Connectivity Summary</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:16px 0;">
+  {% for rs in region_summaries %}
+  <div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:14px 16px;">
+    <div style="font-family:Consolas,monospace;font-size:0.68rem;color:#5F6B7C;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">{{ rs.region }}</div>
+    <div style="font-weight:700;font-size:0.92rem;margin-bottom:10px;">{{ rs.region_name }}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:0.75rem;">
+      <div>
+        <div style="color:#5F6B7C;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.5px;">Internet</div>
+        <div style="font-weight:600;color:#C5CBD3;">{{ '%.1f'|format(rs.avg_internet) if rs.avg_internet else '—' }}%</div>
+      </div>
+      <div>
+        <div style="color:#5F6B7C;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.5px;">Mobile</div>
+        <div style="font-weight:600;color:#3FA6DA;">{{ '%.1f'|format(rs.avg_mobile) if rs.avg_mobile else '—' }}</div>
+      </div>
+      <div>
+        <div style="color:#5F6B7C;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.5px;">Broadband</div>
+        <div style="font-weight:600;color:#8F99A8;">{{ '%.1f'|format(rs.avg_broadband) if rs.avg_broadband else '—' }}</div>
+      </div>
+    </div>
+    <div style="font-size:0.65rem;color:#5F6B7C;margin-top:8px;">{{ rs.data_count }} of {{ rs.country_count }} entities reporting</div>
+  </div>
+  {% endfor %}
+</div>
+
+{# ── Section 03: Country Rankings ── #}
+<div class="sec">
+  <span class="sec-num">03</span>
+  <span class="sec-title">Country Rankings</span>
+  <hr class="sec-rule">
+</div>
+
+<table class="data-table" id="rankings-table">
+  <thead>
+    <tr>
+      <th style="cursor:pointer;" onclick="sortTable(0)">Country</th>
+      <th class="r" style="cursor:pointer;" onclick="sortTable(1)">Internet %</th>
+      <th class="r" style="cursor:pointer;" onclick="sortTable(2)">Mobile /100</th>
+      <th class="r" style="cursor:pointer;" onclick="sortTable(3)">Fixed /100</th>
+      <th class="r" style="cursor:pointer;" onclick="sortTable(4)">Broadband /100</th>
+      <th style="cursor:pointer;" onclick="sortTable(5)">Region</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in all_data %}
+    {% if c.internet_pct is not none or c.mobile_per100 is not none %}
+    <tr>
+      <td><a href="/analysis/dossier/{{ c.iso2 }}">{{ c.name }}</a></td>
+      <td class="r">{{ '%.1f'|format(c.internet_pct) if c.internet_pct is not none else '—' }}</td>
+      <td class="r">{{ '%.1f'|format(c.mobile_per100) if c.mobile_per100 is not none else '—' }}</td>
+      <td class="r">{{ '%.1f'|format(c.fixed_per100) if c.fixed_per100 is not none else '—' }}</td>
+      <td class="r">{{ '%.1f'|format(c.broadband_per100) if c.broadband_per100 is not none else '—' }}</td>
+      <td>{{ c.cocom }}</td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+
+{# ── Section 04: Digital Divide ── #}
+<div class="sec">
+  <span class="sec-num">04</span>
+  <span class="sec-title">Digital Divide</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px;margin:16px 0;">
+  <div>
+    <div style="font-family:Consolas,monospace;font-size:0.68rem;color:#29A634;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Most Connected</div>
+    <div id="top10-chart" style="height:340px;"></div>
+  </div>
+  <div>
+    <div style="font-family:Consolas,monospace;font-size:0.68rem;color:#D33D17;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Least Connected</div>
+    <div id="bottom10-chart" style="height:340px;"></div>
+  </div>
+</div>
+
+{# ── Methodology ── #}
+<div class="caveat">
+  <strong>Methodology</strong><br>
+  Data from CIA World Factbook {{ year }} edition (public domain).
+  <strong>Internet users</strong>: percent of population with Internet access.
+  <strong>Mobile cellular</strong>: subscriptions per 100 inhabitants (values above 100 indicate multiple SIMs per person).
+  <strong>Fixed lines</strong>: traditional telephone subscriptions per 100 inhabitants.
+  <strong>Broadband</strong>: fixed broadband subscriptions per 100 inhabitants (data available from 2018).
+  <br><a href="/sources" style="display:inline-block;margin-top:6px;">Full Sources &amp; Methodology &rarr;</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Data from server ── */
+const allData = {{ all_data | tojson }};
+const top10 = {{ top10 | tojson }};
+const bottom10 = {{ bottom10 | tojson }};
+
+const indicatorLabels = {
+  internet_pct: 'Internet Users (%)',
+  mobile_per100: 'Mobile Subs /100',
+  fixed_per100: 'Fixed Lines /100',
+  broadband_per100: 'Broadband /100',
+};
+
+const indicatorScales = {
+  internet_pct: [[0,'#62D96B'],[0.25,'#43BF4D'],[0.5,'#29A634'],[0.75,'#238C2C'],[1,'#1D7324']],
+  mobile_per100: [[0,'#FBB360'],[0.25,'#EC9A3C'],[0.5,'#C87619'],[0.75,'#935610'],[1,'#77450D']],
+  fixed_per100: [[0,'#68C1EE'],[0.25,'#3FA6DA'],[0.5,'#147EB3'],[0.75,'#0F6894'],[1,'#0C5174']],
+  broadband_per100: [[0,'#D69FD6'],[0.25,'#BD6BBD'],[0.5,'#9D3F9D'],[0.75,'#7C327C'],[1,'#5C255A']],
+};
+
+const indicatorRanges = {
+  internet_pct: [0, 100],
+  mobile_per100: [0, 200],
+  fixed_per100: [0, 60],
+  broadband_per100: [0, 55],
+};
+
+/* ── Choropleth map ── */
+function renderMap(indicator) {
+  const valid = allData.filter(d => d[indicator] != null);
+  const [zmin, zmax] = indicatorRanges[indicator];
+  Plotly.react('comms-map', [{
+    type: 'choropleth',
+    locations: valid.map(d => d.iso3),
+    z: valid.map(d => d[indicator]),
+    zmin: zmin,
+    zmax: zmax,
+    text: valid.map(d => d.name),
+    hovertemplate: '%{text}<br>' + indicatorLabels[indicator] + ': %{z:,.1f}<extra></extra>',
+    colorscale: indicatorScales[indicator],
+    marker: { line: { color: '#111418', width: 0.8 } },
+    colorbar: {
+      title: { text: indicatorLabels[indicator], font: { color: '#8F99A8', size: 10 } },
+      tickfont: { color: '#8F99A8', size: 9 },
+      bgcolor: 'rgba(0,0,0,0)',
+      outlinecolor: '#2F343C',
+      len: 0.6,
+    },
+  }], {
+    geo: {
+      bgcolor: '#1C2127',
+      lakecolor: '#111418',
+      landcolor: '#252A31',
+      showframe: false,
+      showcoastlines: true,
+      coastlinecolor: '#111418',
+      countrycolor: '#111418',
+      showcountries: true,
+      projection: { type: 'natural earth' },
+      showocean: true,
+      oceancolor: '#111418',
+    },
+    paper_bgcolor: '#1C2127',
+    plot_bgcolor: '#1C2127',
+    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
+    margin: { t: 4, b: 4, l: 4, r: 4 },
+    dragmode: false,
+  }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+}
+
+/* ── Digital divide bar charts ── */
+Plotly.newPlot('top10-chart', [{
+  type: 'bar',
+  orientation: 'h',
+  y: top10.map(d => d.name).reverse(),
+  x: top10.map(d => d.internet_pct).reverse(),
+  marker: { color: '#29A634' },
+  hovertemplate: '%{y}: %{x:.1f}%<extra></extra>',
+}], {
+  paper_bgcolor: '#1C2127',
+  plot_bgcolor: '#1C2127',
+  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
+  margin: { t: 4, r: 20, b: 30, l: 180 },
+  xaxis: { range: [0, 105], gridcolor: '#252A31', fixedrange: true, dtick: 25, ticksuffix: '%' },
+  yaxis: { fixedrange: true, tickfont: { size: 11 } },
+  bargap: 0.25,
+}, { responsive: true, displayModeBar: false, doubleClick: 'reset' });
+
+Plotly.newPlot('bottom10-chart', [{
+  type: 'bar',
+  orientation: 'h',
+  y: bottom10.map(d => d.name).reverse(),
+  x: bottom10.map(d => d.internet_pct).reverse(),
+  marker: { color: '#D33D17' },
+  hovertemplate: '%{y}: %{x:.1f}%<extra></extra>',
+}], {
+  paper_bgcolor: '#1C2127',
+  plot_bgcolor: '#1C2127',
+  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
+  margin: { t: 4, r: 20, b: 30, l: 180 },
+  xaxis: { range: [0, 105], gridcolor: '#252A31', fixedrange: true, dtick: 25, ticksuffix: '%' },
+  yaxis: { fixedrange: true, tickfont: { size: 11 } },
+  bargap: 0.25,
+}, { responsive: true, displayModeBar: false, doubleClick: 'reset' });
+
+/* ── Indicator dropdown ── */
+document.getElementById('indicator-select').addEventListener('change', function() {
+  renderMap(this.value);
+});
+
+/* ── Table sorting ── */
+let sortCol = -1, sortAsc = true;
+function sortTable(col) {
+  const table = document.getElementById('rankings-table');
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+
+  if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = col === 0 ? true : false; }
+
+  rows.sort(function(a, b) {
+    let va = a.cells[col].textContent.trim();
+    let vb = b.cells[col].textContent.trim();
+    if (col > 0 && col < 5) {
+      va = va === '\u2014' ? -Infinity : parseFloat(va);
+      vb = vb === '\u2014' ? -Infinity : parseFloat(vb);
+    }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+  rows.forEach(function(r) { tbody.appendChild(r); });
+}
+
+/* ── Initial render ── */
+renderMap('internet_pct');
+</script>
+{% endblock %}

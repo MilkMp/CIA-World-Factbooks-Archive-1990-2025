@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% set active_page = "about" %}
+{% block title %}About — CIA World Factbook Archive{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">REFERENCE // ABOUT</div>
+  <h1>About The Archive</h1>
+  <p class="subtitle">36 years of CIA World Factbook data, preserved and searchable</p>
+</div>
+
+<hr class="doc-rule double">
+
+{# ── Key Metrics Strip ── #}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:#2F343C;border:1px solid #2F343C;border-radius:4px;margin:20px 0;">
+  <div style="background:#1C2127;padding:16px 18px;text-align:center;">
+    <div style="font-size:1.6rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">36</div>
+    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Years</div>
+  </div>
+  <div style="background:#1C2127;padding:16px 18px;text-align:center;">
+    <div style="font-size:1.6rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">281</div>
+    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Entities</div>
+  </div>
+  <div style="background:#1C2127;padding:16px 18px;text-align:center;">
+    <div style="font-size:1.6rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">1.07M</div>
+    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Fields</div>
+  </div>
+  <div style="background:#1C2127;padding:16px 18px;text-align:center;">
+    <div style="font-size:1.6rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">414</div>
+    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Canonical Fields</div>
+  </div>
+  <div style="background:#1C2127;padding:16px 18px;text-align:center;">
+    <div style="font-size:1.6rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">1990</div>
+    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Earliest Edition</div>
+  </div>
+  <div style="background:#1C2127;padding:16px 18px;text-align:center;">
+    <div style="font-size:1.6rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">2025</div>
+    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Latest Edition</div>
+  </div>
+</div>
+
+{# ── Section 01: Mission ── #}
+<div class="sec">
+  <span class="sec-num">01</span>
+  <span class="sec-title">Mission</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin:16px 0;">
+  <div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:20px;">
+    <div style="font-family:Consolas,monospace;font-size:0.65rem;color:#5F6B7C;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">The Problem</div>
+    <p style="font-size:0.85rem;color:#C5CBD3;line-height:1.65;margin:0;">The CIA only publishes the current edition of the World Factbook. When a new edition replaces the old, decades of geopolitical data disappears from public access. Historical editions survive only as scattered archives&mdash;plain-text on Gutenberg, cached JSON on GitHub, zip files on the Wayback Machine&mdash;each in a different format with no way to search or compare across years.</p>
+  </div>
+  <div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:20px;">
+    <div style="font-family:Consolas,monospace;font-size:0.65rem;color:#5F6B7C;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">The Solution</div>
+    <p style="font-size:0.85rem;color:#C5CBD3;line-height:1.65;margin:0;">This archive brings every edition from 1990 to 2025 into a single, normalized, searchable database. Every country, every field, every edition&mdash;parsed from original CIA publications, standardized across 36 years of format changes, and made available for research, analysis, and public use.</p>
+  </div>
+</div>
+
+<div class="caveat" style="border-left:3px solid #D33D17;margin-top:12px;">
+  <strong>February 2026</strong><br>
+  The CIA discontinued the online World Factbook, making this archive one of the last comprehensive preserved copies of the full publication history.
+</div>
+
+{# ── Section 02: Capabilities ── #}
+<div class="sec">
+  <span class="sec-num">02</span>
+  <span class="sec-title">Capabilities</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:16px 0;">
+  <a href="/search" style="text-decoration:none;display:block;background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;transition:border-color 200ms;">
+    <div style="font-size:0.92rem;color:#C5CBD3;font-weight:600;margin-bottom:6px;">Boolean Search</div>
+    <p style="font-size:0.78rem;color:#8F99A8;line-height:1.5;margin:0;">Full-text search across 1,071,213 fields with AND/OR/NOT operators, phrase matching, field and year filtering.</p>
+  </a>
+  <a href="/archive" style="text-decoration:none;display:block;background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;transition:border-color 200ms;">
+    <div style="font-size:0.92rem;color:#C5CBD3;font-weight:600;margin-bottom:6px;">Browse &amp; Compare</div>
+    <p style="font-size:0.78rem;color:#8F99A8;line-height:1.5;margin:0;">Navigate any country in any year. View side-by-side comparisons. Track individual fields across the full 36-year span.</p>
+  </a>
+  <a href="/analysis" style="text-decoration:none;display:block;background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;transition:border-color 200ms;">
+    <div style="font-size:0.92rem;color:#C5CBD3;font-weight:600;margin-bottom:6px;">Intelligence Analysis</div>
+    <p style="font-size:0.78rem;color:#8F99A8;line-height:1.5;margin:0;">Choropleth maps, regional dashboards, timeline animations, country dossiers formatted per ICD 203 analytic standards.</p>
+  </a>
+  <a href="/export" style="text-decoration:none;display:block;background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;transition:border-color 200ms;">
+    <div style="font-size:0.92rem;color:#C5CBD3;font-weight:600;margin-bottom:6px;">Data Export</div>
+    <p style="font-size:0.78rem;color:#8F99A8;line-height:1.5;margin:0;">Download as CSV, Excel, or formatted PDF. Bulk export all 36 years for any country. Print-ready paginated reports.</p>
+  </a>
+</div>
+
+{# ── Section 03: Who This Is For ── #}
+<div class="sec">
+  <span class="sec-num">03</span>
+  <span class="sec-title">Audience</span>
+  <hr class="sec-rule">
+</div>
+
+<table class="data-table">
+  <thead>
+    <tr><th>Audience</th><th>Use Case</th></tr>
+  </thead>
+  <tbody>
+    <tr><td style="color:#C5CBD3;font-weight:600;">Researchers</td><td>Track how countries evolved over decades&mdash;GDP trajectories, population shifts, governance changes</td></tr>
+    <tr><td style="color:#C5CBD3;font-weight:600;">Analysts</td><td>Compare economic, military, or demographic indicators across time and regions</td></tr>
+    <tr><td style="color:#C5CBD3;font-weight:600;">Journalists</td><td>Verify historical claims against primary source data from U.S. Government publications</td></tr>
+    <tr><td style="color:#C5CBD3;font-weight:600;">Archivists</td><td>Preserve access to public-domain government publications before they disappear</td></tr>
+    <tr><td style="color:#C5CBD3;font-weight:600;">Students</td><td>Study international relations, political science, or intelligence analysis with real-world data</td></tr>
+    <tr><td style="color:#C5CBD3;font-weight:600;">Data Scientists</td><td>Build structured, longitudinal country datasets from standardized, canonical field names</td></tr>
+  </tbody>
+</table>
+
+{# ── Section 04: Architecture ── #}
+<div class="sec">
+  <span class="sec-num">04</span>
+  <span class="sec-title">Architecture</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin:16px 0;">
+  <div>
+    <table class="data-table">
+      <thead><tr><th>Component</th><th>Technology</th></tr></thead>
+      <tbody>
+        <tr><td>Backend</td><td>Python / FastAPI</td></tr>
+        <tr><td>Templates</td><td>Jinja2</td></tr>
+        <tr><td>Database</td><td>SQLite (deployed) / SQL Server (source)</td></tr>
+        <tr><td>Charts</td><td>Plotly.js 2.32</td></tr>
+        <tr><td>Hosting</td><td>Fly.io (Docker)</td></tr>
+        <tr><td>Source Control</td><td>GitHub</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <table class="data-table">
+      <thead><tr><th>ETL Pipeline</th><th>Coverage</th></tr></thead>
+      <tbody>
+        <tr><td>Plain-text parser</td><td>1990&ndash;2001 (Gutenberg)</td></tr>
+        <tr><td>HTML parser (5 variants)</td><td>2000&ndash;2020</td></tr>
+        <tr><td>JSON parser</td><td>2021&ndash;2025</td></tr>
+        <tr><td>Field canonicalization</td><td>1,090 &rarr; 414 names</td></tr>
+        <tr><td>Entity standardization</td><td>281 entities, 9 types</td></tr>
+        <tr><td>Regional classification</td><td>6 COCOM commands</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ── Section 05: Creator ── #}
+<div class="sec">
+  <span class="sec-num">05</span>
+  <span class="sec-title">Creator</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:16px 0;">
+  <div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:20px;">
+    <div style="font-size:0.95rem;color:#C5CBD3;font-weight:700;margin-bottom:10px;">MilkMp</div>
+    <p style="font-size:0.82rem;color:#8F99A8;line-height:1.6;margin:0 0 12px 0;">Research analyst with training in information organization, archival methodology, intelligence analysis standards, and historical research methods. This project combines all four disciplines&mdash;library science to structure a government publication, historical methods for 36 years of format changes, ICD 203/208 standards for data presentation, and crime/intelligence analysis for the analytic tools.</p>
+    <div style="margin-top:8px;">
+      <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank" rel="noopener" class="btn">GitHub Repository</a>
+    </div>
+  </div>
+  <div>
+    <table class="data-table">
+      <thead><tr><th colspan="2">Credentials</th></tr></thead>
+      <tbody>
+        <tr><td style="color:#8F99A8;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;">Education</td><td>MLIS (Library &amp; Info Science)</td></tr>
+        <tr><td style="color:#8F99A8;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;">Education</td><td>B.A. in History</td></tr>
+        <tr><td style="color:#8F99A8;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;">Certificate</td><td>Crime &amp; Intelligence Analysis</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ── Disclaimer ── #}
+<div class="caveat" style="margin-top:24px;">
+  <strong>Disclaimer</strong><br>
+  This project is not affiliated with the Central Intelligence Agency, the Office of the
+  Director of National Intelligence, or the U.S. Government. All data originates from the
+  CIA World Factbook, a public-domain publication. The intelligence community formatting
+  (ICD 203/208 structure, COCOM regional organization, confidence badges) is used for
+  presentation purposes only and does not imply access to classified sources or methods.
+  <br><a href="/sources" style="display:inline-block;margin-top:6px;">Full Sources &amp; Methodology &rarr;</a>
+</div>
+
+{% endblock %}

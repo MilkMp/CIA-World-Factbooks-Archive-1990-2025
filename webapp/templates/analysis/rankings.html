@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% set active_page = "rankings" %}
+{% block title %}Global Rankings — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // GLOBAL-RANKINGS // {{ year }}</div>
+  <h1>Global Rankings</h1>
+  <p class="subtitle">Sovereign state leaderboard by indicator &mdash; {{ year }} data</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:8px;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/regional" class="btn">Regional Dashboard</a>
+</div>
+
+{# ── Controls ── #}
+<div style="display:flex;align-items:center;gap:12px;margin:16px 0;flex-wrap:wrap;">
+  <label style="font-size:0.72rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;">Indicator</label>
+  <select id="indicator-select" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+    {% for key, label in indicators.items() %}
+    <option value="{{ key }}" {{ 'selected' if key == indicator else '' }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <label style="font-size:0.72rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;">Year</label>
+  <select id="year-select" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+    {% for y in years %}
+    <option value="{{ y }}" {{ 'selected' if y == year else '' }}>{{ y }}</option>
+    {% endfor %}
+  </select>
+  <a id="update-btn" href="#" class="btn">Update</a>
+</div>
+
+{# ── Section 01: Top / Bottom Bar Charts ── #}
+<div class="sec">
+  <span class="sec-num">01</span>
+  <span class="sec-title">Top &amp; Bottom 10</span>
+  <hr class="sec-rule">
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px;margin:16px 0;">
+  <div>
+    <div style="font-family:Consolas,monospace;font-size:0.68rem;color:#2D72D2;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Top 10</div>
+    <div id="top10-chart" style="height:340px;"></div>
+  </div>
+  <div>
+    <div style="font-family:Consolas,monospace;font-size:0.68rem;color:#8F99A8;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Bottom 10</div>
+    <div id="bottom10-chart" style="height:340px;"></div>
+  </div>
+</div>
+
+{# ── Section 02: Full Rankings Table ── #}
+<div class="sec">
+  <span class="sec-num">02</span>
+  <span class="sec-title">Full Leaderboard ({{ rankings|length }} countries)</span>
+  <hr class="sec-rule">
+</div>
+
+<table class="data-table" id="rankings-table">
+  <thead>
+    <tr>
+      <th style="cursor:pointer;width:50px;" onclick="sortTable(0)">#</th>
+      <th style="cursor:pointer;" onclick="sortTable(1)">Country</th>
+      <th class="r" style="cursor:pointer;" onclick="sortTable(2)">Value</th>
+      <th style="cursor:pointer;" onclick="sortTable(3)">Region</th>
+      <th style="width:90px;">Trend</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rankings %}
+    <tr>
+      <td style="color:#5F6B7C;">{{ r.rank }}</td>
+      <td><a href="/analysis/dossier/{{ r.iso2 }}">{{ r.name }}</a></td>
+      <td class="r" style="font-variant-numeric:tabular-nums;">{{ r.display }}</td>
+      <td style="font-size:0.75rem;color:#5F6B7C;">{{ r.cocom }}</td>
+      <td>
+        {% set vals = sparklines.get(r.iso2, []) %}
+        {% if vals and vals|length > 1 %}
+        {% set vmin = vals|min %}
+        {% set vmax = vals|max %}
+        {% set vrange = vmax - vmin if vmax != vmin else 1 %}
+        <svg width="80" height="20" style="vertical-align:middle;">
+          <polyline fill="none" stroke="#3FA6DA" stroke-width="1.5"
+            points="{% for v in vals %}{{ (loop.index0 / (vals|length - 1)) * 78 + 1 }},{{ 19 - ((v - vmin) / vrange) * 17 }} {% endfor %}" />
+        </svg>
+        {% else %}
+        <span style="color:#5F6B7C;">—</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{# ── Methodology ── #}
+<div class="caveat">
+  <strong>Methodology</strong><br>
+  Rankings include all 192 sovereign states with available data for the selected indicator and year.
+  Values are parsed from CIA World Factbook text fields using standardized extraction patterns.
+  Sparklines show the last 10 years of data (top 50 countries only).
+  <br><a href="/sources" style="display:inline-block;margin-top:6px;">Full Sources &amp; Methodology &rarr;</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const top10 = {{ top10 | tojson }};
+const bottom10 = {{ bottom10 | tojson }};
+
+/* ── Bar charts ── */
+Plotly.newPlot('top10-chart', [{
+  type: 'bar', orientation: 'h',
+  y: top10.map(d => d.name).reverse(),
+  x: top10.map(d => d.value).reverse(),
+  marker: { color: '#2D72D2' },
+  hovertemplate: '%{y}: %{x:,.2f}<extra></extra>',
+}], {
+  paper_bgcolor: '#1C2127', plot_bgcolor: '#1C2127',
+  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
+  margin: { t: 4, r: 20, b: 30, l: 180 },
+  xaxis: { gridcolor: '#252A31', fixedrange: true },
+  yaxis: { fixedrange: true, tickfont: { size: 11 } },
+  bargap: 0.25,
+}, { responsive: true, displayModeBar: false });
+
+Plotly.newPlot('bottom10-chart', [{
+  type: 'bar', orientation: 'h',
+  y: bottom10.map(d => d.name).reverse(),
+  x: bottom10.map(d => d.value).reverse(),
+  marker: { color: '#5F6B7C' },
+  hovertemplate: '%{y}: %{x:,.2f}<extra></extra>',
+}], {
+  paper_bgcolor: '#1C2127', plot_bgcolor: '#1C2127',
+  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
+  margin: { t: 4, r: 20, b: 30, l: 180 },
+  xaxis: { gridcolor: '#252A31', fixedrange: true },
+  yaxis: { fixedrange: true, tickfont: { size: 11 } },
+  bargap: 0.25,
+}, { responsive: true, displayModeBar: false });
+
+/* ── Update button ── */
+document.getElementById('update-btn').addEventListener('click', function(e) {
+  e.preventDefault();
+  var ind = document.getElementById('indicator-select').value;
+  var yr = document.getElementById('year-select').value;
+  window.location.href = '/analysis/rankings?indicator=' + ind + '&year=' + yr;
+});
+
+/* ── Table sorting ── */
+let sortCol = -1, sortAsc = true;
+function sortTable(col) {
+  const tbody = document.querySelector('#rankings-table tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = col <= 1 ? true : false; }
+  rows.sort(function(a, b) {
+    let va = a.cells[col].textContent.trim();
+    let vb = b.cells[col].textContent.trim();
+    if (col === 0 || col === 2) {
+      va = parseFloat(va.replace(/[$,%BGyrsGDPk\/]/g, '').replace(/,/g, '')) || 0;
+      vb = parseFloat(vb.replace(/[$,%BGyrsGDPk\/]/g, '').replace(/,/g, '')) || 0;
+    }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+  rows.forEach(function(r) { tbody.appendChild(r); });
+}
+</script>
+{% endblock %}

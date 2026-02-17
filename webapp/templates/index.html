@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% set active_page = "home" %}
+{% block title %}CIA World Factbook Archive{% endblock %}
+
+{% block head %}
+<style>
+/* ── Hero ── */
+.hero {
+  padding: 48px 0 36px;
+  border-bottom: 1px solid #2F343C;
+  margin-bottom: 28px;
+}
+.hero-eyebrow {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #5F6B7C;
+  margin-bottom: 14px;
+}
+.hero h1 {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #C5CBD3;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+.hero h1 span {
+  color: #5F6B7C;
+  font-weight: 400;
+}
+.hero-desc {
+  font-size: 0.95rem;
+  color: #8F99A8;
+  line-height: 1.65;
+  max-width: 620px;
+}
+
+/* ── Stats Strip ── */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: #2F343C;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  margin-bottom: 36px;
+  overflow: hidden;
+}
+.stats-strip .stat {
+  background: #1C2127;
+  padding: 18px 14px;
+  text-align: center;
+  transition: background-color 100ms cubic-bezier(0.4, 1, 0.75, 0.9);
+}
+.stats-strip .stat:hover { background: #252A31; }
+.stats-strip .stat-num {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #C5CBD3;
+  line-height: 1.1;
+}
+.stats-strip .stat-desc {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #5F6B7C;
+  margin-top: 5px;
+}
+
+/* ── Platform Sections ── */
+.platform-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+.platform {
+  background: #1C2127;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 200ms cubic-bezier(0.4, 1, 0.75, 0.9),
+              box-shadow 200ms cubic-bezier(0.4, 1, 0.75, 0.9);
+}
+.platform:hover {
+  border-color: #383E47;
+  box-shadow: 0 2px 12px rgba(17, 20, 24, 0.5);
+}
+.platform:active {
+  transition-duration: 0ms;
+  box-shadow: 0 1px 4px rgba(17, 20, 24, 0.3);
+}
+.platform-number {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.6rem;
+  color: #404854;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.platform-title {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #C5CBD3;
+  margin-bottom: 4px;
+  letter-spacing: 0.3px;
+}
+.platform-subtitle {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  color: #5F6B7C;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #252A31;
+}
+.platform-desc {
+  font-size: 0.85rem;
+  color: #8F99A8;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  flex: 1;
+}
+.platform-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.platform-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #252A31;
+  text-decoration: none;
+  transition: padding-left 100ms cubic-bezier(0.4, 1, 0.75, 0.9);
+}
+.platform-link:hover {
+  padding-left: 6px;
+  text-decoration: none;
+}
+.platform-link .pl-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #252A31;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: background-color 100ms cubic-bezier(0.4, 1, 0.75, 0.9);
+}
+.platform-link:hover .pl-icon { background: #2F343C; }
+.platform-link .pl-text {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ABB3BF;
+  transition: color 100ms cubic-bezier(0.4, 1, 0.75, 0.9);
+}
+.platform-link:hover .pl-text { color: #C5CBD3; }
+.platform-link .pl-meta {
+  font-size: 0.65rem;
+  color: #5F6B7C;
+  margin-top: 1px;
+}
+.platform-link .pl-arrow {
+  margin-left: auto;
+  color: #404854;
+  font-size: 0.8rem;
+  transition: color 100ms cubic-bezier(0.4, 1, 0.75, 0.9),
+              transform 100ms cubic-bezier(0.4, 1, 0.75, 0.9);
+}
+.platform-link:hover .pl-arrow {
+  color: #8F99A8;
+  transform: translateX(3px);
+}
+
+/* ── Section Label ── */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #5F6B7C;
+  margin-bottom: 16px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid #2F343C;
+}
+
+/* ── About Footer ── */
+.landing-footer {
+  padding: 14px 16px;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  background: #1C2127;
+  font-size: 0.72rem;
+  color: #5F6B7C;
+  line-height: 1.6;
+}
+.landing-footer strong {
+  color: #8F99A8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-size: 0.62rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .stats-strip { grid-template-columns: repeat(2, 1fr); }
+  .platform-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .hero { padding: 28px 0 20px; }
+  .hero h1 { font-size: 1.6rem; }
+  .hero-desc { font-size: 0.85rem; }
+  .stats-strip .stat { padding: 14px 10px; }
+  .stats-strip .stat-num { font-size: 1.3rem; }
+  .platform { padding: 20px 18px; }
+  .platform:hover { box-shadow: none; }
+  .platform-link:hover { padding-left: 0; }
+}
+@media (max-width: 480px) {
+  .stats-strip { grid-template-columns: 1fr 1fr; }
+  .hero h1 { font-size: 1.3rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="landing">
+
+<!-- ── Hero ── -->
+<div class="hero">
+  <div class="hero-eyebrow">Unclassified // Open Source Intelligence Archive</div>
+  <h1>CIA World Factbook<br><span>{{ stats.first_year }} &ndash; {{ stats.last_year }}</span></h1>
+  <p class="hero-desc">
+    {{ stats.years_covered }} years of geopolitical intelligence preserved and structured for
+    analysis. Every country, every field, every edition &mdash; parsed from the original CIA
+    publications into a searchable, queryable archive.
+  </p>
+</div>
+
+<!-- ── Stats ── -->
+<div class="stats-strip">
+  <div class="stat">
+    <div class="stat-num">{{ "{:,}".format(stats.master_countries) }}</div>
+    <div class="stat-desc">Entities</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">{{ stats.years_covered }}</div>
+    <div class="stat-desc">Editions</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">{{ "{:,}".format(stats.country_years) }}</div>
+    <div class="stat-desc">Country-Year Records</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">{{ "{:,}".format(stats.total_fields) }}</div>
+    <div class="stat-desc">Parsed Data Fields</div>
+  </div>
+</div>
+
+<!-- ── Two Platforms ── -->
+<div class="section-label">Platforms</div>
+<div class="platform-grid">
+
+  <!-- Platform 01: Archive -->
+  <div class="platform">
+    <div class="platform-number">01</div>
+    <div class="platform-title">Factbook Archive</div>
+    <div class="platform-subtitle">Reference Library</div>
+    <div class="platform-desc">
+      Browse every edition of the CIA World Factbook from {{ stats.first_year }} to {{ stats.last_year }}.
+      View raw field data exactly as published, search across all years,
+      and track how the CIA's reporting on any country has changed over time.
+    </div>
+    <div class="platform-links">
+      <a href="/archive" class="platform-link">
+        <div class="pl-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#5F6B7C" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1"/><path d="M5.5 1v14M2 4.5h3.5M2 8h3.5M2 11.5h3.5"/></svg></div>
+        <div>
+          <div class="pl-text">Browse by Year</div>
+          <div class="pl-meta">{{ stats.years_covered }} editions, chronological access</div>
+        </div>
+        <span class="pl-arrow">&rarr;</span>
+      </a>
+      <a href="/search" class="platform-link">
+        <div class="pl-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#5F6B7C" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4.5 4.5"/></svg></div>
+        <div>
+          <div class="pl-text">Full-Text Search</div>
+          <div class="pl-meta">Search across all years and fields</div>
+        </div>
+        <span class="pl-arrow">&rarr;</span>
+      </a>
+      <a href="/countries" class="platform-link">
+        <div class="pl-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#5F6B7C" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 2.2 1.8 9.8 0 12M8 2c-1.8 2.2-1.8 9.8 0 12"/></svg></div>
+        <div>
+          <div class="pl-text">Country Dictionary</div>
+          <div class="pl-meta">{{ "{:,}".format(stats.master_countries) }} entities with ISO codes and metadata</div>
+        </div>
+        <span class="pl-arrow">&rarr;</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Platform 02: Intelligence -->
+  <div class="platform">
+    <div class="platform-number">02</div>
+    <div class="platform-title">Intelligence Analysis</div>
+    <div class="platform-subtitle">Analytic Workspace</div>
+    <div class="platform-desc">
+      Interactive assessments organized by DoD Combatant Command regions.
+      Choropleth maps, time-series comparisons, country dossiers formatted per
+      ICD 203 analytic standards, and head-to-head indicator comparison.
+    </div>
+    <div class="platform-links">
+      <a href="/analysis" class="platform-link">
+        <div class="pl-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#5F6B7C" stroke-width="1.5"><rect x="1" y="1" width="5.5" height="5.5" rx="1"/><rect x="9.5" y="1" width="5.5" height="5.5" rx="1"/><rect x="1" y="9.5" width="5.5" height="5.5" rx="1"/><rect x="9.5" y="9.5" width="5.5" height="5.5" rx="1"/></svg></div>
+        <div>
+          <div class="pl-text">Regional Dashboard</div>
+          <div class="pl-meta">COCOM regions with maps and indicators</div>
+        </div>
+        <span class="pl-arrow">&rarr;</span>
+      </a>
+      <a href="/analysis/timeline" class="platform-link">
+        <div class="pl-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#5F6B7C" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 3"/></svg></div>
+        <div>
+          <div class="pl-text">Timeline Map</div>
+          <div class="pl-meta">Animated world map with country time series</div>
+        </div>
+        <span class="pl-arrow">&rarr;</span>
+      </a>
+      <a href="/analysis/map-compare" class="platform-link">
+        <div class="pl-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#5F6B7C" stroke-width="1.5"><rect x="1" y="2" width="5" height="12" rx="1"/><rect x="10" y="2" width="5" height="12" rx="1"/><path d="M7 8h2"/></svg></div>
+        <div>
+          <div class="pl-text">Map Compare</div>
+          <div class="pl-meta">Side-by-side choropleth across editions</div>
+        </div>
+        <span class="pl-arrow">&rarr;</span>
+      </a>
+      <a href="/analysis/compare" class="platform-link">
+        <div class="pl-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#5F6B7C" stroke-width="1.5"><path d="M4 13V5M12 13V8M8 13V3"/></svg></div>
+        <div>
+          <div class="pl-text">Compare Countries</div>
+          <div class="pl-meta">Side-by-side indicator comparison</div>
+        </div>
+        <span class="pl-arrow">&rarr;</span>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── About ── -->
+<div class="section-label">About</div>
+<div class="landing-footer">
+  <strong>About This Project</strong><br>
+  All data originates from the CIA World Factbook, a public-domain U.S. Government
+  publication. This project is not affiliated with the Central Intelligence Agency or
+  the U.S. Government. Analysis follows ICD 203 analytic standards. Data spans
+  {{ stats.years_covered }} editions ({{ stats.first_year }}&ndash;{{ stats.last_year }})
+  covering {{ "{:,}".format(stats.master_countries) }} entities with
+  {{ "{:,}".format(stats.total_fields) }} parsed data fields.
+  <a href="/about" style="display:inline-block;margin-top:4px;font-size:0.72rem;">
+    About &rarr;
+  </a>
+  <a href="/sources" style="display:inline-block;margin-top:4px;font-size:0.72rem;margin-left:12px;">
+    Sources &amp; Methodology &rarr;
+  </a>
+  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank" rel="noopener"
+     style="display:inline-block;margin-top:4px;font-size:0.72rem;margin-left:12px;">
+    GitHub Repository &rarr;
+  </a>
+</div>
+
+</div>
+{% endblock %}

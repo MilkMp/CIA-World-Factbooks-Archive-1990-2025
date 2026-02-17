@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>
+    {% if entries %}{{ entries[0].name }}{% if entries|length > 1 and entries[-1].name != entries[0].name %} et al.{% endif %} ({{ entries[0].year }}{% if entries[-1].year != entries[0].year %}&ndash;{{ entries[-1].year }}{% endif %}) &mdash; CIA World Factbook Archive{% else %}Print Export{% endif %}
+  </title>
+  <style>
+    /* ── Print-optimized stylesheet ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-size: 9pt; line-height: 1.45; color: #111; background: #fff;
+    }
+
+    /* ── Screen preview styling ── */
+    @media screen {
+      body { background: #1C2127; color: #C5CBD3; max-width: 900px; margin: 0 auto; padding: 20px 40px; }
+      .print-controls {
+        position: sticky; top: 0; z-index: 100;
+        background: #1C2127; border-bottom: 1px solid #383E47;
+        padding: 12px 0; margin-bottom: 20px;
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      }
+      .print-controls button, .print-controls a {
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 0.72rem; font-weight: 600; letter-spacing: 1px;
+        text-transform: uppercase; text-decoration: none;
+        padding: 8px 16px; border: 1px solid #5F6B7C; border-radius: 3px;
+        cursor: pointer; transition: all 0.15s ease;
+      }
+      .print-controls button {
+        background: #2D72D2; color: #fff; border-color: #2D72D2;
+      }
+      .print-controls button:hover { background: #215DB0; }
+      .print-controls a {
+        background: transparent; color: #8ABBFF;
+      }
+      .print-controls a:hover { background: #252A31; }
+      .print-controls .count {
+        font-family: 'Consolas', monospace; font-size: 0.68rem;
+        color: #5F6B7C; letter-spacing: 0.5px;
+      }
+      .page-header .doc-id { color: #5F6B7C; border-bottom-color: #383E47; }
+      .page-header h2 { color: #E1E8ED; }
+      .page-header .subtitle { color: #8F99A8; }
+      .section-divider { border-top-color: #383E47; }
+      .sec-title { color: #8ABBFF; }
+      .sec-rule { border-top-color: #2F343C; }
+      .field-name { color: #8ABBFF; }
+      .field-content { color: #C5CBD3; }
+      .category-block { border-left-color: #383E47; }
+      .field-item { border-bottom-color: #252A31; }
+    }
+
+    /* ── Shared (screen + print) ── */
+    .page-header { margin-bottom: 8pt; }
+    .page-header .doc-id {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 7pt; color: #666; letter-spacing: 2px; text-transform: uppercase;
+      border-bottom: 1pt solid #ccc; padding-bottom: 3pt; margin-bottom: 4pt;
+    }
+    .page-header h2 {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13pt; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .page-header .subtitle {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 7.5pt; color: #666; letter-spacing: 1px; margin-top: 2pt;
+    }
+    .section-divider {
+      border: none; border-top: 2pt double #666; margin: 10pt 0;
+    }
+    .sec { margin-top: 10pt; margin-bottom: 3pt; }
+    .sec-title {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 8pt; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    }
+    .sec-rule { border: none; border-top: 1pt solid #ccc; margin-top: 2pt; }
+    .category-block {
+      border-left: 2pt solid #999; padding-left: 10pt; margin: 4pt 0;
+    }
+    .field-item {
+      border-bottom: 0.5pt solid #ddd; margin-bottom: 3pt; padding-bottom: 3pt;
+    }
+    .field-name {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 7.5pt; font-weight: 700; margin-bottom: 1pt;
+    }
+    .field-content { font-size: 8.5pt; line-height: 1.35; }
+    .year-block { margin-bottom: 16pt; }
+    .error-msg {
+      text-align: center; padding: 40px; font-size: 1rem; color: #888;
+    }
+
+    /* ── Print overrides ── */
+    @media print {
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { background: #fff; color: #111; padding: 0; margin: 0; max-width: none; }
+      .print-controls { display: none !important; }
+      .page-header .doc-id { color: #666; border-bottom-color: #ccc; }
+      .page-header h2 { color: #000; }
+      .page-header .subtitle { color: #444; }
+      .section-divider { border-top-color: #666; }
+      .sec-title { color: #333; }
+      .sec-rule { border-top-color: #ccc; }
+      .field-name { color: #222; }
+      .field-content { color: #111; }
+      .category-block { border-left-color: #999; }
+      .field-item { border-bottom-color: #ddd; }
+
+      .year-block { break-before: page; page-break-before: always; }
+      .year-block:first-of-type { break-before: auto; page-break-before: auto; }
+      .sec { break-after: avoid; page-break-after: avoid; }
+      .field-item { break-inside: avoid; page-break-inside: avoid; }
+
+      @page { size: letter; margin: 0.6in 0.65in; }
+    }
+  </style>
+</head>
+<body>
+
+{% if error %}
+<div class="error-msg">{{ error }}</div>
+{% elif entries %}
+
+<div class="print-controls">
+  <button onclick="window.print()">Print / Save as PDF</button>
+  <a href="/export">Back to Export</a>
+  <span class="count">{{ entries|length }} edition{{ 's' if entries|length != 1 else '' }} &mdash;
+    {{ entries[0].name }}{% if entries[-1].name != entries[0].name %} + {{ (entries|map(attribute='name')|unique|list|length) - 1 }} more{% endif %}
+    ({{ entries[0].year }}&ndash;{{ entries[-1].year }})</span>
+</div>
+
+{% for e in entries %}
+<div class="year-block">
+  <div class="page-header">
+    <div class="doc-id">CIA WORLD FACTBOOK ARCHIVE &mdash; {{ e.name }} &mdash; {{ e.year }} EDITION</div>
+    <h2>{{ e.name }}</h2>
+    <p class="subtitle">{{ e.year }} Edition</p>
+  </div>
+  <hr class="section-divider">
+
+  {% for cat_name, fields in e.categories.items() %}
+  <div class="sec">
+    <span class="sec-title">{{ cat_name }}</span>
+    <hr class="sec-rule">
+  </div>
+  <div class="category-block">
+    {% for f in fields %}
+    <div class="field-item">
+      <div class="field-name">{{ f.CanonicalName or f.FieldName }}</div>
+      <div class="field-content">{{ f.Content }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  {% if not e.categories %}
+  <p style="font-style:italic;color:#888;margin:12pt 0;">No field data for this edition.</p>
+  {% endif %}
+</div>
+{% endfor %}
+
+{% else %}
+<div class="error-msg">No data to display.</div>
+{% endif %}
+
+</body>
+</html>
