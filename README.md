@@ -240,16 +240,38 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 - Consolidated petroleum sub-field view
 
 ## Screenshots
+
+### Search & Browse
 | | |
 |---|---|
-| ![Homepage](docs/screenshots/homepage.png) | ![Search Results](docs/screenshots/search_results.png) |
-| **Homepage** — Database statistics and navigation | **Full-Text Search** — Keyword search across 1M+ fields |
-| ![Field Time Series](docs/screenshots/field_timeseries.png) | ![Factbook Export](docs/screenshots/country_export.png) |
-| **Field Time Series** — Track any field across 36 years | **Factbook Export** — Print-ready report with parsed fields |
-| ![Boolean Search](docs/screenshots/search_boolean.png) | ![Country Profile](docs/screenshots/country_profile.png) |
-| **Boolean Search** — Exact phrase + AND/OR/NOT operators | **Country Profile** — Complete field data by category |
-| ![Regional Dashboard](docs/screenshots/regional_dashboard.png) | ![Intelligence Dossier](docs/screenshots/dossier.png) |
-| **Regional Dashboard** — EUCOM region with GDP choropleth | **Intelligence Dossier** — Assessments per ICD 203 standards |
+| ![Homepage](docs/screenshots/homepage.png) | ![About](docs/screenshots/about.png) |
+| **Homepage** — Database statistics, navigation, and live search | **About** — Project mission, architecture, and methodology |
+| ![Full-Text Search](docs/screenshots/search_results.png) | ![Boolean Search](docs/screenshots/search_boolean.png) |
+| **Full-Text Search** — Keyword search across 1,071,213 fields | **Boolean Search** — AND/OR/NOT operators with phrase matching |
+
+### The Archive
+| | |
+|---|---|
+| ![Browse Years](docs/screenshots/browse_years.png) | ![Country Profile](docs/screenshots/country_profile.png) |
+| **Browse Archive** — Navigate all 281 entities across 36 years | **Country Profile** — Complete factbook data by category |
+| ![Field Time Series](docs/screenshots/field_timeseries.png) | ![Data Export](docs/screenshots/country_export.png) |
+| **Field Time Series** — Track any field across 36 years with Plotly charts | **Data Export** — CSV, Excel, and print-ready PDF reports |
+| ![Country Dictionary](docs/screenshots/country_dictionary.png) | |
+| **Country Dictionary** — All 281 entities with type, region, and ISO codes | |
+
+### Intelligence Analysis
+| | |
+|---|---|
+| ![Analysis Overview](docs/screenshots/analysis_overview.png) | ![Regional Dashboard](docs/screenshots/regional_dashboard.png) |
+| **Analysis Overview** — Available dashboards and analytical products | **Regional Dashboard** — Global choropleth with COCOM region drill-down |
+| ![Region Detail](docs/screenshots/region_eucom.png) | ![Compare Countries](docs/screenshots/compare_countries.png) |
+| **COCOM Region Detail** — Country-level KPIs within a command region | **Compare Countries** — Side-by-side comparison of any two nations |
+| ![Timeline Map](docs/screenshots/timeline_map.png) | ![Map Compare](docs/screenshots/map_compare.png) |
+| **Timeline Map** — Animated choropleth 1990-2025 with multi-country time series | **Map Compare** — Side-by-side world maps across two different years |
+| ![Communications](docs/screenshots/communications.png) | ![Intelligence Dossier](docs/screenshots/dossier.png) |
+| **Communications Analysis** — Internet, mobile, broadband with digital divide analysis | **Intelligence Dossier** — Per-country assessment following ICD 203 standards |
+| ![Threat Brief](docs/screenshots/threats.png) | |
+| **Regional Threat Brief** — COCOM-level instability and security indicators | |
 
 
 
