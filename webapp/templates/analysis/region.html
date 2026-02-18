@@ -4,6 +4,32 @@
 
 {% block head %}
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+.country-card {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  background: #1C2127;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  padding: 16px 18px;
+  min-width: 240px;
+  max-width: 300px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+}
+.country-card .cc-name { font-size: 0.92rem; font-weight: 600; color: #C5CBD3; margin-bottom: 2px; }
+.country-card .cc-region { font-size: 0.62rem; color: #5F6B7C; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+.country-card .cc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-bottom: 12px; }
+.country-card .cc-stat-label { font-size: 0.6rem; color: #5F6B7C; text-transform: uppercase; letter-spacing: 0.5px; }
+.country-card .cc-stat-val { font-size: 0.82rem; color: #ABB3BF; font-weight: 600; }
+.country-card .cc-dossier {
+  display: inline-block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.8px;
+  color: #ABB3BF; padding: 5px 12px; border: 1px solid #2F343C; border-radius: 3px; text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.country-card .cc-dossier:hover { background: #252A31; border-color: #404854; color: #C5CBD3; text-decoration: none; }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -99,6 +125,19 @@
   <hr class="sec-rule">
 </div>
 <div id="life-chart" class="chart-container" style="height:clamp(260px,40vw,400px);"></div>
+
+<!-- Country Info Card -->
+<div id="country-card" class="country-card">
+  <div class="cc-name" id="cc-name"></div>
+  <div class="cc-region" id="cc-region"></div>
+  <div class="cc-stats">
+    <div><div class="cc-stat-label">Population</div><div class="cc-stat-val" id="cc-pop"></div></div>
+    <div><div class="cc-stat-label">GDP (PPP)</div><div class="cc-stat-val" id="cc-gdp"></div></div>
+    <div><div class="cc-stat-label">Life Expectancy</div><div class="cc-stat-val" id="cc-life"></div></div>
+    <div><div class="cc-stat-label">Military % GDP</div><div class="cc-stat-val" id="cc-mil"></div></div>
+  </div>
+  <a id="cc-link" class="cc-dossier" href="#">View Dossier &rarr;</a>
+</div>
 
 {% else %}
 <div class="caveat">
@@ -200,14 +239,50 @@ document.getElementById('region-map-indicator').addEventListener('change', funct
   renderRegionMap(this.value);
 });
 
-// Click handler: navigate to country dossier
+// Click handler: show country info card
+function fmtNum(n) {
+  if (!n) return '\u2014';
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+function showCountryCard(country, evt) {
+  const card = document.getElementById('country-card');
+  document.getElementById('cc-name').textContent = country.name;
+  document.getElementById('cc-region').textContent = region;
+  document.getElementById('cc-pop').textContent = fmtNum(country.population);
+  document.getElementById('cc-gdp').textContent = country.gdp_billions ? '$' + country.gdp_billions.toFixed(0) + 'B' : '\u2014';
+  document.getElementById('cc-life').textContent = country.life_exp ? country.life_exp.toFixed(1) + ' yrs' : '\u2014';
+  document.getElementById('cc-mil').textContent = country.mil_pct_gdp ? country.mil_pct_gdp.toFixed(2) + '%' : '\u2014';
+  document.getElementById('cc-link').href = '/analysis/dossier/' + country.iso2;
+  let x = evt.clientX + 12, y = evt.clientY - 20;
+  card.style.display = 'block';
+  const rect = card.getBoundingClientRect();
+  if (x + rect.width > window.innerWidth - 16) x = evt.clientX - rect.width - 12;
+  if (y + rect.height > window.innerHeight - 16) y = window.innerHeight - rect.height - 16;
+  if (y < 8) y = 8;
+  card.style.left = x + 'px';
+  card.style.top = y + 'px';
+}
+function hideCountryCard() {
+  document.getElementById('country-card').style.display = 'none';
+}
 document.getElementById('region-map').on('plotly_click', function(eventData) {
   if (eventData.points && eventData.points.length > 0) {
     const iso3 = eventData.points[0].location;
     const match = data.find(d => d.iso3 === iso3);
-    if (match) window.location.href = '/analysis/dossier/' + match.iso2;
+    if (match) { showCountryCard(match, eventData.event); return; }
+  }
+  hideCountryCard();
+});
+document.addEventListener('click', function(e) {
+  const card = document.getElementById('country-card');
+  if (card.style.display === 'block' && !card.contains(e.target) && !e.target.closest('.js-plotly-plot')) {
+    hideCountryCard();
   }
 });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hideCountryCard(); });
 
 // ── Bar Charts ──
 const gdpData = data.filter(d => d.gdp_billions).sort((a,b) => b.gdp_billions - a.gdp_billions);
