@@ -14,7 +14,7 @@
   <meta name="twitter:title" content="CIA World Factbook Archive">
   <meta name="twitter:description" content="36 years of structured intelligence data (1990-2025). 281 entities, 1,071,213 fields.">
   <meta name="twitter:image" content="https://cia-factbook-archive.fly.dev/static/og-image.png">
-  <link rel="stylesheet" href="/static/css/intel-theme.css?v=8">
+  <link rel="stylesheet" href="/static/css/intel-theme.css?v=9">
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   {% block head %}{% endblock %}
 </head>
@@ -27,34 +27,31 @@
   <nav class="sidebar">
     <div class="sidebar-title">Factbook Archive</div>
     <a href="/" class="{{ 'active' if active_page == 'home' else '' }}">Home</a>
-    <a href="/countries" class="{{ 'active' if active_page == 'countries' else '' }}">Country Dictionary</a>
 
     <div class="nav-section">The Archive</div>
     <a href="/archive/library" class="{{ 'active' if active_page == 'library' else '' }}">Library</a>
+    <a href="/countries" class="{{ 'active' if active_page == 'countries' else '' }}">Country Dictionary</a>
     <a href="/archive" class="{{ 'active' if active_page == 'browse' else '' }}">Browse by Year</a>
     <a href="/search" class="{{ 'active' if active_page == 'search' else '' }}">Search Fields</a>
+    <a href="/analysis/diff" class="{{ 'active' if active_page == 'diff' else '' }}">Text Diff</a>
     <a href="/export" class="{{ 'active' if active_page == 'export' else '' }}">Data Export</a>
 
-    <div class="nav-section">Intelligence Analysis</div>
+    <div class="nav-section">Intelligence</div>
     <a href="/analysis" class="{{ 'active' if active_page == 'analysis-home' else '' }}">Overview</a>
-    <div style="font-size:0.55rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1.2px;padding:10px 16px 2px;font-weight:600;">Geographic</div>
+    <div class="nav-sub-label">Maps &amp; Geography</div>
     <a href="/analysis/regional" class="{{ 'active' if active_page == 'analysis' else '' }}">Regional Dashboard</a>
     <a href="/analysis/timeline" class="{{ 'active' if active_page == 'timeline' else '' }}">Timeline Map</a>
     <a href="/analysis/map-compare" class="{{ 'active' if active_page == 'map-compare' else '' }}">Map Compare</a>
-    <div style="font-size:0.55rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1.2px;padding:10px 16px 2px;font-weight:600;">Comparative</div>
+    <div class="nav-sub-label">Rankings &amp; Trends</div>
     <a href="/analysis/rankings" class="{{ 'active' if active_page == 'rankings' else '' }}">Global Rankings</a>
     <a href="/analysis/compare" class="{{ 'active' if active_page == 'compare' else '' }}">Compare Countries</a>
     <a href="/analysis/communications" class="{{ 'active' if active_page == 'communications' else '' }}">Communications</a>
-    <div style="font-size:0.55rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1.2px;padding:10px 16px 2px;font-weight:600;">Temporal</div>
     <a href="/analysis/changes" class="{{ 'active' if active_page == 'changes' else '' }}">Change Detection</a>
     <a href="/analysis/dissolved" class="{{ 'active' if active_page == 'dissolved' else '' }}">Dissolved States</a>
-    <a href="/analysis/diff" class="{{ 'active' if active_page == 'diff' else '' }}">Text Diff</a>
 
     <div class="nav-section">Reference</div>
     <a href="/api" class="{{ 'active' if active_page == 'api-docs' else '' }}">API Documentation</a>
-    <a href="/sources" class="{{ 'active' if active_page == 'sources' else '' }}">Sources &amp; Methodology</a>
     <a href="/about" class="{{ 'active' if active_page == 'about' else '' }}">About</a>
-    <a href="/report" class="{{ 'active' if active_page == 'report' else '' }}">Report a Bug</a>
   </nav>
 
   <main class="main-content">
@@ -69,8 +66,9 @@
   <a href="/">Home</a>
   <a href="/countries">Countries</a>
   <a href="/archive">The Archive</a>
-  <a href="/analysis">Analysis</a>
-  <a href="/sources">Sources</a>
+  <a href="/analysis">Intelligence</a>
+  <a href="/api">API</a>
+  <a href="/sources">Sources &amp; Methodology</a>
   <a href="/about">About</a>
   <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank" rel="noopener">GitHub</a>
   <a href="/report">Report a Bug</a>

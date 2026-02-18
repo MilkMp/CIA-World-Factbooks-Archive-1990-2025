@@ -120,6 +120,15 @@ a:hover { text-decoration: underline; color: #FFFFFF; }
   padding: 16px 20px 6px;
 }
 
+.sidebar .nav-sub-label {
+  font-size: 0.55rem;
+  color: #5F6B7C;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  padding: 10px 16px 2px;
+  font-weight: 600;
+}
+
 .main-content {
   flex: 1;
   padding: 32px 40px;
@@ -699,6 +708,9 @@ mark.search-hit {
     border-left: 1px solid #2F343C;
     letter-spacing: 0.8px;
     white-space: nowrap;
+  }
+  .sidebar .nav-sub-label {
+    display: none;
   }
   .sidebar a {
     display: inline-block;
