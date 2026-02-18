@@ -28,7 +28,14 @@
   <button type="submit">Search</button>
 </form>
 
-{% if q %}
+{% if search_error %}
+<div class="caveat" style="border-color:#8B4513;">
+  <strong>Search Error</strong><br>
+  {{ search_error }}
+</div>
+{% endif %}
+
+{% if q and not search_error %}
 <div class="sec">
   <span class="sec-num">{{ "{:,}".format(total) }} RESULTS</span>
   <span class="sec-title">Search Results for &ldquo;{{ q }}&rdquo;{% if total_pages > 1 %} &mdash; Page {{ page }} of {{ total_pages }}{% endif %}</span>

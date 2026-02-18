@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% set active_page = "report" %}
+{% block title %}Report a Bug — CIA World Factbook Archive{% endblock %}
+
+{% block head %}
+<style>
+.report-form {
+  max-width: 640px;
+}
+.report-form label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #5F6B7C;
+  margin-bottom: 6px;
+  margin-top: 18px;
+}
+.report-form input[type="text"],
+.report-form textarea,
+.report-form select {
+  width: 100%;
+  background: #1C2127;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  color: #C5CBD3;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.85rem;
+  padding: 10px 12px;
+  transition: border-color 200ms;
+}
+.report-form input[type="text"]:focus,
+.report-form textarea:focus,
+.report-form select:focus {
+  outline: none;
+  border-color: #5F6B7C;
+}
+.report-form textarea {
+  min-height: 140px;
+  resize: vertical;
+  line-height: 1.6;
+}
+.report-form select {
+  appearance: auto;
+}
+.report-form button {
+  margin-top: 20px;
+  background: #252A31;
+  color: #C5CBD3;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  padding: 10px 28px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 200ms, border-color 200ms;
+}
+.report-form button:hover {
+  background: #2F343C;
+  border-color: #383E47;
+}
+.success-msg {
+  background: #1C2127;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  padding: 24px;
+  max-width: 640px;
+}
+.success-msg strong {
+  color: #C5CBD3;
+  display: block;
+  margin-bottom: 8px;
+}
+.success-msg p {
+  color: #8F99A8;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">FEEDBACK // BUG-REPORT</div>
+  <h1>Report a Bug</h1>
+  <p class="subtitle">Found something broken? Let us know and we'll fix it.</p>
+</div>
+
+<hr class="doc-rule double">
+
+{% if submitted %}
+<div class="success-msg">
+  <strong>Report Submitted</strong>
+  <p>
+    Thank you for the report. We'll review it and push a fix as soon as possible.
+    <a href="/" style="display:inline-block;margin-top:12px;">Return to Home</a>
+  </p>
+</div>
+
+{% else %}
+<form class="report-form" method="post" action="/report">
+
+  <label for="category">Category</label>
+  <select name="category" id="category">
+    <option value="bug">Bug / Error</option>
+    <option value="data">Data Issue (wrong or missing data)</option>
+    <option value="ui">UI / Display Problem</option>
+    <option value="feature">Feature Request</option>
+    <option value="other">Other</option>
+  </select>
+
+  <label for="page_url">Page URL (optional)</label>
+  <input type="text" name="page_url" id="page_url" placeholder="e.g., /search?q=oil+production+-refin*" value="">
+
+  <label for="description">Description</label>
+  <textarea name="description" id="description" placeholder="Describe what happened, what you expected, and any steps to reproduce the issue..."></textarea>
+
+  <button type="submit">Submit Report</button>
+</form>
+
+<div class="caveat" style="margin-top:24px;max-width:640px;">
+  You can also report issues directly on
+  <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/issues" target="_blank" rel="noopener">GitHub Issues</a>.
+</div>
+{% endif %}
+
+{% endblock %}

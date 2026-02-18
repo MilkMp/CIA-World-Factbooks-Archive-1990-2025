@@ -167,7 +167,14 @@ def _ast_to_fts(node):
         return f'NOT {inner}' if inner else ''
     elif node[0] == 'AND':
         left = _ast_to_fts(node[1])
-        right = _ast_to_fts(node[2])
+        # FTS5 uses "x NOT y" as a binary operator — no "AND" before NOT
+        right_node = node[2]
+        if right_node[0] == 'NOT':
+            right_inner = _ast_to_fts(right_node[1])
+            if left and right_inner:
+                return f'({left} NOT {right_inner})'
+            return left or ''
+        right = _ast_to_fts(right_node)
         if left and right:
             return f'({left} AND {right})'
         return left or right
@@ -202,6 +209,9 @@ def parse_boolean_query(q):
         return None, []
     fts_expr = _ast_to_fts(ast)
     if not fts_expr:
+        return None, []
+    # FTS5 cannot handle standalone NOT (e.g. "-nuclear") — needs a positive term
+    if fts_expr.lstrip().startswith('NOT '):
         return None, []
     return fts_expr, [fts_expr]
 
@@ -423,19 +433,23 @@ async def search_page(request: Request, q: str = "",
     base_where, params = _build_search_query(q, year_start, year_end) \
         if q else (None, None)
 
+    search_error = None
     if base_where:
-        count_row = sql_one(f"SELECT COUNT(*) AS cnt {base_where}", params)
-        total = count_row['cnt'] if count_row else 0
+        try:
+            count_row = sql_one(f"SELECT COUNT(*) AS cnt {base_where}", params)
+            total = count_row['cnt'] if count_row else 0
 
-        offset = (page - 1) * PER_PAGE
-        results = sql(f"""
-            SELECT c.Year, c.Name, c.Code, cc.CategoryTitle,
-                cf.FieldName, SUBSTR(cf.Content, 1, 400) AS ContentPreview,
-                mc.CanonicalCode, mc.ISOAlpha2
-            {base_where}
-            ORDER BY c.Year DESC, c.Name
-            LIMIT ? OFFSET ?
-        """, params + [PER_PAGE, offset])
+            offset = (page - 1) * PER_PAGE
+            results = sql(f"""
+                SELECT c.Year, c.Name, c.Code, cc.CategoryTitle,
+                    cf.FieldName, SUBSTR(cf.Content, 1, 400) AS ContentPreview,
+                    mc.CanonicalCode, mc.ISOAlpha2
+                {base_where}
+                ORDER BY c.Year DESC, c.Name
+                LIMIT ? OFFSET ?
+            """, params + [PER_PAGE, offset])
+        except Exception:
+            search_error = "Search syntax not supported. Try simpler terms or remove special characters."
 
     all_years = sql("SELECT DISTINCT Year FROM Countries ORDER BY Year DESC")
     total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE) if total else 1
@@ -451,6 +465,7 @@ async def search_page(request: Request, q: str = "",
         "total": total,
         "total_pages": total_pages,
         "per_page": PER_PAGE,
+        "search_error": search_error,
     })
 
 
@@ -563,18 +578,22 @@ async def api_search(q: str = "", year_start: int = 0, year_end: int = 0, page: 
     if not base_where:
         return {"results": [], "total": 0, "page": 1, "total_pages": 0}
 
-    count_row = sql_one(f"SELECT COUNT(*) AS cnt {base_where}", params)
-    total = count_row['cnt'] if count_row else 0
+    try:
+        count_row = sql_one(f"SELECT COUNT(*) AS cnt {base_where}", params)
+        total = count_row['cnt'] if count_row else 0
 
-    offset = (page - 1) * PER_PAGE
-    results = sql(f"""
-        SELECT c.Year, c.Name, c.Code, cc.CategoryTitle,
-            cf.FieldName, SUBSTR(cf.Content, 1, 400) AS ContentPreview,
-            mc.CanonicalCode, mc.ISOAlpha2
-        {base_where}
-        ORDER BY c.Year DESC, c.Name
-        LIMIT ? OFFSET ?
-    """, params + [PER_PAGE, offset])
+        offset = (page - 1) * PER_PAGE
+        results = sql(f"""
+            SELECT c.Year, c.Name, c.Code, cc.CategoryTitle,
+                cf.FieldName, SUBSTR(cf.Content, 1, 400) AS ContentPreview,
+                mc.CanonicalCode, mc.ISOAlpha2
+            {base_where}
+            ORDER BY c.Year DESC, c.Name
+            LIMIT ? OFFSET ?
+        """, params + [PER_PAGE, offset])
+    except Exception:
+        return {"results": [], "total": 0, "page": 1, "total_pages": 0,
+                "error": "Search syntax not supported"}
 
     total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE) if total else 0
     return {"results": results, "total": total, "page": page, "total_pages": total_pages}

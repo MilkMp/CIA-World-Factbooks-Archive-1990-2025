@@ -1,9 +1,10 @@
 from pathlib import Path
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from webapp.config import settings
-from webapp.database import sql_one
+from webapp.database import sql_one, get_feedback_connection
 from webapp.routers import archive, countries, analysis, analysis2, export
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -34,6 +35,34 @@ async def sources(request: Request):
 @app.get("/about")
 async def about(request: Request):
     return templates.TemplateResponse("about.html", {"request": request})
+
+
+@app.get("/report")
+async def report_bug_page(request: Request):
+    return templates.TemplateResponse("report.html", {
+        "request": request, "submitted": False,
+    })
+
+
+@app.post("/report")
+async def report_bug_submit(request: Request,
+                            page_url: str = Form(""),
+                            category: str = Form("bug"),
+                            description: str = Form("")):
+    if description.strip():
+        ua = request.headers.get("user-agent", "")
+        conn = get_feedback_connection()
+        try:
+            conn.execute(
+                "INSERT INTO bug_reports (page_url, category, description, user_agent) VALUES (?, ?, ?, ?)",
+                [page_url.strip(), category.strip(), description.strip(), ua[:500]],
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    return templates.TemplateResponse("report.html", {
+        "request": request, "submitted": True,
+    })
 
 
 @app.get("/")
