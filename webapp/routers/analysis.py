@@ -43,7 +43,12 @@ def _get_country_indicators(iso_codes, year=ANALYSIS_YEAR):
         JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
         WHERE mc.ISOAlpha2 IN ({placeholders})
           AND c.Year = ?
-          AND mc.EntityType = 'sovereign'
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
           AND fm.IsNoise = 0
           AND fm.CanonicalName IN ('Population',
               'Real GDP (purchasing power parity)',
