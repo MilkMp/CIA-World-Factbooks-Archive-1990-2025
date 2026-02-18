@@ -664,8 +664,14 @@ async def diff_page(request: Request, code: str = "", field: str = "",
     # All sovereign countries for dropdown
     countries = sql("""
         SELECT CanonicalName, ISOAlpha2
-        FROM MasterCountries
-        WHERE EntityType = 'sovereign'
+        FROM MasterCountries mc
+        WHERE ISOAlpha2 IS NOT NULL
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
         ORDER BY CanonicalName
     """)
 

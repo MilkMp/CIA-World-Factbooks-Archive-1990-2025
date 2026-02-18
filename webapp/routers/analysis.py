@@ -414,8 +414,14 @@ async def compare_page(request: Request, a: str = "", b: str = ""):
     # Get all countries for the selector dropdowns
     all_countries = sql("""
         SELECT CanonicalName, CanonicalCode, ISOAlpha2
-        FROM MasterCountries
-        WHERE EntityType = 'sovereign'
+        FROM MasterCountries mc
+        WHERE ISOAlpha2 IS NOT NULL
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
         ORDER BY CanonicalName
     """)
 
@@ -449,8 +455,14 @@ async def timeline_page(request: Request):
     years = [r['Year'] for r in all_years]
     countries = sql("""
         SELECT CanonicalName, ISOAlpha2
-        FROM MasterCountries
-        WHERE EntityType = 'sovereign' AND ISOAlpha2 IS NOT NULL
+        FROM MasterCountries mc
+        WHERE ISOAlpha2 IS NOT NULL
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
         ORDER BY CanonicalName
     """)
     return templates.TemplateResponse("analysis/timeline.html", {

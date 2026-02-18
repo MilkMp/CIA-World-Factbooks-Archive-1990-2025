@@ -117,7 +117,12 @@ def _build_rankings(indicator, year):
         JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
         JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
         WHERE c.Year = ? AND fm.CanonicalName = ? AND fm.IsNoise = 0
-          AND mc.EntityType = 'sovereign'
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
     """, [year, field_name])
 
     results = []
@@ -222,7 +227,12 @@ def _compute_changes(year):
             JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
             WHERE c.Year IN (?, ?)
               AND fm.CanonicalName = ? AND fm.IsNoise = 0
-              AND mc.EntityType = 'sovereign'
+              AND (mc.EntityType = 'sovereign'
+                   OR NOT EXISTS (
+                       SELECT 1 FROM MasterCountries mc2
+                       WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                         AND mc2.EntityType = 'sovereign'
+                         AND mc2.MasterCountryID != mc.MasterCountryID))
             ORDER BY mc.ISOAlpha2, c.Year
         """, [prev_year, year, field_name])
 
