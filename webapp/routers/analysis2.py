@@ -158,6 +158,12 @@ def _build_sparklines(indicator, iso_codes, end_year):
         WHERE mc.ISOAlpha2 IN ({ph})
           AND c.Year BETWEEN ? AND ?
           AND fm.CanonicalName = ? AND fm.IsNoise = 0
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
         ORDER BY mc.ISOAlpha2, c.Year
     """, iso_codes + [start_year, end_year, field_name])
 

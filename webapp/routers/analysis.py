@@ -498,6 +498,12 @@ async def threats_page(request: Request, cocom: str):
         JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
         WHERE mc.ISOAlpha2 IN ({placeholders})
           AND c.Year = ?
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
           AND fm.IsNoise = 0
           AND fm.CanonicalName IN ('Terrorist group(s)','Illicit drugs',
               'Trafficking in persons','Disputes - international',
@@ -636,7 +642,12 @@ async def api_timeseries(indicator: str = "life_exp", countries: str = ""):
         WHERE mc.ISOAlpha2 IN ({placeholders})
           AND fm.CanonicalName = ?
           AND fm.IsNoise = 0
-          AND mc.EntityType = 'sovereign'
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
         ORDER BY mc.CanonicalName, c.Year
     """, codes + [field_name])
 
@@ -701,6 +712,12 @@ def _get_comms_indicators(iso_codes, year=ANALYSIS_YEAR):
         JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
         WHERE mc.ISOAlpha2 IN ({placeholders})
           AND c.Year = ?
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
           AND fm.IsNoise = 0
           AND fm.CanonicalName IN ({','.join(['?'] * len(_COMMS_FIELDS))})
     """, list(iso_codes) + [year] + list(_COMMS_FIELDS))
