@@ -287,6 +287,7 @@ const map = new mapboxgl.Map({
   style: 'mapbox://styles/mapbox/dark-v11',
   bounds: bounds || [[-180, -60], [180, 75]],
   fitBoundsOptions: { padding: 40 },
+  projection: 'globe',
   attributionControl: false,
   maxZoom: 8,
 });

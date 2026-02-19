@@ -167,51 +167,170 @@ tr.clickable:hover td { background: rgba(47, 52, 60, 0.4); }
 }
 .caveat strong { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #ABB3BF; }
 
-/* Screenshot carousel */
-.carousel-section { margin: 24px 0; }
-.carousel-container { position: relative; overflow: hidden; }
-.carousel {
-  display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-  gap: 0; padding: 0;
-  scrollbar-width: none; -ms-overflow-style: none;
-  scroll-behavior: smooth;
+/* Screenshot gallery — Palantir-style interactive */
+.gallery-section {
+  margin: 24px 0; perspective: 1200px;
 }
-.carousel::-webkit-scrollbar { display: none; }
-.carousel-slide {
-  flex: 0 0 100%; scroll-snap-align: start; position: relative;
-  background: #1C2127; border-radius: 6px;
-  overflow: hidden;
-}
-.carousel-slide img { width: 100%; height: 420px; display: block; object-fit: cover; object-position: top; }
-.carousel-slide .slide-caption {
-  padding: 14px 18px;
-  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.82rem;
-  color: #8F99A8; background: #1C2127; border: 1px solid #2F343C;
-  border-top: none; border-radius: 0 0 6px 6px;
-}
-.carousel-slide .slide-caption strong { color: #C5CBD3; font-size: 0.88rem; display: block; margin-bottom: 3px; }
-.carousel-arrow {
-  position: absolute; top: 200px; transform: translateY(-50%);
-  width: 44px; height: 44px; border-radius: 50%;
-  background: rgba(17, 20, 24, 0.75); border: 1px solid rgba(255,255,255,0.15);
-  color: #fff; font-size: 1.2rem; cursor: pointer;
+
+/* ── Per-card navigation arrows (on each picture) ── */
+.card-arrow {
+  position: absolute; top: 50%; transform: translateY(-70%);
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(17, 20, 24, 0.75); border: 1px solid rgba(255,255,255,0.12);
+  color: #ABB3BF; font-size: 0.95rem; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: background 150ms, border-color 150ms;
-  z-index: 2; backdrop-filter: blur(6px);
+  z-index: 5; backdrop-filter: blur(8px);
+  opacity: 0; transition: opacity 200ms, background 150ms, border-color 150ms, color 150ms, transform 150ms;
 }
-.carousel-arrow:hover { background: rgba(17, 20, 24, 0.9); border-color: rgba(255,255,255,0.35); }
-.carousel-arrow.left { left: 16px; }
-.carousel-arrow.right { right: 16px; }
-.carousel-dots {
-  display: flex; justify-content: center; gap: 8px; margin-top: 4px;
+.gallery-card:hover .card-arrow { opacity: 1; }
+.card-arrow:hover {
+  background: rgba(17, 20, 24, 0.95); border-color: rgba(255,255,255,0.35);
+  color: #fff;
 }
-.carousel-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: #2F343C; border: none; cursor: pointer;
-  transition: background 200ms, transform 200ms;
+.card-arrow:active { transform: translateY(-70%) scale(0.88); }
+.card-arrow.left { left: 10px; }
+.card-arrow.right { right: 10px; }
+
+/* ── Track (horizontal drag-scroll) ── */
+.gallery-track {
+  display: flex; gap: 20px; padding: 24px 4px 32px;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none; -ms-overflow-style: none;
+  cursor: grab; user-select: none;
+  -webkit-overflow-scrolling: touch;
 }
-.carousel-dot:hover { background: #5F6B7C; }
-.carousel-dot.active { background: #C5CBD3; transform: scale(1.25); }
+.gallery-track::-webkit-scrollbar { display: none; }
+.gallery-track.dragging { cursor: grabbing; scroll-behavior: auto; }
+
+/* ── Card ── */
+.gallery-card {
+  flex: 0 0 420px; position: relative;
+  border-radius: 8px; overflow: hidden;
+  background: #1C2127; border: 1px solid #2F343C;
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.03, 0.98, 0.52, 0.99),
+              box-shadow 0.4s cubic-bezier(0.03, 0.98, 0.52, 0.99),
+              border-color 0.3s ease;
+  will-change: transform;
+}
+.gallery-card:hover {
+  border-color: #404854;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(45, 114, 210, 0.08);
+  z-index: 2;
+}
+
+/* ── Cursor glow overlay ── */
+.gallery-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(45, 114, 210, 0.06),
+    transparent 40%
+  );
+  z-index: 3; pointer-events: none;
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.gallery-card:hover::before { opacity: 1; }
+
+/* ── Border glow ── */
+.gallery-card::after {
+  content: '';
+  position: absolute; inset: -1px;
+  background: radial-gradient(
+    400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(45, 114, 210, 0.25),
+    transparent 40%
+  );
+  z-index: -1; border-radius: 9px;
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.gallery-card:hover::after { opacity: 1; }
+
+/* ── Image wrapper with parallax ── */
+.gallery-img-wrap {
+  overflow: hidden; height: 280px; position: relative;
+}
+.gallery-img-wrap img {
+  width: 110%; height: 110%; object-fit: cover; object-position: top left;
+  display: block;
+  transform: translate(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -10px));
+  transition: transform 0.4s cubic-bezier(0.03, 0.98, 0.52, 0.99);
+  will-change: transform;
+}
+
+/* ── Caption ── */
+.gallery-caption {
+  padding: 16px 20px;
+  border-top: 1px solid #252A31;
+  position: relative; z-index: 2;
+}
+.gallery-caption strong {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  color: #C5CBD3; font-size: 0.88rem; display: block; margin-bottom: 4px;
+}
+.gallery-caption span {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.78rem; color: #5F6B7C; line-height: 1.5;
+}
+
+/* ── Progress bar (auto-advance indicator) ── */
+.gallery-progress {
+  display: flex; justify-content: center; gap: 6px;
+  margin-top: 8px; padding: 0 4px;
+}
+.gallery-pip {
+  height: 3px; flex: 1; max-width: 48px;
+  background: #252A31; border-radius: 2px;
+  overflow: hidden; cursor: pointer;
+  transition: background 200ms;
+}
+.gallery-pip:hover { background: #383E47; }
+.gallery-pip.active { background: transparent; }
+.gallery-pip-fill {
+  height: 100%; width: 0; background: #5F6B7C;
+  border-radius: 2px;
+}
+.gallery-pip.active .gallery-pip-fill {
+  width: 100%;
+  transition: width 6s linear;
+}
+.gallery-pip.past .gallery-pip-fill {
+  width: 100%; background: #383E47;
+}
+
+/* ── Lightbox ── */
+.gallery-lightbox {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(17, 20, 24, 0.92); backdrop-filter: blur(12px);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out;
+}
+.gallery-lightbox.open { display: flex; }
+.gallery-lightbox img {
+  max-width: 92vw; max-height: 88vh; object-fit: contain;
+  border-radius: 6px; border: 1px solid #2F343C;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+}
+.gallery-lightbox .lb-caption {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.82rem; color: #8F99A8; background: rgba(28, 33, 39, 0.85);
+  padding: 10px 20px; border-radius: 4px; border: 1px solid #2F343C;
+  text-align: center; max-width: 600px;
+  backdrop-filter: blur(8px);
+}
+.gallery-lightbox .lb-caption strong { color: #C5CBD3; display: block; margin-bottom: 2px; }
+
+/* ── Scroll-triggered fade-in ── */
+.gallery-section {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gallery-section.visible {
+  opacity: 1; transform: translateY(0);
+}
 
 /* Footer */
 footer {
@@ -250,10 +369,12 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
   .main-content { padding: 20px 16px; max-width: 100%; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .data-table { display: block; overflow-x: auto; }
-  .carousel-slide img { height: 240px; }
-  .carousel-arrow { top: 120px; width: 36px; height: 36px; font-size: 0.95rem; }
-  .carousel-arrow.left { left: 8px; }
-  .carousel-arrow.right { right: 8px; }
+  .gallery-card { flex: 0 0 320px; }
+  .gallery-img-wrap { height: 200px; }
+  .gallery-track { gap: 14px; padding: 16px 4px 24px; }
+  .card-arrow { width: 30px; height: 30px; font-size: 0.8rem; }
+  .card-arrow.left { left: 6px; }
+  .card-arrow.right { right: 6px; }
 }
 @media (max-width: 480px) {
   .banner { font-size: 0.55rem; letter-spacing: 2px; padding: 4px 0; }
@@ -372,62 +493,88 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
         <hr class="sec-rule">
       </div>
 
-      <div class="carousel-section">
-        <div class="carousel-container">
-          <button class="carousel-arrow left" onclick="scrollCarousel(-1)" aria-label="Previous">&#10094;</button>
-          <div class="carousel" id="screenshot-carousel">
-            <div class="carousel-slide">
-              <img src="screenshots/homepage.png" alt="Homepage" loading="lazy">
-              <div class="slide-caption"><strong>Homepage</strong>Landing page with database statistics and navigation</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/search_results.png" alt="Full-Text Search" loading="lazy">
-              <div class="slide-caption"><strong>Full-Text Search</strong>Keyword search across 1M+ fields with Library of Congress Z39.58 syntax</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/search_boolean.png" alt="Boolean Search" loading="lazy">
-              <div class="slide-caption"><strong>Boolean Search</strong>"nuclear weapons" AND proliferation -- exact phrase matching with boolean operators</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/country_profile.png" alt="Country Profile" loading="lazy">
-              <div class="slide-caption"><strong>Country Profile</strong>Complete field data for any entity, organized by category</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/regional_dashboard.png" alt="Regional Dashboard" loading="lazy">
-              <div class="slide-caption"><strong>Regional Dashboard</strong>Mapbox GL JS choropleth with COCOM regions, hover popups, and capital markers</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/region_eucom.png" alt="EUCOM Region" loading="lazy">
-              <div class="slide-caption"><strong>COCOM Region Detail</strong>Regional map with country-level KPIs and ranked indicators</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/timeline_map.png" alt="Timeline Map" loading="lazy">
-              <div class="slide-caption"><strong>Timeline Map</strong>Animated Mapbox choropleth across 36 years with multi-country time series</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/map_compare.png" alt="Map Compare" loading="lazy">
-              <div class="slide-caption"><strong>Map Compare</strong>Two synced Mapbox maps for side-by-side year comparison</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/communications.png" alt="Communications Analysis" loading="lazy">
-              <div class="slide-caption"><strong>Communications Analysis</strong>Internet, mobile, and broadband penetration with digital divide indicators</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/dossier.png" alt="Intelligence Dossier" loading="lazy">
-              <div class="slide-caption"><strong>Intelligence Dossier</strong>Country assessments formatted per ICD 203 analytic standards</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/field_timeseries.png" alt="Field Time Series" loading="lazy">
-              <div class="slide-caption"><strong>Field Time Series</strong>Track any data field across 36 years with interactive charts</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/country_export.png" alt="Country Export" loading="lazy">
-              <div class="slide-caption"><strong>Factbook Export</strong>Print-ready country report with all parsed fields organized by category</div>
-            </div>
+      <div class="gallery-section" id="gallery-section">
+        <div class="gallery-track" id="gallery-track">
+          <div class="gallery-card" data-idx="0">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/homepage.png" alt="Homepage" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Homepage</strong><span>Landing page with database statistics and navigation</span></div>
           </div>
-          <button class="carousel-arrow right" onclick="scrollCarousel(1)" aria-label="Next">&#10095;</button>
+          <div class="gallery-card" data-idx="1">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/search_results.png" alt="Full-Text Search" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Full-Text Search</strong><span>Keyword search across 1M+ fields with Z39.58 syntax</span></div>
+          </div>
+          <div class="gallery-card" data-idx="2">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/search_boolean.png" alt="Boolean Search" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Boolean Search</strong><span>Exact phrase matching with boolean operators</span></div>
+          </div>
+          <div class="gallery-card" data-idx="3">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/country_profile.png" alt="Country Profile" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Country Profile</strong><span>Complete field data for any entity, organized by category</span></div>
+          </div>
+          <div class="gallery-card" data-idx="4">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/regional_dashboard.png" alt="Regional Dashboard" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Regional Dashboard</strong><span>Mapbox choropleth with COCOM regions and capital markers</span></div>
+          </div>
+          <div class="gallery-card" data-idx="5">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/region_eucom.png" alt="EUCOM Region" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>COCOM Region Detail</strong><span>Regional map with country-level KPIs and ranked indicators</span></div>
+          </div>
+          <div class="gallery-card" data-idx="6">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/timeline_map.png" alt="Timeline Map" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Timeline Map</strong><span>Animated choropleth across 36 years with time series</span></div>
+          </div>
+          <div class="gallery-card" data-idx="7">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/map_compare.png" alt="Map Compare" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Map Compare</strong><span>Two synced maps for side-by-side year comparison</span></div>
+          </div>
+          <div class="gallery-card" data-idx="8">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/communications.png" alt="Communications Analysis" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Communications Analysis</strong><span>Internet, mobile, and broadband penetration indicators</span></div>
+          </div>
+          <div class="gallery-card" data-idx="9">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/dossier.png" alt="Intelligence Dossier" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Intelligence Dossier</strong><span>Country assessments formatted per ICD 203 standards</span></div>
+          </div>
+          <div class="gallery-card" data-idx="10">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/field_timeseries.png" alt="Field Time Series" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Field Time Series</strong><span>Track any data field across 36 years with charts</span></div>
+          </div>
+          <div class="gallery-card" data-idx="11">
+            <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+            <div class="gallery-img-wrap"><img src="screenshots/country_export.png" alt="Country Export" loading="lazy"></div>
+            <button class="card-arrow right" aria-label="Next">&#10095;</button>
+            <div class="gallery-caption"><strong>Factbook Export</strong><span>Print-ready country report with all parsed fields</span></div>
+          </div>
         </div>
-        <div class="carousel-dots" id="carousel-dots"></div>
+        <div class="gallery-progress" id="gallery-progress"></div>
+      </div>
+
+      <!-- Lightbox -->
+      <div class="gallery-lightbox" id="gallery-lightbox">
+        <img src="" alt="">
+        <div class="lb-caption"><strong></strong><span></span></div>
       </div>
 
       <hr class="doc-rule">
@@ -711,44 +858,241 @@ function renderCountries(filter, type) {
   document.getElementById('countries-count').textContent = rows.length + ' entities';
 }
 
-/* Carousel logic */
-function initCarousel() {
-  var carousel = document.getElementById('screenshot-carousel');
-  var slides = carousel.querySelectorAll('.carousel-slide');
-  var dotsContainer = document.getElementById('carousel-dots');
+/* ── Gallery: 3D tilt, parallax, drag-scroll, auto-advance, lightbox ── */
+function initGallery() {
+  var track = document.getElementById('gallery-track');
+  var cards = track.querySelectorAll('.gallery-card');
+  var section = document.getElementById('gallery-section');
+  var progressContainer = document.getElementById('gallery-progress');
+  var lightbox = document.getElementById('gallery-lightbox');
+  var lbImg = lightbox.querySelector('img');
+  var lbCaption = lightbox.querySelector('.lb-caption');
 
-  /* Build dot indicators */
-  slides.forEach(function(_, i) {
-    var dot = document.createElement('button');
-    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
-    dot.setAttribute('aria-label', 'Slide ' + (i + 1));
-    dot.onclick = function() {
-      slides[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-    };
-    dotsContainer.appendChild(dot);
+  /* ── Scroll-triggered reveal ── */
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+    });
+  }, { threshold: 0.15 });
+  observer.observe(section);
+
+  /* ── 3D tilt + parallax + glow per card ── */
+  cards.forEach(function(card) {
+    var img = card.querySelector('.gallery-img-wrap img');
+
+    card.addEventListener('mousemove', function(e) {
+      var rect = card.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var y = e.clientY - rect.top;
+      var cx = rect.width / 2;
+      var cy = rect.height / 2;
+
+      /* Normalize -1 to 1 */
+      var nx = (x - cx) / cx;
+      var ny = (y - cy) / cy;
+
+      /* 3D tilt — max 8deg */
+      var rotateY = nx * 8;
+      var rotateX = -ny * 6;
+      card.style.transform = 'perspective(800px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) scale(1.03)';
+
+      /* Parallax on image */
+      card.style.setProperty('--px', nx.toFixed(3));
+      card.style.setProperty('--py', ny.toFixed(3));
+
+      /* Cursor glow position */
+      card.style.setProperty('--mouse-x', x + 'px');
+      card.style.setProperty('--mouse-y', y + 'px');
+    });
+
+    card.addEventListener('mouseleave', function() {
+      card.style.transform = '';
+      card.style.setProperty('--px', '0');
+      card.style.setProperty('--py', '0');
+    });
+
+    /* Click to open lightbox (skip if arrow or drag) */
+    card.addEventListener('click', function(e) {
+      if (wasDragging) return;
+      if (e.target.closest('.card-arrow')) return;
+      var src = img.src;
+      var caption = card.querySelector('.gallery-caption');
+      lbImg.src = src;
+      lbImg.alt = img.alt;
+      lbCaption.querySelector('strong').textContent = caption.querySelector('strong').textContent;
+      lbCaption.querySelector('span').textContent = caption.querySelector('span').textContent;
+      lightbox.classList.add('open');
+    });
   });
 
-  /* Update dots on scroll */
-  var dots = dotsContainer.querySelectorAll('.carousel-dot');
-  var scrollTimeout;
-  carousel.addEventListener('scroll', function() {
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(function() {
-      var scrollLeft = carousel.scrollLeft;
-      var slideWidth = slides[0].offsetWidth;
-      var idx = Math.round(scrollLeft / slideWidth);
-      idx = Math.max(0, Math.min(idx, slides.length - 1));
-      dots.forEach(function(d, i) {
-        d.classList.toggle('active', i === idx);
+  /* Close lightbox */
+  lightbox.addEventListener('click', function() { lightbox.classList.remove('open'); });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') lightbox.classList.remove('open');
+  });
+
+  /* ── Per-card arrow buttons ── */
+  cards.forEach(function(card) {
+    var idx = parseInt(card.dataset.idx, 10);
+    var leftArr = card.querySelector('.card-arrow.left');
+    var rightArr = card.querySelector('.card-arrow.right');
+    if (leftArr) {
+      leftArr.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (idx > 0) scrollToCard(idx - 1);
       });
-    }, 50);
+    }
+    if (rightArr) {
+      rightArr.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (idx < cards.length - 1) scrollToCard(idx + 1);
+      });
+    }
   });
-}
 
-function scrollCarousel(dir) {
-  var carousel = document.getElementById('screenshot-carousel');
-  var slideWidth = carousel.querySelector('.carousel-slide').offsetWidth;
-  carousel.scrollBy({ left: dir * slideWidth, behavior: 'smooth' });
+  /* ── Drag-to-scroll with momentum ── */
+  var isDragging = false;
+  var wasDragging = false;
+  var startX = 0, scrollLeft = 0;
+  var velocity = 0, lastX = 0, lastTime = 0;
+  var momentumId = null;
+
+  track.addEventListener('mousedown', function(e) {
+    isDragging = true;
+    wasDragging = false;
+    track.classList.add('dragging');
+    startX = e.pageX - track.offsetLeft;
+    scrollLeft = track.scrollLeft;
+    velocity = 0;
+    lastX = e.pageX;
+    lastTime = Date.now();
+    if (momentumId) cancelAnimationFrame(momentumId);
+    pauseAuto();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    var x = e.pageX - track.offsetLeft;
+    var walk = (x - startX) * 1.2;
+    track.scrollLeft = scrollLeft - walk;
+
+    /* Track velocity for momentum */
+    var now = Date.now();
+    var dt = now - lastTime;
+    if (dt > 0) {
+      velocity = (e.pageX - lastX) / dt;
+      lastX = e.pageX;
+      lastTime = now;
+    }
+
+    if (Math.abs(walk) > 4) wasDragging = true;
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!isDragging) return;
+    isDragging = false;
+    track.classList.remove('dragging');
+
+    /* Apply momentum */
+    if (Math.abs(velocity) > 0.15) {
+      var v = velocity * 300;
+      (function coast() {
+        if (Math.abs(v) < 0.5) return;
+        track.scrollLeft -= v * 0.016;
+        v *= 0.95;
+        momentumId = requestAnimationFrame(coast);
+      })();
+    }
+
+    setTimeout(function() { wasDragging = false; }, 50);
+    scheduleAuto();
+  });
+
+  /* Touch drag for mobile */
+  var touchStartX = 0, touchScrollLeft = 0;
+  track.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].pageX;
+    touchScrollLeft = track.scrollLeft;
+    pauseAuto();
+  }, { passive: true });
+  track.addEventListener('touchend', function() { scheduleAuto(); }, { passive: true });
+
+  /* ── Auto-advance with progress pips ── */
+  var currentPip = 0;
+  var autoTimer = null;
+  var AUTO_INTERVAL = 6000;
+
+  /* Build pips */
+  cards.forEach(function(_, i) {
+    var pip = document.createElement('div');
+    pip.className = 'gallery-pip' + (i === 0 ? ' active' : '');
+    pip.innerHTML = '<div class="gallery-pip-fill"></div>';
+    pip.onclick = function() { scrollToCard(i); };
+    progressContainer.appendChild(pip);
+  });
+
+  var pips = progressContainer.querySelectorAll('.gallery-pip');
+
+  function updatePips(idx) {
+    pips.forEach(function(p, i) {
+      p.classList.remove('active', 'past');
+      if (i < idx) p.classList.add('past');
+      if (i === idx) p.classList.add('active');
+    });
+    currentPip = idx;
+  }
+
+  function scrollToCard(idx) {
+    var card = cards[idx];
+    if (!card) return;
+    var trackRect = track.getBoundingClientRect();
+    var cardRect = card.getBoundingClientRect();
+    var offset = cardRect.left - trackRect.left + track.scrollLeft - (trackRect.width / 2 - cardRect.width / 2);
+    track.scrollTo({ left: offset, behavior: 'smooth' });
+    updatePips(idx);
+    restartAuto();
+  }
+
+  function advanceAuto() {
+    var next = (currentPip + 1) % cards.length;
+    scrollToCard(next);
+  }
+
+  function scheduleAuto() {
+    clearInterval(autoTimer);
+    autoTimer = setInterval(advanceAuto, AUTO_INTERVAL);
+  }
+
+  function pauseAuto() {
+    clearInterval(autoTimer);
+  }
+
+  function restartAuto() {
+    pauseAuto();
+    scheduleAuto();
+  }
+
+  /* Pause auto on hover */
+  track.addEventListener('mouseenter', pauseAuto);
+  track.addEventListener('mouseleave', scheduleAuto);
+
+  /* Update pips on manual scroll */
+  var scrollDebounce;
+  track.addEventListener('scroll', function() {
+    clearTimeout(scrollDebounce);
+    scrollDebounce = setTimeout(function() {
+      var trackLeft = track.scrollLeft;
+      var cardW = cards[0].offsetWidth + 20;
+      var idx = Math.round(trackLeft / cardW);
+      idx = Math.max(0, Math.min(idx, cards.length - 1));
+      if (idx !== currentPip) updatePips(idx);
+    }, 80);
+  });
+
+  /* Start auto-advance */
+  updatePips(0);
+  scheduleAuto();
 }
 
 var activeType = 'all';
@@ -767,7 +1111,7 @@ function filterType(type) {
 
 document.addEventListener('DOMContentLoaded', function() {
   renderCountries('', 'all');
-  initCarousel();
+  initGallery();
   document.getElementById('country-filter').addEventListener('input', function(e) {
     renderCountries(e.target.value, activeType);
   });
