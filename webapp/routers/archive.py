@@ -442,7 +442,8 @@ async def search_page(request: Request, q: str = "",
             offset = (page - 1) * PER_PAGE
             results = sql(f"""
                 SELECT c.Year, c.Name, c.Code, cc.CategoryTitle,
-                    cf.FieldName, SUBSTR(cf.Content, 1, 400) AS ContentPreview,
+                    cf.FieldName,
+                    snippet(CountryFieldsFTS, 0, '', '', '...', 40) AS ContentPreview,
                     mc.CanonicalCode, mc.ISOAlpha2
                 {base_where}
                 ORDER BY c.Year DESC, c.Name

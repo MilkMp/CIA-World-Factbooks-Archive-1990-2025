@@ -119,9 +119,11 @@ function exportPDF() {
   });
   if (phrases.length === 0) return;
 
-  // 3. Build alternation regex from all terms
+  // 3. Build alternation regex — escape special chars, convert FTS wildcards
   var parts = phrases.map(function(t) {
-    return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    var escaped = t.replace(/([.+^${}()|[\]\\])/g, '\\$1');
+    escaped = escaped.replace(/\*/g, '\\w*').replace(/\?/g, '\\w');
+    return escaped;
   });
   const re = new RegExp('(' + parts.join('|') + ')', 'gi');
   const hits = [];

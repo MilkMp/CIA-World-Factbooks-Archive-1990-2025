@@ -60,8 +60,8 @@
       <td><a href="/archive/{{ r.Year }}/{{ r.CanonicalCode or r.ISOAlpha2 or r.Code }}?q={{ q|urlencode }}">{{ r.Name }}</a></td>
       <td>{{ r.CategoryTitle }}</td>
       <td>{{ r.FieldName }}</td>
-      <td style="font-size:0.8rem;max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-        {{ r.ContentPreview[:200] }}
+      <td class="content-preview" style="font-size:0.8rem;max-width:500px;">
+        {{ r.ContentPreview }}
       </td>
     </tr>
     {% endfor %}
@@ -201,4 +201,64 @@
   &bull; Use year range filters to narrow results to specific Factbook editions
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  const q = new URLSearchParams(window.location.search).get('q');
+  if (!q) return;
+  var cells = document.querySelectorAll('.content-preview');
+  if (!cells.length) return;
+
+  /* Extract search terms — strip boolean operators, keep terms and phrases */
+  var phrases = [];
+  var stripped = q.replace(/"([^"]+)"/g, function(_, p) {
+    phrases.push(p.trim());
+    return ' ';
+  });
+  var OPERATORS = {AND:1, OR:1, NOT:1};
+  stripped.split(/\s+/).forEach(function(tok) {
+    if (!tok) return;
+    var clean = tok.replace(/^[-(]+|[)]+$/g, '');
+    if (!clean || OPERATORS[clean.toUpperCase()]) return;
+    phrases.push(clean);
+  });
+  if (phrases.length === 0) return;
+
+  /* Build regex — escape special chars, then convert FTS wildcards to regex */
+  var parts = phrases.map(function(t) {
+    var escaped = t.replace(/([.+^${}()|[\]\\])/g, '\\$1');
+    escaped = escaped.replace(/\*/g, '\\w*').replace(/\?/g, '\\w');
+    return escaped;
+  });
+  var re = new RegExp('(' + parts.join('|') + ')', 'gi');
+
+  cells.forEach(function(cell) {
+    if (!re.test(cell.textContent)) { re.lastIndex = 0; return; }
+    re.lastIndex = 0;
+    var walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+    var nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach(function(node) {
+      if (!re.test(node.textContent)) { re.lastIndex = 0; return; }
+      re.lastIndex = 0;
+      var frag = document.createDocumentFragment();
+      var last = 0;
+      node.textContent.replace(re, function(match, p1, offset) {
+        if (offset > last) frag.appendChild(document.createTextNode(node.textContent.slice(last, offset)));
+        var mark = document.createElement('mark');
+        mark.className = 'search-hit';
+        mark.textContent = match;
+        frag.appendChild(mark);
+        last = offset + match.length;
+        return match;
+      });
+      if (last < node.textContent.length) frag.appendChild(document.createTextNode(node.textContent.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  });
+})();
+</script>
 {% endblock %}
