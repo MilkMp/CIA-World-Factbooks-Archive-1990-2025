@@ -97,7 +97,9 @@ a:hover { text-decoration: underline; color: #FFFFFF; }
   color: #5F6B7C;
   padding: 0;
   margin-bottom: 12px;
+  text-decoration: none;
 }
+.sidebar-title:hover { color: #8F99A8; text-decoration: none; }
 
 /* Hamburger toggle — hidden on desktop */
 .nav-toggle {

@@ -14,7 +14,7 @@
   <meta name="twitter:title" content="CIA World Factbook Archive">
   <meta name="twitter:description" content="36 years of structured intelligence data (1990-2025). 281 entities, 1,071,213 fields.">
   <meta name="twitter:image" content="https://cia-factbook-archive.fly.dev/static/og-image.png">
-  <link rel="stylesheet" href="/static/css/intel-theme.css?v=13">
+  <link rel="stylesheet" href="/static/css/intel-theme.css?v=14">
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   {% block head %}{% endblock %}
 </head>
@@ -26,7 +26,7 @@
 
   <nav class="sidebar" x-data="{ navOpen: false }" @click.outside="navOpen = false" @keydown.escape.window="navOpen = false">
     <div class="sidebar-header">
-      <div class="sidebar-title">Factbook Archive</div>
+      <a href="/" class="sidebar-title">Factbook Archive</a>
       <button class="nav-toggle" @click="navOpen = !navOpen" :class="{ 'is-open': navOpen }" aria-label="Toggle navigation">
         <span></span><span></span><span></span>
       </button>
