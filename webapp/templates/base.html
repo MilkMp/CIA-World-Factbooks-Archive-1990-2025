@@ -14,7 +14,7 @@
   <meta name="twitter:title" content="CIA World Factbook Archive">
   <meta name="twitter:description" content="36 years of structured intelligence data (1990-2025). 281 entities, 1,071,213 fields.">
   <meta name="twitter:image" content="https://cia-factbook-archive.fly.dev/static/og-image.png">
-  <link rel="stylesheet" href="/static/css/intel-theme.css?v=10">
+  <link rel="stylesheet" href="/static/css/intel-theme.css?v=11">
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   {% block head %}{% endblock %}
 </head>
@@ -24,35 +24,42 @@
 
 <div class="layout">
 
-  <nav class="sidebar">
-    <div class="sidebar-title">Factbook Archive</div>
-    <a href="/" class="{{ 'active' if active_page == 'home' else '' }}">Home</a>
+  <nav class="sidebar" x-data="{ navOpen: false }" @click.outside="navOpen = false" @keydown.escape.window="navOpen = false">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Factbook Archive</div>
+      <button class="nav-toggle" @click="navOpen = !navOpen" :class="{ 'is-open': navOpen }" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="nav-links" :class="{ 'nav-open': navOpen }">
+      <a href="/" class="{{ 'active' if active_page == 'home' else '' }}" @click="navOpen = false">Home</a>
 
-    <div class="nav-section">The Archive</div>
-    <a href="/archive/library" class="{{ 'active' if active_page == 'library' else '' }}">Library</a>
-    <a href="/countries" class="{{ 'active' if active_page == 'countries' else '' }}">Country Dictionary</a>
-    <a href="/archive" class="{{ 'active' if active_page == 'browse' else '' }}">Browse by Year</a>
-    <a href="/search" class="{{ 'active' if active_page == 'search' else '' }}">Search Fields</a>
-    <a href="/analysis/diff" class="{{ 'active' if active_page == 'diff' else '' }}">Text Diff</a>
-    <a href="/export" class="{{ 'active' if active_page == 'export' else '' }}">Data Export</a>
+      <div class="nav-section">The Archive</div>
+      <a href="/archive/library" class="{{ 'active' if active_page == 'library' else '' }}" @click="navOpen = false">Library</a>
+      <a href="/countries" class="{{ 'active' if active_page == 'countries' else '' }}" @click="navOpen = false">Country Dictionary</a>
+      <a href="/archive" class="{{ 'active' if active_page == 'browse' else '' }}" @click="navOpen = false">Browse by Year</a>
+      <a href="/search" class="{{ 'active' if active_page == 'search' else '' }}" @click="navOpen = false">Search Fields</a>
+      <a href="/analysis/diff" class="{{ 'active' if active_page == 'diff' else '' }}" @click="navOpen = false">Text Diff</a>
+      <a href="/export" class="{{ 'active' if active_page == 'export' else '' }}" @click="navOpen = false">Data Export</a>
 
-    <div class="nav-section">Intelligence</div>
-    <a href="/analysis" class="{{ 'active' if active_page == 'analysis-home' else '' }}">Overview</a>
-    <div class="nav-sub-label">Maps &amp; Geography</div>
-    <a href="/analysis/regional" class="{{ 'active' if active_page == 'analysis' else '' }}">Regional Dashboard</a>
-    <a href="/analysis/timeline" class="{{ 'active' if active_page == 'timeline' else '' }}">Timeline Map</a>
-    <a href="/analysis/map-compare" class="{{ 'active' if active_page == 'map-compare' else '' }}">Map Compare</a>
-    <div class="nav-sub-label">Rankings &amp; Trends</div>
-    <a href="/analysis/rankings" class="{{ 'active' if active_page == 'rankings' else '' }}">Global Rankings</a>
-    <a href="/analysis/compare" class="{{ 'active' if active_page == 'compare' else '' }}">Compare Countries</a>
-    <a href="/analysis/communications" class="{{ 'active' if active_page == 'communications' else '' }}">Communications</a>
-    <a href="/analysis/changes" class="{{ 'active' if active_page == 'changes' else '' }}">Change Detection</a>
-    <a href="/analysis/dissolved" class="{{ 'active' if active_page == 'dissolved' else '' }}">Dissolved States</a>
+      <div class="nav-section">Intelligence</div>
+      <a href="/analysis" class="{{ 'active' if active_page == 'analysis-home' else '' }}" @click="navOpen = false">Overview</a>
+      <div class="nav-sub-label">Maps &amp; Geography</div>
+      <a href="/analysis/regional" class="{{ 'active' if active_page == 'analysis' else '' }}" @click="navOpen = false">Regional Dashboard</a>
+      <a href="/analysis/timeline" class="{{ 'active' if active_page == 'timeline' else '' }}" @click="navOpen = false">Timeline Map</a>
+      <a href="/analysis/map-compare" class="{{ 'active' if active_page == 'map-compare' else '' }}" @click="navOpen = false">Map Compare</a>
+      <div class="nav-sub-label">Rankings &amp; Trends</div>
+      <a href="/analysis/rankings" class="{{ 'active' if active_page == 'rankings' else '' }}" @click="navOpen = false">Global Rankings</a>
+      <a href="/analysis/compare" class="{{ 'active' if active_page == 'compare' else '' }}" @click="navOpen = false">Compare Countries</a>
+      <a href="/analysis/communications" class="{{ 'active' if active_page == 'communications' else '' }}" @click="navOpen = false">Communications</a>
+      <a href="/analysis/changes" class="{{ 'active' if active_page == 'changes' else '' }}" @click="navOpen = false">Change Detection</a>
+      <a href="/analysis/dissolved" class="{{ 'active' if active_page == 'dissolved' else '' }}" @click="navOpen = false">Dissolved States</a>
 
-    <div class="nav-section">Reference</div>
-    <a href="/api" class="{{ 'active' if active_page == 'api-docs' else '' }}">API Documentation</a>
-    <a href="/about" class="{{ 'active' if active_page == 'about' else '' }}">About</a>
-    <a href="/report" class="hide-mobile {{ 'active' if active_page == 'report' else '' }}">Report a Bug</a>
+      <div class="nav-section">Reference</div>
+      <a href="/api" class="{{ 'active' if active_page == 'api-docs' else '' }}" @click="navOpen = false">API Documentation</a>
+      <a href="/about" class="{{ 'active' if active_page == 'about' else '' }}" @click="navOpen = false">About</a>
+      <a href="/report" class="{{ 'active' if active_page == 'report' else '' }}" @click="navOpen = false">Report a Bug</a>
+    </div>
   </nav>
 
   <main class="main-content">
