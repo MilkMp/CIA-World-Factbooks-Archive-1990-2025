@@ -709,7 +709,8 @@ mark.search-hit {
     letter-spacing: 0.8px;
     white-space: nowrap;
   }
-  .sidebar .nav-sub-label {
+  .sidebar .nav-sub-label,
+  .sidebar .hide-mobile {
     display: none;
   }
   .sidebar a {
