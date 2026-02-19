@@ -3,6 +3,8 @@
 {% block title %}Timeline Map — Intelligence Analysis{% endblock %}
 
 {% block head %}
+<link href="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.js"></script>
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 <style>
   .timeline-controls {
@@ -286,8 +288,13 @@
   }
   .panel-body {
     flex: 1;
-    padding: 12px;
+    padding: 0;
     position: relative;
+  }
+  #timeline-map {
+    width: 100%;
+    height: 100%;
+    min-height: 380px;
   }
   .panel-body .chart-container {
     height: 100%;
@@ -301,9 +308,27 @@
     background: rgba(28, 33, 39, 0.6);
   }
 
+  /* Mapbox popup override */
+  .mapboxgl-popup-content {
+    background: #1C2127 !important;
+    color: #C5CBD3;
+    border: 1px solid #2F343C;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    line-height: 1.5;
+  }
+  .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: #2F343C; }
+  .mapboxgl-popup-anchor-top .mapboxgl-popup-tip { border-bottom-color: #2F343C; }
+  .mapboxgl-popup-close-button { display: none; }
+  .mapboxgl-ctrl-attrib { display: none !important; }
+
   @media (max-width: 1200px) {
     .dual-panel { grid-template-columns: 1fr; }
     .panel-body .chart-container { min-height: 320px; }
+    #timeline-map { min-height: 320px; }
   }
   @media (max-width: 800px) {
     .timeline-controls { gap: 10px; }
@@ -311,6 +336,10 @@
     .year-slider { min-width: 120px; }
     .ts-controls select { max-width: 100%; }
     .panel-body .chart-container { min-height: 280px; }
+    #timeline-map { min-height: 280px; }
+  }
+  @media (max-width: 800px) {
+    .play-btn { padding: 10px 20px; font-size: 0.9rem; }
   }
   @media (max-width: 480px) {
     .timeline-controls {
@@ -319,8 +348,8 @@
     }
     .timeline-controls label { margin-bottom: -4px; }
     .year-display { font-size: 1.6rem; order: -1; }
-    .year-slider { min-width: 100%; }
-    .play-btn { align-self: flex-start; }
+    .year-slider { min-width: 100%; height: 28px; }
+    .play-btn { align-self: flex-start; padding: 12px 24px; font-size: 0.95rem; }
     .ts-controls { flex-direction: column; align-items: stretch; }
     .ts-controls select { max-width: 100%; }
   }
@@ -337,7 +366,7 @@
 <hr class="doc-rule double">
 
 <div style="margin:12px 0; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-  <a href="/analysis" class="btn">Back to Dashboard</a>
+  <a href="/analysis/regional" class="btn">Back to Dashboard</a>
   <div style="flex:1;"></div>
   <label style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:0.7rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;">Indicator:</label>
   <select id="tl-indicator" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:5px 10px;font-size:0.82rem;">
@@ -351,7 +380,7 @@
 
 <div class="dual-panel">
 
-  <!-- ══════ LEFT PANEL: Animated World Map ══════ -->
+  <!-- Left Panel: Animated World Map -->
   <div class="panel">
     <div class="panel-header">
       Global Map
@@ -359,7 +388,7 @@
       <div class="year-display" id="year-display">{{ years[0] }}</div>
     </div>
     <div class="panel-body">
-      <div id="timeline-map" class="chart-container"></div>
+      <div id="timeline-map"></div>
       <div id="loading" class="loading-overlay" style="display:none;">Loading data...</div>
     </div>
     <div style="padding:8px 16px 10px; border-top:1px solid #252A31; display:flex; align-items:center; gap:12px;">
@@ -369,7 +398,7 @@
     </div>
   </div>
 
-  <!-- ══════ RIGHT PANEL: Country Time Series ══════ -->
+  <!-- Right Panel: Country Time Series (Plotly) -->
   <div class="panel">
     <div class="panel-header">
       Country Time Series
@@ -395,12 +424,12 @@
       </div>
       <div class="ts-chips" id="ts-chips"></div>
     </div>
-    <div class="panel-body">
+    <div class="panel-body" style="padding:12px;">
       <div id="ts-chart" class="chart-container"></div>
     </div>
   </div>
 
-  <!-- ══════ USAGE — spans both columns ══════ -->
+  <!-- Usage hint — spans both columns -->
   <div style="grid-column:1/-1; display:flex; gap:24px; padding:10px 16px; background:#1C2127; border:1px solid #2F343C; border-radius:6px; font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.72rem; color:#5F6B7C; line-height:1.5;">
     <span><strong style="color:#8F99A8;">Play</strong> or drag slider to animate</span>
     <span><strong style="color:#8F99A8;">Click</strong> a country on the map to add it to the time series</span>
@@ -428,23 +457,28 @@ const indicatorLabels = {
   life_exp: 'Life Expectancy (years)',
 };
 
-/* Color scales — DG2 base → extended palette */
-const indicatorScales = {
-  gdp_billions: [[0,'#252A31'],[0.25,'#5C4405'],[0.5,'#D1980B'],[0.75,'#F0B726'],[1,'#FBD065']],   /* GOLD */
-  population:   [[0,'#252A31'],[0.25,'#77450D'],[0.5,'#C87619'],[0.75,'#EC9A3C'],[1,'#FBB360']],   /* ORANGE */
-  mil_pct_gdp:  [[0,'#252A31'],[0.25,'#96290D'],[0.5,'#D33D17'],[0.75,'#EB6847'],[1,'#FF9980']],   /* VERMILION */
-  gdp_percap:   [[0,'#252A31'],[0.25,'#0C5174'],[0.5,'#147EB3'],[0.75,'#3FA6DA'],[1,'#68C1EE']],   /* CERULEAN */
-  life_exp:     [[0,'#252A31'],[0.2,'#1D7324'],[0.4,'#29A634'],[0.6,'#43BF4D'],[0.8,'#62D96B'],[1,'#72CA9B']], /* FOREST→GREEN */
+const indicatorColors = {
+  gdp_billions: ['#252A31','#5C4405','#D1980B','#FBD065'],
+  population:   ['#252A31','#77450D','#C87619','#FBB360'],
+  mil_pct_gdp:  ['#252A31','#96290D','#D33D17','#FF9980'],
+  gdp_percap:   ['#252A31','#0C5174','#147EB3','#68C1EE'],
+  life_exp:     ['#252A31','#1D7324','#29A634','#72CA9B'],
 };
 
-// Cache fetched data per year
 const cache = {};
 let currentData = [];
 let playing = false;
 let playTimer = null;
-let mapInitialized = false;
-const TRANSITION_MS = 900;
-const FRAME_INTERVAL = 1500;
+let baseGeoJSON = null;
+const FRAME_INTERVAL = 1200;
+
+function fmtNum(n) {
+  if (!n && n !== 0) return '\u2014';
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
 
 async function fetchYear(year) {
   if (cache[year]) return cache[year];
@@ -456,7 +490,6 @@ async function fetchYear(year) {
   return data;
 }
 
-/* Prefetch upcoming years so playback is seamless */
 function prefetch(startIdx, count) {
   for (let i = 1; i <= count; i++) {
     const futureIdx = (startIdx + i) % years.length;
@@ -469,90 +502,145 @@ function prefetch(startIdx, count) {
   }
 }
 
-function buildTrace(data, indicator) {
-  const valid = data.filter(d => d[indicator]);
-  return {
-    type: 'choropleth',
-    locations: valid.map(d => d.iso3),
-    z: valid.map(d => d[indicator]),
-    text: valid.map(d => d.name + ' (' + d.cocom + ')'),
-    hovertemplate: '%{text}<br>' + indicatorLabels[indicator] + ': %{z:,.2f}<extra></extra>',
-    colorscale: indicatorScales[indicator],
-    marker: { line: { color: '#111418', width: 1.2 } },
-    colorbar: {
-      orientation: 'h',
-      x: 0.5,
-      xanchor: 'center',
-      y: -0.02,
-      yanchor: 'top',
-      len: 0.4,
-      thickness: 6,
-      title: { text: '', font: { size: 0 } },
-      tickfont: { color: '#5F6B7C', size: 8 },
-      bgcolor: 'rgba(0,0,0,0)',
-      outlinecolor: 'rgba(0,0,0,0)',
-      ticks: 'outside',
-      ticklen: 2,
-      nticks: 4,
-    },
-  };
+/* ── Mapbox Map ── */
+mapboxgl.accessToken = '{{ mapbox_token }}';
+
+const map = new mapboxgl.Map({
+  container: 'timeline-map',
+  style: 'mapbox://styles/mapbox/dark-v11',
+  center: [15, 20],
+  zoom: 1.3,
+  projection: 'naturalEarth',
+  attributionControl: false,
+  maxZoom: 8,
+});
+
+map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left');
+
+const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '280px' });
+
+function buildColorExpr(indicator, mapData) {
+  const values = mapData.map(d => d[indicator]).filter(v => v != null && v > 0);
+  if (!values.length) return '#252A31';
+  values.sort((a, b) => a - b);
+  const min = values[0], max = values[values.length - 1];
+  const q33 = values[Math.floor(values.length * 0.33)];
+  const q66 = values[Math.floor(values.length * 0.66)];
+  const colors = indicatorColors[indicator];
+  return [
+    'case',
+    ['==', ['get', indicator], null], '#252A31',
+    ['==', ['get', indicator], 0], '#252A31',
+    ['interpolate', ['linear'], ['get', indicator],
+      min, colors[0], q33, colors[1], q66, colors[2], max, colors[3]],
+  ];
 }
 
-const mapLayout = {
-  geo: {
-    bgcolor: 'rgba(0,0,0,0)',
-    lakecolor: '#111418',
-    landcolor: '#252A31',
-    showframe: false,
-    showcoastlines: true,
-    coastlinecolor: '#111418',
-    countrycolor: '#111418',
-    showcountries: true,
-    projection: { type: 'natural earth' },
-    showocean: true,
-    oceancolor: '#111418',
-  },
-  paper_bgcolor: 'rgba(0,0,0,0)',
-  plot_bgcolor: 'rgba(0,0,0,0)',
-  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
-  margin: { t: 10, b: 28, l: 10, r: 10 },
-  dragmode: false,
-};
+/* Working GeoJSON — mutated in-place to avoid expensive deep clones */
+let workingGeo = null;
 
-function renderTimelineMap(data, indicator, smooth) {
-  currentData = data;
-  const trace = buildTrace(data, indicator);
-
-  if (!mapInitialized) {
-    Plotly.react('timeline-map', [trace], mapLayout,
-      { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
-    mapInitialized = true;
-    return;
+function mergeDataIntoGeo(mapData) {
+  if (!workingGeo) {
+    workingGeo = JSON.parse(JSON.stringify(baseGeoJSON));
   }
+  const lookup = {};
+  mapData.forEach(d => { lookup[d.iso3] = d; });
+  workingGeo.features.forEach(f => {
+    const d = lookup[f.properties.iso3];
+    if (d) {
+      f.properties.population = d.population;
+      f.properties.gdp_billions = d.gdp_billions;
+      f.properties.gdp_percap = d.gdp_percap;
+      f.properties.mil_pct_gdp = d.mil_pct_gdp;
+      f.properties.life_exp = d.life_exp;
+      f.properties.cname = d.name;
+      f.properties.iso2 = d.iso2;
+      f.properties.cocom = d.cocom;
+    } else {
+      f.properties.population = null;
+      f.properties.gdp_billions = null;
+      f.properties.gdp_percap = null;
+      f.properties.mil_pct_gdp = null;
+      f.properties.life_exp = null;
+      f.properties.cname = null;
+      f.properties.iso2 = null;
+      f.properties.cocom = null;
+    }
+  });
+  return workingGeo;
+}
 
-  if (smooth) {
-    /* Animate: smoothly interpolate colors between frames */
-    Plotly.animate('timeline-map', {
-      data: [trace],
-      layout: {},
-    }, {
-      transition: { duration: TRANSITION_MS, easing: 'cubic-in-out' },
-      frame: { duration: TRANSITION_MS, redraw: true },
+map.on('load', function() {
+  fetch('/static/data/countries-110m.geojson')
+    .then(r => r.json())
+    .then(geo => {
+      baseGeoJSON = JSON.parse(JSON.stringify(geo));
+
+      map.addSource('countries', { type: 'geojson', data: geo });
+
+      const firstSymbol = map.getStyle().layers.find(l => l.type === 'symbol');
+      const beforeId = firstSymbol ? firstSymbol.id : undefined;
+
+      map.addLayer({
+        id: 'country-fills',
+        type: 'fill',
+        source: 'countries',
+        paint: {
+          'fill-color': '#252A31',
+          'fill-opacity': 0.85,
+          'fill-color-transition': { duration: 500, delay: 0 },
+        },
+      }, beforeId);
+
+      map.addLayer({
+        id: 'country-borders',
+        type: 'line',
+        source: 'countries',
+        paint: { 'line-color': '#2F343C', 'line-width': 0.5 },
+      });
+
+      /* Brighten map labels for readability over choropleth */
+      map.getStyle().layers.filter(l => l.type === 'symbol').forEach(l => {
+        map.setPaintProperty(l.id, 'text-color', '#E1E8ED');
+        map.setPaintProperty(l.id, 'text-halo-color', '#111418');
+        map.setPaintProperty(l.id, 'text-halo-width', 1.5);
+      });
+
+      /* Hover */
+      map.on('mousemove', 'country-fills', function(e) {
+        if (!e.features || !e.features.length) return;
+        map.getCanvas().style.cursor = 'pointer';
+        const p = e.features[0].properties;
+        if (!p.cname || p.cname === 'null') { popup.remove(); return; }
+        const indicator = indicatorSelect.value;
+        popup.setLngLat(e.lngLat).setHTML(
+          '<b>' + p.cname + '</b>' + (p.cocom && p.cocom !== 'null' ? ' (' + p.cocom + ')' : '') + '<br>' +
+          'Pop: ' + fmtNum(p.population) + '<br>' +
+          'GDP: ' + (p.gdp_billions && p.gdp_billions !== 'null' ? '$' + Number(p.gdp_billions).toFixed(0) + 'B' : '\u2014') + '<br>' +
+          'GDP/Cap: ' + (p.gdp_percap && p.gdp_percap !== 'null' ? '$' + Number(p.gdp_percap).toLocaleString(undefined,{maximumFractionDigits:0}) : '\u2014') + '<br>' +
+          'Military: ' + (p.mil_pct_gdp && p.mil_pct_gdp !== 'null' ? Number(p.mil_pct_gdp).toFixed(2) + '%' : '\u2014') + '<br>' +
+          'Life Exp: ' + (p.life_exp && p.life_exp !== 'null' ? Number(p.life_exp).toFixed(1) + ' yrs' : '\u2014')
+        ).addTo(map);
+      });
+
+      map.on('mouseleave', 'country-fills', function() {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+      });
+
+      /* Click → add to time series */
+      map.on('click', 'country-fills', function(e) {
+        if (!e.features || !e.features.length) return;
+        const p = e.features[0].properties;
+        if (p.iso2 && p.iso2 !== 'null') {
+          tsAddCountry(p.iso2);
+        }
+      });
+
+      /* Load first year */
+      updateYear(0, false);
     });
-  } else {
-    Plotly.react('timeline-map', [trace], mapLayout,
-      { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
-  }
-}
-
-/* Animate the year counter */
-function setYearDisplay(year) {
-  yearDisplay.classList.add('transitioning');
-  setTimeout(function() {
-    yearDisplay.textContent = year;
-    yearDisplay.classList.remove('transitioning');
-  }, 150);
-}
+});
 
 async function updateYear(idx, smooth) {
   const year = years[idx];
@@ -562,27 +650,46 @@ async function updateYear(idx, smooth) {
   } else {
     yearDisplay.textContent = year;
   }
-  const data = await fetchYear(year);
-  renderTimelineMap(data, indicatorSelect.value, smooth);
+
+  const mapData = await fetchYear(year);
+  currentData = mapData;
+
+  if (!baseGeoJSON) return;
+
+  /* Merge data in-place and update source */
+  const geo = mergeDataIntoGeo(mapData);
+
+  const src = map.getSource('countries');
+  if (src) {
+    src.setData(geo);
+    map.setPaintProperty('country-fills', 'fill-color', buildColorExpr(indicatorSelect.value, mapData));
+  }
 }
 
-// Slider events — instant on drag for responsiveness
+function setYearDisplay(year) {
+  yearDisplay.classList.add('transitioning');
+  setTimeout(function() {
+    yearDisplay.textContent = year;
+    yearDisplay.classList.remove('transitioning');
+  }, 150);
+}
+
+/* Slider */
 slider.addEventListener('input', function() {
   updateYear(parseInt(this.value), false);
 });
 
-// Indicator change
+/* Indicator change */
 indicatorSelect.addEventListener('change', function() {
   const idx = parseInt(slider.value);
   const year = years[idx];
-  if (cache[year]) {
-    renderTimelineMap(cache[year], this.value, false);
-  } else {
-    updateYear(idx, false);
+  if (cache[year] && map.getLayer('country-fills')) {
+    map.setPaintProperty('country-fills', 'fill-color', buildColorExpr(this.value, cache[year]));
   }
+  if (tsSelected.length) tsFetchAndRender();
 });
 
-// Play/pause with smooth transitions and prefetching
+/* Play/pause */
 playBtn.addEventListener('click', function() {
   if (playing) {
     clearTimeout(playTimer);
@@ -594,40 +701,34 @@ playBtn.addEventListener('click', function() {
     playBtn.textContent = 'Pause';
     playBtn.classList.add('playing');
     let idx = parseInt(slider.value);
-
-    /* Prefetch the first batch */
-    prefetch(idx, 5);
+    prefetch(idx, 8);
 
     function tick() {
       if (!playing) return;
       idx++;
       if (idx >= years.length) idx = 0;
       updateYear(idx, true);
-      /* Prefetch ahead during playback */
-      prefetch(idx, 4);
+      prefetch(idx, 6);
       playTimer = setTimeout(tick, FRAME_INTERVAL);
     }
     playTimer = setTimeout(tick, 200);
   }
 });
 
-// Initial load
-updateYear(0, false);
 
 // ════════════════════════════════════════════════════════
-// Country Time Series — Interactive Line Chart
+// Country Time Series — Interactive Line Chart (Plotly)
 // ════════════════════════════════════════════════════════
 
-/* Extended palette for multi-line charts */
 const tsColors = [
-  '#2D72D2','#D33D17','#29A634','#D1980B','#9D3F9D',  /* BLUE3, VERMILION3, FOREST3, GOLD3, VIOLET3 */
-  '#00A396','#DB2C6F','#7961DB','#8EB125','#147EB3',  /* TURQUOISE3, ROSE3, INDIGO3, LIME3, CERULEAN3 */
+  '#2D72D2','#D33D17','#29A634','#D1980B','#9D3F9D',
+  '#00A396','#DB2C6F','#7961DB','#8EB125','#147EB3',
 ];
 
 const tsCountrySelect = document.getElementById('ts-country-select');
 const tsAddBtn = document.getElementById('ts-add-btn');
 const tsChips = document.getElementById('ts-chips');
-let tsSelected = []; // [{iso2, name, color}]
+let tsSelected = [];
 let tsColorIdx = 0;
 let tsFetching = false;
 
@@ -682,7 +783,6 @@ async function tsFetchAndRender() {
   const data = await res.json();
   tsFetching = false;
 
-  // Group by country
   const byCountry = {};
   data.forEach(d => {
     if (!byCountry[d.iso2]) byCountry[d.iso2] = { name: d.name, years: [], values: [] };
@@ -690,7 +790,6 @@ async function tsFetchAndRender() {
     byCountry[d.iso2].values.push(d.value);
   });
 
-  // Build Plotly traces
   const traces = tsSelected.map(c => {
     const series = byCountry[c.iso2];
     if (!series) return null;
@@ -744,12 +843,10 @@ function tsAddCountry(iso2) {
   tsFetchAndRender();
 }
 
-// Add button
 tsAddBtn.addEventListener('click', function() {
   tsAddCountry(tsCountrySelect.value);
 });
 
-// Preset buttons
 document.querySelectorAll('.ts-preset').forEach(btn => {
   btn.addEventListener('click', function() {
     tsSelected = [];
@@ -766,21 +863,7 @@ document.querySelectorAll('.ts-preset').forEach(btn => {
   });
 });
 
-// When indicator changes, also update the time series chart
-indicatorSelect.addEventListener('change', function() {
-  if (tsSelected.length) tsFetchAndRender();
-});
-
-// Also allow clicking a country on the map to add it to the time series
-document.getElementById('timeline-map').on('plotly_click', function(eventData) {
-  if (eventData.points && eventData.points.length > 0) {
-    const iso3 = eventData.points[0].location;
-    const match = currentData.find(d => d.iso3 === iso3);
-    if (match) tsAddCountry(match.iso2);
-  }
-});
-
-// Initialize with default "Great Powers (P5)"
+// Initialize with P5
 ['US','CN','RU','GB','FR'].forEach(code => tsAddCountry(code));
 </script>
 {% endblock %}

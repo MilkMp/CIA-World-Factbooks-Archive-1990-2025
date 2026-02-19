@@ -3,7 +3,117 @@
 {% block title %}Communications Infrastructure — Intelligence Analysis{% endblock %}
 
 {% block head %}
+<link href="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.js"></script>
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  /* ── Map Panel ── */
+  .comms-map-panel {
+    background: #1C2127;
+    border: 1px solid #2F343C;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .comms-map-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    background: #252A31;
+    border-bottom: 1px solid #2F343C;
+  }
+  .comms-map-toolbar label {
+    font-size: 0.7rem;
+    color: #8F99A8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .comms-map-toolbar select {
+    background: #1C2127;
+    border: 1px solid #383E47;
+    border-radius: 3px;
+    color: #C5CBD3;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .comms-map-toolbar select:focus {
+    border-color: #8F99A8;
+    box-shadow: 0 0 0 1px rgba(143, 153, 168, 0.4);
+  }
+  .comms-map-body {
+    position: relative;
+  }
+  #comms-map {
+    width: 100%;
+    height: clamp(280px, 45vw, 480px);
+  }
+
+  /* ── Map Legend ── */
+  .comms-legend {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: #1C2127;
+    border: 1px solid #2F343C;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 0.62rem;
+    color: #8F99A8;
+    z-index: 2;
+    -webkit-font-smoothing: antialiased;
+  }
+  .comms-legend .legend-title {
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .comms-legend .legend-bar {
+    height: 8px;
+    border-radius: 2px;
+    width: 120px;
+    margin-bottom: 2px;
+  }
+  .comms-legend .legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Consolas', monospace;
+    font-size: 0.58rem;
+  }
+
+  /* ── Mapbox popup overrides ── */
+  .mapboxgl-popup-content {
+    background: #1C2127 !important;
+    color: #C5CBD3;
+    border: 1px solid #2F343C;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    line-height: 1.5;
+  }
+  .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: #2F343C; }
+  .mapboxgl-popup-anchor-top .mapboxgl-popup-tip { border-bottom-color: #2F343C; }
+  .mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: #2F343C; }
+  .mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: #2F343C; }
+  .mapboxgl-popup-close-button { display: none; }
+  .mapboxgl-ctrl-attrib { display: none !important; }
+
+  @media (max-width: 640px) {
+    .comms-map-toolbar { flex-wrap: wrap; gap: 8px; }
+    .comms-legend { bottom: 8px; right: 8px; padding: 6px 8px; }
+    .comms-legend .legend-bar { width: 90px; }
+  }
+  @media (max-width: 480px) {
+    .comms-legend { bottom: 6px; left: 50px; right: auto; }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -29,17 +139,28 @@
   <hr class="sec-rule">
 </div>
 
-<div style="display:flex;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap;">
-  <label style="font-size:0.72rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;">Indicator</label>
-  <select id="indicator-select" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
-    <option value="internet_pct" selected>Internet Users (% of population)</option>
-    <option value="mobile_per100">Mobile Cellular (per 100 inhabitants)</option>
-    <option value="fixed_per100">Fixed Lines (per 100 inhabitants)</option>
-    <option value="broadband_per100">Broadband (per 100 inhabitants)</option>
-  </select>
+<div class="comms-map-panel">
+  <div class="comms-map-toolbar">
+    <label>Indicator</label>
+    <select id="indicator-select">
+      <option value="internet_pct" selected>Internet Users (% of population)</option>
+      <option value="mobile_per100">Mobile Cellular (per 100 inhabitants)</option>
+      <option value="fixed_per100">Fixed Lines (per 100 inhabitants)</option>
+      <option value="broadband_per100">Broadband (per 100 inhabitants)</option>
+    </select>
+  </div>
+  <div class="comms-map-body">
+    <div id="comms-map"></div>
+    <div class="comms-legend" id="comms-legend">
+      <div class="legend-title" id="legend-title">Internet Users (%)</div>
+      <div class="legend-bar" id="legend-bar"></div>
+      <div class="legend-labels">
+        <span id="legend-min">0</span>
+        <span id="legend-max">100%</span>
+      </div>
+    </div>
+  </div>
 </div>
-
-<div id="comms-map" style="height:clamp(300px,45vw,480px);"></div>
 
 {# ── Section 02: Regional Summary ── #}
 <div class="sec">
@@ -150,11 +271,11 @@ const indicatorLabels = {
   broadband_per100: 'Broadband /100',
 };
 
-const indicatorScales = {
-  internet_pct: [[0,'#62D96B'],[0.25,'#43BF4D'],[0.5,'#29A634'],[0.75,'#238C2C'],[1,'#1D7324']],
-  mobile_per100: [[0,'#FBB360'],[0.25,'#EC9A3C'],[0.5,'#C87619'],[0.75,'#935610'],[1,'#77450D']],
-  fixed_per100: [[0,'#68C1EE'],[0.25,'#3FA6DA'],[0.5,'#147EB3'],[0.75,'#0F6894'],[1,'#0C5174']],
-  broadband_per100: [[0,'#D69FD6'],[0.25,'#BD6BBD'],[0.5,'#9D3F9D'],[0.75,'#7C327C'],[1,'#5C255A']],
+const indicatorColors = {
+  internet_pct:     ['#252A31', '#1D7324', '#29A634', '#62D96B'],
+  mobile_per100:    ['#252A31', '#77450D', '#C87619', '#FBB360'],
+  fixed_per100:     ['#252A31', '#0C5174', '#147EB3', '#68C1EE'],
+  broadband_per100: ['#252A31', '#5C255A', '#9D3F9D', '#D69FD6'],
 };
 
 const indicatorRanges = {
@@ -164,50 +285,155 @@ const indicatorRanges = {
   broadband_per100: [0, 55],
 };
 
-/* ── Choropleth map ── */
-function renderMap(indicator) {
-  const valid = allData.filter(d => d[indicator] != null);
-  const [zmin, zmax] = indicatorRanges[indicator];
-  Plotly.react('comms-map', [{
-    type: 'choropleth',
-    locations: valid.map(d => d.iso3),
-    z: valid.map(d => d[indicator]),
-    zmin: zmin,
-    zmax: zmax,
-    text: valid.map(d => d.name),
-    hovertemplate: '%{text}<br>' + indicatorLabels[indicator] + ': %{z:,.1f}<extra></extra>',
-    colorscale: indicatorScales[indicator],
-    marker: { line: { color: '#111418', width: 0.8 } },
-    colorbar: {
-      title: { text: indicatorLabels[indicator], font: { color: '#8F99A8', size: 10 } },
-      tickfont: { color: '#8F99A8', size: 9 },
-      bgcolor: 'rgba(0,0,0,0)',
-      outlinecolor: '#2F343C',
-      len: 0.6,
-    },
-  }], {
-    geo: {
-      bgcolor: '#1C2127',
-      lakecolor: '#111418',
-      landcolor: '#252A31',
-      showframe: false,
-      showcoastlines: true,
-      coastlinecolor: '#111418',
-      countrycolor: '#111418',
-      showcountries: true,
-      projection: { type: 'natural earth' },
-      showocean: true,
-      oceancolor: '#111418',
-    },
-    paper_bgcolor: '#1C2127',
-    plot_bgcolor: '#1C2127',
-    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
-    margin: { t: 4, b: 4, l: 4, r: 4 },
-    dragmode: false,
-  }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+let currentIndicator = 'internet_pct';
+let map, geojsonData, popup;
+
+/* Build lookup by ISO3 */
+const dataByIso3 = {};
+allData.forEach(d => { dataByIso3[d.iso3] = d; });
+
+/* ── Initialize Mapbox ── */
+mapboxgl.accessToken = '{{ mapbox_token }}';
+
+map = new mapboxgl.Map({
+  container: 'comms-map',
+  style: 'mapbox://styles/mapbox/dark-v11',
+  center: [15, 20],
+  zoom: 1.5,
+  projection: 'naturalEarth',
+  attributionControl: false,
+  maxZoom: 8,
+});
+
+map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left');
+
+popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '260px' });
+
+function fmtVal(v, indicator) {
+  if (v == null) return '\u2014';
+  if (indicator === 'internet_pct') return v.toFixed(1) + '%';
+  return v.toFixed(1);
 }
 
-/* ── Digital divide bar charts ── */
+/* ── Build color expression ── */
+function buildColorExpr(indicator) {
+  const [zmin, zmax] = indicatorRanges[indicator];
+  const colors = indicatorColors[indicator];
+  const q33 = zmin + (zmax - zmin) * 0.33;
+  const q66 = zmin + (zmax - zmin) * 0.66;
+
+  return [
+    'case',
+    ['==', ['get', indicator], null], '#252A31',
+    ['==', ['get', indicator], 0], colors[0],
+    ['interpolate', ['linear'], ['get', indicator],
+      zmin, colors[0],
+      q33, colors[1],
+      q66, colors[2],
+      zmax, colors[3],
+    ],
+  ];
+}
+
+/* ── Update legend ── */
+function updateLegend(indicator) {
+  const [zmin, zmax] = indicatorRanges[indicator];
+  const colors = indicatorColors[indicator];
+  const suffix = indicator === 'internet_pct' ? '%' : '';
+
+  document.getElementById('legend-title').textContent = indicatorLabels[indicator];
+  document.getElementById('legend-bar').style.background =
+    'linear-gradient(to right, ' + colors.join(', ') + ')';
+  document.getElementById('legend-min').textContent = zmin + suffix;
+  document.getElementById('legend-max').textContent = zmax + suffix;
+}
+
+map.on('load', function() {
+  fetch('/static/data/countries-110m.geojson')
+    .then(r => r.json())
+    .then(geo => {
+      geojsonData = geo;
+
+      /* Embed comms data into GeoJSON properties */
+      geo.features.forEach(f => {
+        const d = dataByIso3[f.properties.iso3];
+        if (d) {
+          f.properties.internet_pct = d.internet_pct;
+          f.properties.mobile_per100 = d.mobile_per100;
+          f.properties.fixed_per100 = d.fixed_per100;
+          f.properties.broadband_per100 = d.broadband_per100;
+          f.properties.cocom = d.cocom;
+          f.properties.cname = d.name;
+        }
+      });
+
+      map.addSource('countries', { type: 'geojson', data: geo });
+
+      /* Insert below labels so country names stay visible */
+      const firstSymbol = map.getStyle().layers.find(l => l.type === 'symbol');
+      const beforeId = firstSymbol ? firstSymbol.id : undefined;
+
+      map.addLayer({
+        id: 'country-fills',
+        type: 'fill',
+        source: 'countries',
+        paint: {
+          'fill-color': buildColorExpr(currentIndicator),
+          'fill-opacity': 0.85,
+          'fill-color-transition': { duration: 400 },
+        },
+      }, beforeId);
+
+      map.addLayer({
+        id: 'country-borders',
+        type: 'line',
+        source: 'countries',
+        paint: {
+          'line-color': '#2F343C',
+          'line-width': 0.5,
+        },
+      });
+
+      /* Brighten map labels for readability over choropleth */
+      map.getStyle().layers.filter(l => l.type === 'symbol').forEach(l => {
+        map.setPaintProperty(l.id, 'text-color', '#E1E8ED');
+        map.setPaintProperty(l.id, 'text-halo-color', '#111418');
+        map.setPaintProperty(l.id, 'text-halo-width', 1.5);
+      });
+
+      updateLegend(currentIndicator);
+
+      /* ── Hover popup ── */
+      map.on('mousemove', 'country-fills', function(e) {
+        if (!e.features || !e.features.length) return;
+        map.getCanvas().style.cursor = 'pointer';
+        const p = e.features[0].properties;
+        if (!p.cname) { popup.remove(); return; }
+        const html = '<b>' + p.cname + '</b>' + (p.cocom ? ' (' + p.cocom + ')' : '') + '<br>' +
+          'Internet: ' + fmtVal(p.internet_pct, 'internet_pct') + '<br>' +
+          'Mobile: ' + fmtVal(p.mobile_per100, 'mobile_per100') + '/100<br>' +
+          'Fixed: ' + fmtVal(p.fixed_per100, 'fixed_per100') + '/100<br>' +
+          'Broadband: ' + fmtVal(p.broadband_per100, 'broadband_per100') + '/100';
+        popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+      });
+
+      map.on('mouseleave', 'country-fills', function() {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+      });
+    });
+});
+
+/* ── Indicator switch ── */
+document.getElementById('indicator-select').addEventListener('change', function() {
+  currentIndicator = this.value;
+  if (map.getLayer('country-fills')) {
+    map.setPaintProperty('country-fills', 'fill-color', buildColorExpr(currentIndicator));
+  }
+  updateLegend(currentIndicator);
+});
+
+/* ── Digital divide bar charts (Plotly) ── */
 Plotly.newPlot('top10-chart', [{
   type: 'bar',
   orientation: 'h',
@@ -242,11 +468,6 @@ Plotly.newPlot('bottom10-chart', [{
   bargap: 0.25,
 }, { responsive: true, displayModeBar: false, doubleClick: 'reset' });
 
-/* ── Indicator dropdown ── */
-document.getElementById('indicator-select').addEventListener('change', function() {
-  renderMap(this.value);
-});
-
 /* ── Table sorting ── */
 let sortCol = -1, sortAsc = true;
 function sortTable(col) {
@@ -269,8 +490,5 @@ function sortTable(col) {
   });
   rows.forEach(function(r) { tbody.appendChild(r); });
 }
-
-/* ── Initial render ── */
-renderMap('internet_pct');
 </script>
 {% endblock %}

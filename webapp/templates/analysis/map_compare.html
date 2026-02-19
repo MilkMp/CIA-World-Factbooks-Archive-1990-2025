@@ -3,7 +3,8 @@
 {% block title %}Map Compare — Intelligence Analysis{% endblock %}
 
 {% block head %}
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.js"></script>
 <style>
   .compare-controls {
     display: flex;
@@ -77,7 +78,8 @@
   }
   .map-container {
     width: 100%;
-    min-height: 380px;
+    height: clamp(280px, 35vw, 420px);
+    position: relative;
   }
   .compare-loading {
     display: none;
@@ -153,8 +155,68 @@
     color: #C5CBD3;
   }
 
+  /* Mapbox popup overrides */
+  .mapboxgl-popup-content {
+    background: #1C2127 !important;
+    color: #C5CBD3;
+    border: 1px solid #2F343C;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    line-height: 1.5;
+  }
+  .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: #2F343C; }
+  .mapboxgl-popup-anchor-top .mapboxgl-popup-tip { border-bottom-color: #2F343C; }
+  .mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: #2F343C; }
+  .mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: #2F343C; }
+  .mapboxgl-popup-close-button { display: none; }
+  .mapboxgl-ctrl-attrib { display: none !important; }
+
+  /* Shared legend between both maps */
+  .compare-legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 8px 14px;
+    background: #1C2127;
+    border: 1px solid #2F343C;
+    border-radius: 4px;
+    font-size: 0.62rem;
+    color: #8F99A8;
+  }
+  .compare-legend .legend-title {
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .compare-legend .legend-bar {
+    height: 8px;
+    border-radius: 2px;
+    width: 140px;
+    flex-shrink: 0;
+  }
+  .compare-legend .legend-labels {
+    display: flex;
+    gap: 6px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.58rem;
+    white-space: nowrap;
+  }
+
   @media (max-width: 960px) {
     .compare-grid { grid-template-columns: 1fr; }
+    .map-container { height: clamp(280px, 55vw, 400px); }
+    .indicator-pills { gap: 6px; }
+  }
+  @media (max-width: 480px) {
+    .compare-controls { gap: 10px; }
+    .indicator-pill { padding: 8px 14px; font-size: 0.82rem; }
+    .map-container { height: 260px; }
+    .panel-year { font-size: 1rem; }
   }
 </style>
 {% endblock %}
@@ -198,6 +260,17 @@
 </div>
 
 <div class="compare-loading" id="loading">Loading map data&hellip;</div>
+
+<!-- Shared legend -->
+<div class="compare-legend" id="shared-legend" style="display:none;">
+  <span class="legend-title" id="legend-title">Population</span>
+  <div class="legend-bar" id="legend-bar"></div>
+  <div class="legend-labels">
+    <span id="legend-min">0</span>
+    <span>&rarr;</span>
+    <span id="legend-max">0</span>
+  </div>
+</div>
 
 <div class="compare-grid">
   <div class="compare-panel">
@@ -264,6 +337,7 @@ const yearB = document.getElementById('year-b');
 const loading = document.getElementById('loading');
 const pills = document.querySelectorAll('.indicator-pill');
 let currentIndicator = 'population';
+let baseGeoJSON = null;
 
 const indicatorLabels = {
   population: 'Population',
@@ -273,12 +347,12 @@ const indicatorLabels = {
   life_exp: 'Life Expectancy (yrs)',
 };
 
-const indicatorScales = {
-  population: [[0,'#77450D'],[0.15,'#935610'],[0.3,'#C87619'],[0.5,'#EC9A3C'],[0.7,'#FBB360'],[1,'#FBD065']],
-  gdp_billions: [[0,'#5C4405'],[0.15,'#866103'],[0.3,'#D1980B'],[0.5,'#F0B726'],[0.7,'#FBD065'],[1,'#FBD065']],
-  mil_pct_gdp: [[0,'#96290D'],[0.2,'#B83211'],[0.4,'#D33D17'],[0.6,'#EB6847'],[0.8,'#FF9980'],[1,'#FF9980']],
-  gdp_percap: [[0,'#0C5174'],[0.15,'#0F6894'],[0.3,'#147EB3'],[0.5,'#3FA6DA'],[0.7,'#68C1EE'],[1,'#68C1EE']],
-  life_exp: [[0,'#1D7324'],[0.15,'#238C2C'],[0.3,'#29A634'],[0.5,'#43BF4D'],[0.7,'#62D96B'],[1,'#72CA9B']],
+const indicatorColors = {
+  population:   ['#252A31','#77450D','#C87619','#FBB360'],
+  gdp_billions: ['#252A31','#5C4405','#D1980B','#FBD065'],
+  gdp_percap:   ['#252A31','#0C5174','#147EB3','#68C1EE'],
+  mil_pct_gdp:  ['#252A31','#96290D','#D33D17','#FF9980'],
+  life_exp:     ['#252A31','#1D7324','#29A634','#72CA9B'],
 };
 
 const indicatorFormats = {
@@ -289,6 +363,22 @@ const indicatorFormats = {
   life_exp: v => v.toFixed(1) + ' yrs',
 };
 
+function fmtNum(n) {
+  if (!n && n !== 0) return '\u2014';
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+
+function fmtLegend(n, indicator) {
+  if (indicator === 'gdp_billions') return '$' + n.toFixed(0) + 'B';
+  if (indicator === 'gdp_percap') return '$' + Math.round(n).toLocaleString();
+  if (indicator === 'mil_pct_gdp') return n.toFixed(1) + '%';
+  if (indicator === 'life_exp') return n.toFixed(0) + ' yrs';
+  return fmtNum(n);
+}
+
 async function fetchYear(year) {
   if (cache[year]) return cache[year];
   const res = await fetch('/api/analysis/map-data/' + year);
@@ -297,47 +387,79 @@ async function fetchYear(year) {
   return data;
 }
 
-function renderMap(divId, data, indicator, zmin, zmax) {
-  const valid = data.filter(d => d[indicator] != null);
-  Plotly.react(divId, [{
-    type: 'choropleth',
-    locations: valid.map(d => d.iso3),
-    z: valid.map(d => d[indicator]),
-    zmin: zmin,
-    zmax: zmax,
-    text: valid.map(d => d.name),
-    hovertemplate: '%{text}<br>' + indicatorLabels[indicator] + ': %{z:,.2f}<extra></extra>',
-    colorscale: indicatorScales[indicator],
-    marker: { line: { color: '#111418', width: 0.8 } },
-    colorbar: {
-      title: { text: indicatorLabels[indicator], font: { color: '#8F99A8', size: 10 } },
-      tickfont: { color: '#8F99A8', size: 9 },
-      bgcolor: 'rgba(0,0,0,0)',
-      outlinecolor: '#2F343C',
-      len: 0.6,
-    },
-  }], {
-    geo: {
-      bgcolor: '#1C2127',
-      lakecolor: '#111418',
-      landcolor: '#252A31',
-      showframe: false,
-      showcoastlines: true,
-      coastlinecolor: '#111418',
-      countrycolor: '#111418',
-      showcountries: true,
-      projection: { type: 'natural earth' },
-      showocean: true,
-      oceancolor: '#111418',
-    },
-    paper_bgcolor: '#1C2127',
-    plot_bgcolor: '#1C2127',
-    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
-    margin: { t: 4, b: 4, l: 4, r: 4 },
-    dragmode: false,
-  }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+/* ── Merge indicator data into a cloned GeoJSON ── */
+function mergeDataIntoGeo(data) {
+  const byIso3 = {};
+  data.forEach(d => { byIso3[d.iso3] = d; });
+
+  const geo = JSON.parse(JSON.stringify(baseGeoJSON));
+  geo.features.forEach(f => {
+    const d = byIso3[f.properties.iso3];
+    if (d) {
+      f.properties.population = d.population;
+      f.properties.gdp_billions = d.gdp_billions;
+      f.properties.gdp_percap = d.gdp_percap;
+      f.properties.mil_pct_gdp = d.mil_pct_gdp;
+      f.properties.life_exp = d.life_exp;
+      f.properties.pop_growth = d.pop_growth;
+      f.properties.cocom = d.cocom;
+      f.properties.cname = d.name;
+    } else {
+      f.properties.population = null;
+      f.properties.gdp_billions = null;
+      f.properties.gdp_percap = null;
+      f.properties.mil_pct_gdp = null;
+      f.properties.life_exp = null;
+      f.properties.pop_growth = null;
+      f.properties.cocom = null;
+      f.properties.cname = null;
+    }
+  });
+  return geo;
 }
 
+/* ── Build Mapbox color expression with shared scale ── */
+function buildColorExpr(indicator, allValues) {
+  const values = allValues.filter(v => v != null && v > 0);
+  if (!values.length) return '#252A31';
+  values.sort((a, b) => a - b);
+  const min = values[0];
+  const max = values[values.length - 1];
+  const q33 = values[Math.floor(values.length * 0.33)];
+  const q66 = values[Math.floor(values.length * 0.66)];
+  const colors = indicatorColors[indicator];
+
+  return [
+    'case',
+    ['==', ['get', indicator], null], '#252A31',
+    ['==', ['get', indicator], 0], '#252A31',
+    ['interpolate', ['linear'], ['get', indicator],
+      min, colors[0],
+      q33, colors[1],
+      q66, colors[2],
+      max, colors[3],
+    ],
+  ];
+}
+
+/* ── Update shared legend ── */
+function updateLegend(indicator, allValues) {
+  const values = allValues.filter(v => v != null && v > 0);
+  if (!values.length) return;
+  values.sort((a, b) => a - b);
+  const min = values[0];
+  const max = values[values.length - 1];
+  const colors = indicatorColors[indicator];
+
+  document.getElementById('legend-title').textContent = indicatorLabels[indicator];
+  document.getElementById('legend-bar').style.background =
+    'linear-gradient(to right, ' + colors.join(', ') + ')';
+  document.getElementById('legend-min').textContent = fmtLegend(min, indicator);
+  document.getElementById('legend-max').textContent = fmtLegend(max, indicator);
+  document.getElementById('shared-legend').style.display = '';
+}
+
+/* ── Delta table ── */
 function buildDeltaTable(dataA, dataB, indicator) {
   const mapA = {};
   dataA.forEach(d => { if (d[indicator] != null) mapA[d.iso3] = d; });
@@ -365,7 +487,7 @@ function buildDeltaTable(dataA, dataB, indicator) {
       <td class="mono">${fmt(d.vA)}</td>
       <td class="mono">${fmt(d.vB)}</td>
       <td class="mono ${cls}">${sign}${fmt(d.change)}</td>
-      <td class="mono ${cls}">${d.pct != null ? sign + d.pct.toFixed(1) + '%' : '—'}</td>
+      <td class="mono ${cls}">${d.pct != null ? sign + d.pct.toFixed(1) + '%' : '\u2014'}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -376,6 +498,132 @@ function updatePanelStats(data, indicator, statEl) {
   statEl.textContent = valid.length + ' countries reporting';
 }
 
+/* ── Initialize two Mapbox maps ── */
+mapboxgl.accessToken = '{{ mapbox_token }}';
+
+const mapConfig = {
+  style: 'mapbox://styles/mapbox/dark-v11',
+  center: [15, 20],
+  zoom: 1.5,
+  projection: 'naturalEarth',
+  attributionControl: false,
+  maxZoom: 8,
+};
+
+const mapA = new mapboxgl.Map(Object.assign({ container: 'map-a' }, mapConfig));
+const mapB = new mapboxgl.Map(Object.assign({ container: 'map-b' }, mapConfig));
+
+mapA.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left');
+
+/* ── Synced movement ── */
+let syncing = false;
+
+function syncMaps(source, target) {
+  source.on('move', function() {
+    if (syncing) return;
+    syncing = true;
+    target.jumpTo({
+      center: source.getCenter(),
+      zoom: source.getZoom(),
+      bearing: source.getBearing(),
+      pitch: source.getPitch(),
+    });
+    syncing = false;
+  });
+}
+syncMaps(mapA, mapB);
+syncMaps(mapB, mapA);
+
+/* ── Popups for both maps ── */
+const popupA = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '260px' });
+const popupB = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '260px' });
+
+function addHoverHandlers(map, popup, yearLabel) {
+  map.on('mousemove', 'country-fills', function(e) {
+    if (!e.features || !e.features.length) return;
+    map.getCanvas().style.cursor = 'pointer';
+    const p = e.features[0].properties;
+    if (!p.cname) { popup.remove(); return; }
+    const html = '<b>' + p.cname + '</b>' + (p.cocom ? ' (' + p.cocom + ')' : '') + '<br>' +
+      'Pop: ' + fmtNum(p.population) + '<br>' +
+      'GDP: ' + (p.gdp_billions ? '$' + Number(p.gdp_billions).toFixed(0) + 'B' : '\u2014') + '<br>' +
+      'GDP/Cap: ' + (p.gdp_percap ? '$' + Number(p.gdp_percap).toLocaleString(undefined,{maximumFractionDigits:0}) : '\u2014') + '<br>' +
+      'Military: ' + (p.mil_pct_gdp ? Number(p.mil_pct_gdp).toFixed(2) + '%' : '\u2014') + '<br>' +
+      'Life Exp: ' + (p.life_exp ? Number(p.life_exp).toFixed(1) + ' yrs' : '\u2014');
+    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+  });
+
+  map.on('mouseleave', 'country-fills', function() {
+    map.getCanvas().style.cursor = '';
+    popup.remove();
+  });
+}
+
+/* ── Add layers to a map instance ── */
+function addLayersToMap(map, geoData) {
+  map.addSource('countries', { type: 'geojson', data: geoData });
+
+  const firstSymbol = map.getStyle().layers.find(l => l.type === 'symbol');
+  const beforeId = firstSymbol ? firstSymbol.id : undefined;
+
+  map.addLayer({
+    id: 'country-fills',
+    type: 'fill',
+    source: 'countries',
+    paint: {
+      'fill-color': '#252A31',
+      'fill-opacity': 0.85,
+      'fill-color-transition': { duration: 400 },
+    },
+  }, beforeId);
+
+  map.addLayer({
+    id: 'country-borders',
+    type: 'line',
+    source: 'countries',
+    paint: {
+      'line-color': '#2F343C',
+      'line-width': 0.5,
+    },
+  });
+
+  /* Brighten map labels for readability over choropleth */
+  map.getStyle().layers.filter(l => l.type === 'symbol').forEach(l => {
+    map.setPaintProperty(l.id, 'text-color', '#E1E8ED');
+    map.setPaintProperty(l.id, 'text-halo-color', '#111418');
+    map.setPaintProperty(l.id, 'text-halo-width', 1.5);
+  });
+}
+
+/* ── Wait for both maps to load, then fetch GeoJSON + initial data ── */
+let mapsLoaded = 0;
+
+function onMapLoaded() {
+  mapsLoaded++;
+  if (mapsLoaded < 2) return;
+
+  fetch('/static/data/countries-110m.geojson')
+    .then(r => r.json())
+    .then(geo => {
+      baseGeoJSON = geo;
+
+      /* Add layers with empty data initially */
+      addLayersToMap(mapA, geo);
+      addLayersToMap(mapB, JSON.parse(JSON.stringify(geo)));
+
+      /* Add hover popups */
+      addHoverHandlers(mapA, popupA, 'A');
+      addHoverHandlers(mapB, popupB, 'B');
+
+      /* Initial data load */
+      update();
+    });
+}
+
+mapA.on('load', onMapLoaded);
+mapB.on('load', onMapLoaded);
+
+/* ── Main update function ── */
 async function update() {
   const yA = parseInt(yearA.value);
   const yB = parseInt(yearB.value);
@@ -386,15 +634,30 @@ async function update() {
 
   const [dataA, dataB] = await Promise.all([fetchYear(yA), fetchYear(yB)]);
 
-  // Compute shared scale from combined data
+  /* Compute shared scale from combined data */
   const allVals = [...dataA, ...dataB]
     .map(d => d[currentIndicator])
     .filter(v => v != null);
-  const zmin = Math.min(...allVals);
-  const zmax = Math.max(...allVals);
 
-  renderMap('map-a', dataA, currentIndicator, zmin, zmax);
-  renderMap('map-b', dataB, currentIndicator, zmin, zmax);
+  /* Build shared color expression */
+  const colorExpr = buildColorExpr(currentIndicator, allVals);
+
+  /* Merge data into GeoJSON and update sources */
+  const geoA = mergeDataIntoGeo(dataA);
+  const geoB = mergeDataIntoGeo(dataB);
+
+  if (mapA.getSource('countries')) {
+    mapA.getSource('countries').setData(geoA);
+    mapA.setPaintProperty('country-fills', 'fill-color', colorExpr);
+  }
+
+  if (mapB.getSource('countries')) {
+    mapB.getSource('countries').setData(geoB);
+    mapB.setPaintProperty('country-fills', 'fill-color', colorExpr);
+  }
+
+  /* Update legend and stats */
+  updateLegend(currentIndicator, allVals);
   updatePanelStats(dataA, currentIndicator, document.getElementById('stat-a'));
   updatePanelStats(dataB, currentIndicator, document.getElementById('stat-b'));
   buildDeltaTable(dataA, dataB, currentIndicator);
@@ -402,6 +665,7 @@ async function update() {
   loading.classList.remove('active');
 }
 
+/* ── Event listeners ── */
 yearA.addEventListener('change', update);
 yearB.addEventListener('change', update);
 
@@ -413,8 +677,5 @@ pills.forEach(pill => {
     update();
   });
 });
-
-// Initial render
-update();
 </script>
 {% endblock %}

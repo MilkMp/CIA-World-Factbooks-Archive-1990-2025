@@ -1,8 +1,11 @@
+import re
+
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from webapp.database import sql, sql_one
 from webapp.cocom import COCOM, COCOM_NAMES, get_cocom, iso2_to_iso3
+from webapp.config import settings
 import pycountry
 from webapp.parsers import (
     extract_number, extract_pct_gdp, extract_pct,
@@ -27,6 +30,27 @@ INDICATOR_FIELDS = [
     'GDP - per capita (PPP)', 'Military expenditures',
     'Life expectancy at birth', 'Population growth rate',
 ]
+
+
+def _parse_capital_info(content):
+    """Extract capital name and lat/lon from CIA Factbook Capital field."""
+    if not content:
+        return None, None, None
+    # Format: "name: Washington, D.C. geographic coordinates: ..."
+    # Or just: "Washington, D.C.; ..."
+    name_match = re.match(r'(?:name:\s*)?(.+?)(?:\s*geographic\s+coordinates|\s*;\s*note|\s*time\s+difference|\s*etymology|\n|$)', content, re.IGNORECASE)
+    name = name_match.group(1).strip().rstrip(';') if name_match else None
+    coord_match = re.search(
+        r'(\d+)\s+(\d+)\s*([NS])\s*,?\s*(\d+)\s+(\d+)\s*([EW])', content)
+    if not coord_match:
+        return name, None, None
+    lat = int(coord_match.group(1)) + int(coord_match.group(2)) / 60
+    if coord_match.group(3) == 'S':
+        lat = -lat
+    lon = int(coord_match.group(4)) + int(coord_match.group(5)) / 60
+    if coord_match.group(6) == 'W':
+        lon = -lon
+    return name, round(lat, 4), round(lon, 4)
 
 
 def _get_country_indicators(iso_codes, year=ANALYSIS_YEAR):
@@ -55,7 +79,8 @@ def _get_country_indicators(iso_codes, year=ANALYSIS_YEAR):
               'Real GDP per capita',
               'Military expenditures',
               'Life expectancy at birth','Population growth rate',
-              'Government type','Area - comparative','Terrorist group(s)')
+              'Government type','Area - comparative','Terrorist group(s)',
+              'Capital')
     """, list(iso_codes) + [year])
 
     # Pivot: group by country
@@ -74,6 +99,7 @@ def _get_country_indicators(iso_codes, year=ANALYSIS_YEAR):
     # Parse numeric values
     result = []
     for iso, d in by_country.items():
+        cap_name, cap_lat, cap_lon = _parse_capital_info(d.get('Capital', ''))
         result.append({
             'name': d['name'],
             'original_name': d.get('original_name', d['name']),
@@ -88,6 +114,9 @@ def _get_country_indicators(iso_codes, year=ANALYSIS_YEAR):
             'gov_type': d.get('Government type', ''),
             'area_comp': d.get('Area - comparative', ''),
             'terrorist_groups': d.get('Terrorist group(s)', ''),
+            'capital': cap_name,
+            'cap_lat': cap_lat,
+            'cap_lon': cap_lon,
         })
 
     result.sort(key=lambda x: x['name'])
@@ -157,6 +186,7 @@ async def analysis_dashboard(request: Request):
         "summaries": summaries,
         "map_data": map_data,
         "year": ANALYSIS_YEAR,
+        "mapbox_token": settings.MAPBOX_TOKEN,
         "global_kpi": {
             "entities": total_entities,
             "population": total_pop,
@@ -185,6 +215,7 @@ async def region_detail(request: Request, cocom: str):
         "region_name": COCOM_NAMES.get(cocom, cocom),
         "indicators": indicators,
         "year": ANALYSIS_YEAR,
+        "mapbox_token": settings.MAPBOX_TOKEN,
     })
 
 
@@ -446,6 +477,7 @@ async def map_compare_page(request: Request):
     return templates.TemplateResponse("analysis/map_compare.html", {
         "request": request,
         "years": years,
+        "mapbox_token": settings.MAPBOX_TOKEN,
     })
 
 
@@ -469,6 +501,7 @@ async def timeline_page(request: Request):
         "request": request,
         "years": years,
         "countries": countries,
+        "mapbox_token": settings.MAPBOX_TOKEN,
     })
 
 
@@ -784,6 +817,7 @@ async def communications_page(request: Request):
         "region_summaries": region_summaries,
         "top10": top10,
         "bottom10": bottom10,
+        "mapbox_token": settings.MAPBOX_TOKEN,
     })
 
 

@@ -3,7 +3,8 @@
 {% block title %}Regional Dashboard — Intelligence Analysis{% endblock %}
 
 {% block head %}
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.js"></script>
 <style>
 /* ── Dark Theme — Neutral Grayscale ── */
 
@@ -90,13 +91,28 @@
   outline: none;
   box-shadow: 0 0 0 1px rgba(143, 153, 168, 0.4);
 }
+.map-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: #8F99A8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  margin-left: auto;
+}
+.map-toggle input[type="checkbox"] {
+  accent-color: #8F99A8;
+  cursor: pointer;
+}
 .map-body {
   padding: 0;
+  position: relative;
 }
-.map-body .chart-container {
-  border: none;
-  margin: 0;
-  background: #1C2127;
+#world-map {
+  width: 100%;
+  height: clamp(280px, 45vw, 480px);
 }
 
 /* ── Section Header ── */
@@ -263,9 +279,12 @@
   .rc-metrics { gap: 8px; }
   .rc-metric .num { font-size: 0.8rem; }
   .map-toolbar { flex-wrap: wrap; gap: 6px; }
+  .map-legend { bottom: 8px; right: 8px; padding: 6px 8px; }
+  .map-legend .legend-bar { width: 90px; }
 }
 @media (max-width: 480px) {
   .kpi-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .map-legend { bottom: 6px; left: 50px; right: auto; }
 }
 
 /* ── Country Info Card (map click popup) ── */
@@ -351,6 +370,58 @@
   .country-card .cc-stats { grid-template-columns: 1fr 1fr; gap: 8px 16px; }
   .country-card .cc-dossier { display: block; text-align: center; padding: 10px; }
 }
+
+/* ── Mapbox Popup Override ── */
+.mapboxgl-popup-content {
+  background: #1C2127 !important;
+  color: #C5CBD3;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  line-height: 1.5;
+}
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: #2F343C; }
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip { border-bottom-color: #2F343C; }
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: #2F343C; }
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: #2F343C; }
+.mapboxgl-popup-close-button { display: none; }
+.mapboxgl-ctrl-attrib { display: none !important; }
+
+/* ── Map Legend ── */
+.map-legend {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: #1C2127;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 0.62rem;
+  color: #8F99A8;
+  z-index: 2;
+  -webkit-font-smoothing: antialiased;
+}
+.map-legend .legend-title {
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.map-legend .legend-bar {
+  height: 8px;
+  border-radius: 2px;
+  width: 120px;
+  margin-bottom: 2px;
+}
+.map-legend .legend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Consolas', monospace;
+  font-size: 0.58rem;
+}
 </style>
 {% endblock %}
 
@@ -399,9 +470,20 @@
       <option value="gdp_percap">GDP Per Capita</option>
       <option value="life_exp">Life Expectancy</option>
     </select>
+    <label class="map-toggle">
+      <input type="checkbox" id="show-capitals" checked> Capitals
+    </label>
   </div>
   <div class="map-body">
-    <div id="world-map" class="chart-container" style="height:clamp(280px, 45vw, 480px);"></div>
+    <div id="world-map"></div>
+    <div class="map-legend" id="map-legend">
+      <div class="legend-title" id="legend-title">GDP ($B PPP)</div>
+      <div class="legend-bar" id="legend-bar"></div>
+      <div class="legend-labels">
+        <span id="legend-min">0</span>
+        <span id="legend-max">0</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -451,6 +533,8 @@
     <div><div class="cc-stat-label">GDP (PPP)</div><div class="cc-stat-val" id="cc-gdp"></div></div>
     <div><div class="cc-stat-label">Life Expectancy</div><div class="cc-stat-val" id="cc-life"></div></div>
     <div><div class="cc-stat-label">Military % GDP</div><div class="cc-stat-val" id="cc-mil"></div></div>
+    <div><div class="cc-stat-label">GDP / Capita</div><div class="cc-stat-val" id="cc-gdpcap"></div></div>
+    <div><div class="cc-stat-label">Pop Growth</div><div class="cc-stat-val" id="cc-popgr"></div></div>
   </div>
   <a id="cc-link" class="cc-dossier" href="#">View Dossier &rarr;</a>
 </div>
@@ -480,98 +564,285 @@ const indicatorLabels = {
   life_exp: 'Life Expectancy (years)',
 };
 
-/* Color scales — DG2 base → extended palette */
-const indicatorScales = {
-  gdp_billions: [[0,'#252A31'],[0.25,'#5C4405'],[0.5,'#D1980B'],[0.75,'#F0B726'],[1,'#FBD065']],   /* GOLD */
-  population:   [[0,'#252A31'],[0.25,'#77450D'],[0.5,'#C87619'],[0.75,'#EC9A3C'],[1,'#FBB360']],   /* ORANGE */
-  mil_pct_gdp:  [[0,'#252A31'],[0.25,'#96290D'],[0.5,'#D33D17'],[0.75,'#EB6847'],[1,'#FF9980']],   /* VERMILION */
-  gdp_percap:   [[0,'#252A31'],[0.25,'#0C5174'],[0.5,'#147EB3'],[0.75,'#3FA6DA'],[1,'#68C1EE']],   /* CERULEAN */
-  life_exp:     [[0,'#252A31'],[0.2,'#1D7324'],[0.4,'#29A634'],[0.6,'#43BF4D'],[0.8,'#62D96B'],[1,'#72CA9B']], /* FOREST→GREEN */
+/* DG2 color scales — 4 stops per indicator */
+const indicatorColors = {
+  gdp_billions: ['#252A31','#5C4405','#D1980B','#FBD065'],
+  population:   ['#252A31','#77450D','#C87619','#FBB360'],
+  mil_pct_gdp:  ['#252A31','#96290D','#D33D17','#FF9980'],
+  gdp_percap:   ['#252A31','#0C5174','#147EB3','#68C1EE'],
+  life_exp:     ['#252A31','#1D7324','#29A634','#72CA9B'],
 };
-
-function renderMap(indicator, highlightRegion) {
-  const valid = mapData.filter(d => d[indicator]);
-
-  // Dim non-selected countries when a region is active
-  const borderColors = valid.map(d =>
-    highlightRegion && d.cocom !== highlightRegion ? '#111418' : '#111418'
-  );
-  const borderWidths = valid.map(d =>
-    highlightRegion && d.cocom === highlightRegion ? 2.5 : 0.8
-  );
-
-  const traces = [{
-    type: 'choropleth',
-    locations: valid.map(d => d.iso3),
-    z: valid.map(d => d[indicator]),
-    text: valid.map(d => d.name + ' (' + d.cocom + ')'),
-    hovertemplate: '%{text}<br>' + indicatorLabels[indicator] + ': %{z:,.2f}<extra></extra>',
-    colorscale: indicatorScales[indicator],
-    marker: { line: { color: borderColors, width: borderWidths } },
-    colorbar: {
-      title: { text: indicatorLabels[indicator], font: { color: '#8F99A8', size: 11 } },
-      tickfont: { color: '#8F99A8', size: 10 },
-      bgcolor: 'rgba(0,0,0,0)',
-      outlinecolor: '#2F343C',
-    },
-  }];
-
-  // Add highlight outline trace for the selected region
-  if (highlightRegion) {
-    const regionData = valid.filter(d => d.cocom === highlightRegion);
-    traces.push({
-      type: 'choropleth',
-      locations: regionData.map(d => d.iso3),
-      z: regionData.map(() => 1),
-      text: regionData.map(d => d.name),
-      hoverinfo: 'skip',
-      showscale: false,
-      colorscale: [[0, 'rgba(171,179,191,0.08)'], [1, 'rgba(171,179,191,0.08)']],
-      marker: { line: { color: '#C5CBD3', width: 2.5 } },
-    });
-  }
-
-  Plotly.react('world-map', traces, {
-    geo: {
-      bgcolor: '#1C2127',
-      lakecolor: '#111418',
-      landcolor: highlightRegion ? '#1A1E24' : '#252A31',
-      showframe: false,
-      showcoastlines: true,
-      coastlinecolor: '#111418',
-      countrycolor: '#111418',
-      showcountries: true,
-      projection: { type: 'natural earth' },
-      showocean: true,
-      oceancolor: '#111418',
-    },
-    paper_bgcolor: '#1C2127',
-    plot_bgcolor: '#1C2127',
-    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
-    margin: { t: 8, b: 8, l: 8, r: 8 },
-    dragmode: false,
-  }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
-}
 
 let currentIndicator = 'gdp_billions';
 let activeRegion = null;
+let map, geojsonData, popup;
 
-renderMap(currentIndicator);
-
-document.getElementById('map-indicator').addEventListener('change', function() {
-  currentIndicator = this.value;
-  renderMap(currentIndicator, activeRegion);
-});
-
-/* ── Country info card on map click ── */
+/* ── Number formatter ── */
 function fmtNum(n) {
-  if (!n) return '\u2014';
+  if (!n && n !== 0) return '\u2014';
   if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
   if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
   if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
   return n.toLocaleString();
 }
 
+function fmtLegend(n, indicator) {
+  if (indicator === 'gdp_billions') return '$' + n.toFixed(0) + 'B';
+  if (indicator === 'gdp_percap') return '$' + Math.round(n).toLocaleString();
+  if (indicator === 'mil_pct_gdp') return n.toFixed(1) + '%';
+  if (indicator === 'life_exp') return n.toFixed(0) + ' yrs';
+  return fmtNum(n);
+}
+
+/* ── Initialize Mapbox ── */
+mapboxgl.accessToken = '{{ mapbox_token }}';
+
+map = new mapboxgl.Map({
+  container: 'world-map',
+  style: 'mapbox://styles/mapbox/dark-v11',
+  center: [15, 20],
+  zoom: 1.5,
+  projection: 'naturalEarth',
+  attributionControl: false,
+  maxZoom: 8,
+});
+
+map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left');
+
+popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '280px' });
+
+/* Build a lookup by ISO3 for fast access */
+const dataByIso3 = {};
+mapData.forEach(d => { dataByIso3[d.iso3] = d; });
+
+map.on('load', function() {
+  /* Fetch GeoJSON and join with our data */
+  fetch('/static/data/countries-110m.geojson')
+    .then(r => r.json())
+    .then(geo => {
+      geojsonData = geo;
+
+      /* Embed indicator data into GeoJSON properties */
+      geo.features.forEach(f => {
+        const d = dataByIso3[f.properties.iso3];
+        if (d) {
+          f.properties.population = d.population;
+          f.properties.gdp_billions = d.gdp_billions;
+          f.properties.gdp_percap = d.gdp_percap;
+          f.properties.mil_pct_gdp = d.mil_pct_gdp;
+          f.properties.life_exp = d.life_exp;
+          f.properties.pop_growth = d.pop_growth;
+          f.properties.cocom = d.cocom;
+          f.properties.cname = d.name;
+          f.properties.iso2 = d.iso2;
+          f.properties.capital = d.capital;
+        }
+      });
+
+      /* Add country fills source + layer */
+      map.addSource('countries', { type: 'geojson', data: geo });
+
+      const firstSymbol = map.getStyle().layers.find(l => l.type === 'symbol');
+      const beforeId = firstSymbol ? firstSymbol.id : undefined;
+
+      map.addLayer({
+        id: 'country-fills',
+        type: 'fill',
+        source: 'countries',
+        paint: {
+          'fill-color': buildColorExpr(currentIndicator),
+          'fill-opacity': 0.85,
+          'fill-opacity-transition': { duration: 400 },
+        },
+      }, beforeId);
+
+      map.addLayer({
+        id: 'country-borders',
+        type: 'line',
+        source: 'countries',
+        paint: {
+          'line-color': '#2F343C',
+          'line-width': 0.5,
+        },
+      });
+
+      /* Region highlight layer — hidden by default */
+      map.addLayer({
+        id: 'region-highlight',
+        type: 'line',
+        source: 'countries',
+        paint: {
+          'line-color': '#C5CBD3',
+          'line-width': 2.5,
+        },
+        filter: ['==', 'cocom', ''],
+      });
+
+      /* Capital markers */
+      const capsFeatures = mapData
+        .filter(d => d.cap_lat && d.cap_lon)
+        .map(d => ({
+          type: 'Feature',
+          properties: { name: d.capital || d.name, country: d.name },
+          geometry: { type: 'Point', coordinates: [d.cap_lon, d.cap_lat] },
+        }));
+
+      map.addSource('capitals', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: capsFeatures },
+      });
+
+      map.addLayer({
+        id: 'capital-dots',
+        type: 'circle',
+        source: 'capitals',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 1.5, 4, 3, 8, 5],
+          'circle-color': '#C5CBD3',
+          'circle-stroke-width': 0.5,
+          'circle-stroke-color': '#111418',
+          'circle-opacity': 0.7,
+        },
+      });
+
+      map.addLayer({
+        id: 'capital-labels',
+        type: 'symbol',
+        source: 'capitals',
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-size': 9,
+          'text-offset': [0, 1.2],
+          'text-anchor': 'top',
+          'text-optional': true,
+        },
+        paint: {
+          'text-color': '#8F99A8',
+          'text-halo-color': '#111418',
+          'text-halo-width': 1,
+        },
+        minzoom: 4,
+      });
+
+      /* Brighten map labels for readability over choropleth */
+      map.getStyle().layers.filter(l => l.type === 'symbol' && l.id !== 'capital-labels').forEach(l => {
+        map.setPaintProperty(l.id, 'text-color', '#E1E8ED');
+        map.setPaintProperty(l.id, 'text-halo-color', '#111418');
+        map.setPaintProperty(l.id, 'text-halo-width', 1.5);
+      });
+
+      updateLegend(currentIndicator);
+
+      /* ── Hover — Mapbox Popup ── */
+      map.on('mousemove', 'country-fills', function(e) {
+        if (!e.features || !e.features.length) return;
+        map.getCanvas().style.cursor = 'pointer';
+        const p = e.features[0].properties;
+        if (!p.cname) { popup.remove(); return; }
+        const html = '<b>' + p.cname + '</b>' + (p.cocom ? ' (' + p.cocom + ')' : '') + '<br>' +
+          'Pop: ' + fmtNum(p.population) + '<br>' +
+          'GDP: ' + (p.gdp_billions ? '$' + Number(p.gdp_billions).toFixed(0) + 'B' : '\u2014') + '<br>' +
+          'GDP/Cap: ' + (p.gdp_percap ? '$' + Number(p.gdp_percap).toLocaleString(undefined,{maximumFractionDigits:0}) : '\u2014') + '<br>' +
+          'Military: ' + (p.mil_pct_gdp ? Number(p.mil_pct_gdp).toFixed(2) + '%' : '\u2014') + '<br>' +
+          'Life Exp: ' + (p.life_exp ? Number(p.life_exp).toFixed(1) + ' yrs' : '\u2014');
+        popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+      });
+
+      map.on('mouseleave', 'country-fills', function() {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+      });
+
+      /* ── Click — Country card + flyTo ── */
+      var cardJustShown = false;
+
+      map.on('click', 'country-fills', function(e) {
+        if (!e.features || !e.features.length) return;
+        const iso3 = e.features[0].properties.iso3;
+        const match = dataByIso3[iso3];
+        if (!match) return;
+
+        cardJustShown = true;
+        setTimeout(function() { cardJustShown = false; }, 200);
+
+        /* Fly to country */
+        if (match.cap_lat && match.cap_lon) {
+          map.flyTo({ center: [match.cap_lon, match.cap_lat], zoom: 4, duration: 1200 });
+        }
+
+        showCountryCard(match, e.originalEvent);
+      });
+
+      document.addEventListener('click', function(ev) {
+        if (cardJustShown) return;
+        const card = document.getElementById('country-card');
+        if (card.style.display === 'block' && !card.contains(ev.target)) {
+          hideCountryCard();
+        }
+      });
+      document.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Escape') hideCountryCard();
+      });
+    });
+});
+
+/* ── Build Mapbox color expression for an indicator ── */
+function buildColorExpr(indicator) {
+  const values = mapData.map(d => d[indicator]).filter(v => v != null && v > 0);
+  if (!values.length) return '#252A31';
+  values.sort((a, b) => a - b);
+  const min = values[0];
+  const max = values[values.length - 1];
+  const q33 = values[Math.floor(values.length * 0.33)];
+  const q66 = values[Math.floor(values.length * 0.66)];
+  const colors = indicatorColors[indicator];
+
+  return [
+    'case',
+    ['==', ['get', indicator], null], '#252A31',
+    ['==', ['get', indicator], 0], '#252A31',
+    ['interpolate', ['linear'], ['get', indicator],
+      min, colors[0],
+      q33, colors[1],
+      q66, colors[2],
+      max, colors[3],
+    ],
+  ];
+}
+
+/* ── Update legend ── */
+function updateLegend(indicator) {
+  const values = mapData.map(d => d[indicator]).filter(v => v != null && v > 0);
+  if (!values.length) return;
+  values.sort((a, b) => a - b);
+  const min = values[0];
+  const max = values[values.length - 1];
+  const colors = indicatorColors[indicator];
+
+  document.getElementById('legend-title').textContent = indicatorLabels[indicator];
+  document.getElementById('legend-bar').style.background =
+    'linear-gradient(to right, ' + colors.join(', ') + ')';
+  document.getElementById('legend-min').textContent = fmtLegend(min, indicator);
+  document.getElementById('legend-max').textContent = fmtLegend(max, indicator);
+}
+
+/* ── Switch indicator ── */
+document.getElementById('map-indicator').addEventListener('change', function() {
+  currentIndicator = this.value;
+  if (map.getLayer('country-fills')) {
+    map.setPaintProperty('country-fills', 'fill-color', buildColorExpr(currentIndicator));
+  }
+  updateLegend(currentIndicator);
+});
+
+/* ── Toggle capitals ── */
+document.getElementById('show-capitals').addEventListener('change', function() {
+  const vis = this.checked ? 'visible' : 'none';
+  if (map.getLayer('capital-dots')) map.setLayoutProperty('capital-dots', 'visibility', vis);
+  if (map.getLayer('capital-labels')) map.setLayoutProperty('capital-labels', 'visibility', vis);
+});
+
+/* ── Country info card ── */
 function showCountryCard(country, evt) {
   const card = document.getElementById('country-card');
   document.getElementById('cc-name').textContent = country.name;
@@ -580,14 +851,14 @@ function showCountryCard(country, evt) {
   document.getElementById('cc-gdp').textContent = country.gdp_billions ? '$' + country.gdp_billions.toFixed(0) + 'B' : '\u2014';
   document.getElementById('cc-life').textContent = country.life_exp ? country.life_exp.toFixed(1) + ' yrs' : '\u2014';
   document.getElementById('cc-mil').textContent = country.mil_pct_gdp ? country.mil_pct_gdp.toFixed(2) + '%' : '\u2014';
+  document.getElementById('cc-gdpcap').textContent = country.gdp_percap ? '$' + country.gdp_percap.toLocaleString(undefined, {maximumFractionDigits:0}) : '\u2014';
+  document.getElementById('cc-popgr').textContent = country.pop_growth != null ? country.pop_growth.toFixed(2) + '%' : '\u2014';
   document.getElementById('cc-link').href = '/analysis/dossier/' + country.iso2;
 
   card.style.display = 'block';
   if (window.innerWidth <= 800) {
-    // Mobile: bottom sheet — CSS handles positioning
     card.style.left = ''; card.style.top = '';
   } else {
-    // Desktop: position near click with bounds checking
     let x = evt.clientX + 12, y = evt.clientY - 20;
     const rect = card.getBoundingClientRect();
     if (x + rect.width > window.innerWidth - 16) x = evt.clientX - rect.width - 12;
@@ -598,54 +869,48 @@ function showCountryCard(country, evt) {
   }
 }
 
-var cardJustShown = false;
 function hideCountryCard() {
   document.getElementById('country-card').style.display = 'none';
 }
 
-document.getElementById('world-map').on('plotly_click', function(eventData) {
-  if (eventData.points && eventData.points.length > 0) {
-    const iso3 = eventData.points[0].location;
-    const match = mapData.find(d => d.iso3 === iso3);
-    if (match) {
-      cardJustShown = true;
-      setTimeout(function() { cardJustShown = false; }, 200);
-      showCountryCard(match, eventData.event);
-      return;
-    }
-  }
-  hideCountryCard();
-});
-
-document.addEventListener('click', function(e) {
-  if (cardJustShown) return;
-  const card = document.getElementById('country-card');
-  if (card.style.display === 'block' && !card.contains(e.target)) {
-    hideCountryCard();
-  }
-});
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') hideCountryCard();
-});
+/* ── Region bounding boxes (predefined to handle antimeridian) ── */
+const regionBounds = {
+  EUCOM:     [[-25, 34], [45, 72]],
+  AFRICOM:   [[-20, -35], [55, 38]],
+  INDOPACOM: [[60, -50], [180, 55]],
+  CENTCOM:   [[25, 10], [75, 45]],
+  SOUTHCOM:  [[-85, -55], [-30, 15]],
+  NORTHCOM:  [[-170, 15], [-50, 75]],
+};
 
 /* ── Region card click → highlight on map ── */
 const regionCards = document.querySelectorAll('.region-card[data-region]');
 regionCards.forEach(card => {
   card.addEventListener('click', function(e) {
-    // Don't intercept clicks on the action links
     if (e.target.closest('.rc-actions')) return;
-
     const region = this.dataset.region;
     if (activeRegion === region) {
-      // Toggle off
       activeRegion = null;
       regionCards.forEach(c => c.classList.remove('active'));
+      if (map.getLayer('region-highlight')) {
+        map.setFilter('region-highlight', ['==', 'cocom', '']);
+      }
+      if (map.getLayer('country-fills')) {
+        map.setPaintProperty('country-fills', 'fill-opacity', 0.85);
+      }
+      map.flyTo({ center: [15, 20], zoom: 1.5, duration: 800 });
     } else {
       activeRegion = region;
       regionCards.forEach(c => c.classList.remove('active'));
       this.classList.add('active');
+      if (map.getLayer('region-highlight')) {
+        map.setFilter('region-highlight', ['==', 'cocom', region]);
+      }
+      /* Fly to predefined region bounds */
+      if (regionBounds[region]) {
+        map.fitBounds(regionBounds[region], { padding: 60, duration: 800, maxZoom: 5 });
+      }
     }
-    renderMap(currentIndicator, activeRegion);
   });
 });
 </script>

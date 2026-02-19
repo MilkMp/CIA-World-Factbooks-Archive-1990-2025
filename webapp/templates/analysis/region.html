@@ -3,8 +3,52 @@
 {% block title %}{{ region_name }} ({{ region }}) — Intelligence Analysis{% endblock %}
 
 {% block head %}
+<link href="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.js"></script>
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 <style>
+#region-map {
+  width: 100%;
+  height: clamp(260px, 42vw, 440px);
+}
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.map-toolbar label {
+  font-size: 0.75rem;
+  color: #8F99A8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.map-toolbar select {
+  background: #1C2127;
+  border: 1px solid #383E47;
+  border-radius: 3px;
+  color: #C5CBD3;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  transition: border-color 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.map-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: #8F99A8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  margin-left: auto;
+}
+.map-toggle input[type="checkbox"] {
+  accent-color: #8F99A8;
+  cursor: pointer;
+}
+
 .country-card {
   display: none;
   position: fixed;
@@ -47,6 +91,25 @@
   .country-card .cc-stats { grid-template-columns: 1fr 1fr; gap: 8px 16px; }
   .country-card .cc-dossier { display: block; text-align: center; padding: 10px; }
 }
+
+/* Mapbox popup override */
+.mapboxgl-popup-content {
+  background: #1C2127 !important;
+  color: #C5CBD3;
+  border: 1px solid #2F343C;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  line-height: 1.5;
+}
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: #2F343C; }
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip { border-bottom-color: #2F343C; }
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: #2F343C; }
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: #2F343C; }
+.mapboxgl-popup-close-button { display: none; }
+.mapboxgl-ctrl-attrib { display: none !important; }
 </style>
 {% endblock %}
 
@@ -60,7 +123,7 @@
 <hr class="doc-rule double">
 
 <div style="margin:12px 0;">
-  <a href="/analysis" class="btn">Back to Dashboard</a>
+  <a href="/analysis/regional" class="btn">Back to Dashboard</a>
   <a href="/analysis/threats/{{ region }}" class="btn" style="margin-left:8px;">Threat Environment</a>
 </div>
 
@@ -71,19 +134,20 @@
   <hr class="sec-rule">
 </div>
 
-<div style="margin-bottom:8px;">
-  <label style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:0.75rem;color:#8F99A8;text-transform:uppercase;letter-spacing:1px;">
-    Color by:
-  </label>
-  <select id="region-map-indicator" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:4px 10px;font-size:0.82rem;transition:border-color 0.2s cubic-bezier(0.4,0,0.2,1);">
+<div class="map-toolbar">
+  <label>Color by:</label>
+  <select id="region-map-indicator">
     <option value="gdp_percap">GDP Per Capita</option>
     <option value="gdp_billions">GDP ($B PPP)</option>
     <option value="population">Population</option>
     <option value="mil_pct_gdp">Military % GDP</option>
     <option value="life_exp">Life Expectancy</option>
   </select>
+  <label class="map-toggle">
+    <input type="checkbox" id="show-capitals" checked> Capitals
+  </label>
 </div>
-<div id="region-map" class="chart-container" style="height:clamp(260px, 42vw, 440px);"></div>
+<div id="region-map"></div>
 
 <div class="sec">
   <span class="sec-num">SECTION 02</span>
@@ -154,6 +218,8 @@
     <div><div class="cc-stat-label">GDP (PPP)</div><div class="cc-stat-val" id="cc-gdp"></div></div>
     <div><div class="cc-stat-label">Life Expectancy</div><div class="cc-stat-val" id="cc-life"></div></div>
     <div><div class="cc-stat-label">Military % GDP</div><div class="cc-stat-val" id="cc-mil"></div></div>
+    <div><div class="cc-stat-label">GDP / Capita</div><div class="cc-stat-val" id="cc-gdpcap"></div></div>
+    <div><div class="cc-stat-label">Pop Growth</div><div class="cc-stat-val" id="cc-popgr"></div></div>
   </div>
   <a id="cc-link" class="cc-dossier" href="#">View Dossier &rarr;</a>
 </div>
@@ -169,25 +235,8 @@
 {% block scripts %}
 {% if indicators %}
 <script>
-const chartLayout = {
-  paper_bgcolor: '#1C2127',
-  plot_bgcolor: '#1C2127',
-  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
-  margin: { t: 20, r: 20, b: 100, l: 60 },
-  xaxis: { tickangle: -45, gridcolor: '#252A31', fixedrange: true },
-  yaxis: { gridcolor: '#252A31', fixedrange: true },
-};
-
 const data = {{ indicators | tojson }};
 const region = '{{ region }}';
-
-// ── Regional Map ──
-const geoScopes = {
-  EUCOM: 'europe',
-  AFRICOM: 'africa',
-  SOUTHCOM: 'south america',
-  NORTHCOM: 'north america',
-};
 
 const indicatorLabels = {
   gdp_percap: 'GDP Per Capita ($)',
@@ -197,75 +246,230 @@ const indicatorLabels = {
   life_exp: 'Life Expectancy (years)',
 };
 
-/* Color scales — DG2 base → extended palette */
-const indicatorScales = {
-  gdp_percap:   [[0,'#252A31'],[0.25,'#0C5174'],[0.5,'#147EB3'],[0.75,'#3FA6DA'],[1,'#68C1EE']],   /* CERULEAN */
-  gdp_billions: [[0,'#252A31'],[0.25,'#5C4405'],[0.5,'#D1980B'],[0.75,'#F0B726'],[1,'#FBD065']],   /* GOLD */
-  population:   [[0,'#252A31'],[0.25,'#77450D'],[0.5,'#C87619'],[0.75,'#EC9A3C'],[1,'#FBB360']],   /* ORANGE */
-  mil_pct_gdp:  [[0,'#252A31'],[0.25,'#96290D'],[0.5,'#D33D17'],[0.75,'#EB6847'],[1,'#FF9980']],   /* VERMILION */
-  life_exp:     [[0,'#252A31'],[0.2,'#1D7324'],[0.4,'#29A634'],[0.6,'#43BF4D'],[0.8,'#62D96B'],[1,'#72CA9B']], /* FOREST→GREEN */
+const indicatorColors = {
+  gdp_percap:   ['#252A31','#0C5174','#147EB3','#68C1EE'],
+  gdp_billions: ['#252A31','#5C4405','#D1980B','#FBD065'],
+  population:   ['#252A31','#77450D','#C87619','#FBB360'],
+  mil_pct_gdp:  ['#252A31','#96290D','#D33D17','#FF9980'],
+  life_exp:     ['#252A31','#1D7324','#29A634','#72CA9B'],
 };
 
-function renderRegionMap(indicator) {
-  const valid = data.filter(d => d[indicator]);
-  const geoConfig = {
-    bgcolor: '#1C2127',
-    lakecolor: '#111418',
-    landcolor: '#252A31',
-    showframe: false,
-    showcoastlines: true,
-    coastlinecolor: '#111418',
-    countrycolor: '#111418',
-    showcountries: true,
-    showocean: true,
-    oceancolor: '#111418',
-  };
+/* Region bounding boxes for initial fit */
+const regionBounds = {
+  EUCOM:    [[-25, 34], [45, 72]],
+  AFRICOM:  [[-20, -35], [55, 38]],
+  INDOPACOM:[[60, -50], [180, 55]],
+  CENTCOM:  [[25, 10], [75, 45]],
+  SOUTHCOM: [[-85, -55], [-30, 15]],
+  NORTHCOM: [[-170, 15], [-50, 75]],
+};
 
-  if (geoScopes[region]) {
-    geoConfig.scope = geoScopes[region];
-  } else {
-    geoConfig.projection = { type: 'natural earth' };
-    geoConfig.fitbounds = 'locations';
-  }
+let currentIndicator = 'gdp_percap';
 
-  Plotly.react('region-map', [{
-    type: 'choropleth',
-    locations: valid.map(d => d.iso3),
-    z: valid.map(d => d[indicator]),
-    text: valid.map(d => d.name),
-    hovertemplate: '%{text}<br>' + indicatorLabels[indicator] + ': %{z:,.2f}<extra></extra>',
-    colorscale: indicatorScales[indicator],
-    marker: { line: { color: '#111418', width: 1.2 } },
-    colorbar: {
-      title: { text: indicatorLabels[indicator], font: { color: '#8F99A8', size: 11 } },
-      tickfont: { color: '#8F99A8', size: 10 },
-      bgcolor: 'rgba(0,0,0,0)',
-      outlinecolor: '#2F343C',
-    },
-  }], {
-    geo: geoConfig,
-    paper_bgcolor: '#1C2127',
-    plot_bgcolor: '#1C2127',
-    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif' },
-    margin: { t: 10, b: 10, l: 10, r: 10 },
-    dragmode: false,
-  }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
-}
-
-renderRegionMap('gdp_percap');
-
-document.getElementById('region-map-indicator').addEventListener('change', function() {
-  renderRegionMap(this.value);
-});
-
-// Click handler: show country info card
 function fmtNum(n) {
-  if (!n) return '\u2014';
+  if (!n && n !== 0) return '\u2014';
   if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
   if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
   if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
   return n.toLocaleString();
 }
+
+/* Build lookup */
+const dataByIso3 = {};
+data.forEach(d => { dataByIso3[d.iso3] = d; });
+
+/* ── Mapbox Map ── */
+mapboxgl.accessToken = '{{ mapbox_token }}';
+
+const bounds = regionBounds[region];
+const map = new mapboxgl.Map({
+  container: 'region-map',
+  style: 'mapbox://styles/mapbox/dark-v11',
+  bounds: bounds || [[-180, -60], [180, 75]],
+  fitBoundsOptions: { padding: 40 },
+  attributionControl: false,
+  maxZoom: 8,
+});
+
+if (!bounds) {
+  map.setCenter([15, 20]);
+  map.setZoom(1.5);
+}
+
+map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left');
+
+const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '280px' });
+
+function buildColorExpr(indicator) {
+  const values = data.map(d => d[indicator]).filter(v => v != null && v > 0);
+  if (!values.length) return '#252A31';
+  values.sort((a, b) => a - b);
+  const min = values[0], max = values[values.length - 1];
+  const q33 = values[Math.floor(values.length * 0.33)];
+  const q66 = values[Math.floor(values.length * 0.66)];
+  const colors = indicatorColors[indicator];
+  return [
+    'case',
+    ['==', ['get', indicator], null], '#252A31',
+    ['==', ['get', indicator], 0], '#252A31',
+    ['interpolate', ['linear'], ['get', indicator],
+      min, colors[0], q33, colors[1], q66, colors[2], max, colors[3]],
+  ];
+}
+
+map.on('load', function() {
+  fetch('/static/data/countries-110m.geojson')
+    .then(r => r.json())
+    .then(geo => {
+      /* Embed data into GeoJSON properties */
+      geo.features.forEach(f => {
+        const d = dataByIso3[f.properties.iso3];
+        if (d) {
+          f.properties.population = d.population;
+          f.properties.gdp_billions = d.gdp_billions;
+          f.properties.gdp_percap = d.gdp_percap;
+          f.properties.mil_pct_gdp = d.mil_pct_gdp;
+          f.properties.life_exp = d.life_exp;
+          f.properties.pop_growth = d.pop_growth;
+          f.properties.cname = d.name;
+          f.properties.iso2 = d.iso2;
+          f.properties.capital = d.capital;
+        }
+      });
+
+      map.addSource('countries', { type: 'geojson', data: geo });
+
+      const firstSymbol = map.getStyle().layers.find(l => l.type === 'symbol');
+      const beforeId = firstSymbol ? firstSymbol.id : undefined;
+
+      map.addLayer({
+        id: 'country-fills',
+        type: 'fill',
+        source: 'countries',
+        paint: {
+          'fill-color': buildColorExpr(currentIndicator),
+          'fill-opacity': 0.85,
+          'fill-opacity-transition': { duration: 400 },
+        },
+      }, beforeId);
+
+      map.addLayer({
+        id: 'country-borders',
+        type: 'line',
+        source: 'countries',
+        paint: { 'line-color': '#2F343C', 'line-width': 0.5 },
+      });
+
+      /* Capital markers */
+      const caps = data.filter(d => d.cap_lat && d.cap_lon).map(d => ({
+        type: 'Feature',
+        properties: { name: d.capital || d.name, country: d.name },
+        geometry: { type: 'Point', coordinates: [d.cap_lon, d.cap_lat] },
+      }));
+
+      map.addSource('capitals', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: caps },
+      });
+
+      map.addLayer({
+        id: 'capital-dots',
+        type: 'circle',
+        source: 'capitals',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 2, 4, 4, 8, 6],
+          'circle-color': '#C5CBD3',
+          'circle-stroke-width': 0.5,
+          'circle-stroke-color': '#111418',
+          'circle-opacity': 0.7,
+        },
+      });
+
+      map.addLayer({
+        id: 'capital-labels',
+        type: 'symbol',
+        source: 'capitals',
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-size': 10,
+          'text-offset': [0, 1.2],
+          'text-anchor': 'top',
+          'text-optional': true,
+        },
+        paint: {
+          'text-color': '#8F99A8',
+          'text-halo-color': '#111418',
+          'text-halo-width': 1,
+        },
+        minzoom: 3,
+      });
+
+      /* Brighten map labels for readability over choropleth */
+      map.getStyle().layers.filter(l => l.type === 'symbol' && l.id !== 'capital-labels').forEach(l => {
+        map.setPaintProperty(l.id, 'text-color', '#E1E8ED');
+        map.setPaintProperty(l.id, 'text-halo-color', '#111418');
+        map.setPaintProperty(l.id, 'text-halo-width', 1.5);
+      });
+
+      /* Hover */
+      map.on('mousemove', 'country-fills', function(e) {
+        if (!e.features || !e.features.length) return;
+        map.getCanvas().style.cursor = 'pointer';
+        const p = e.features[0].properties;
+        if (!p.cname) { popup.remove(); return; }
+        popup.setLngLat(e.lngLat).setHTML(
+          '<b>' + p.cname + '</b><br>' +
+          'Pop: ' + fmtNum(p.population) + '<br>' +
+          'GDP: ' + (p.gdp_billions ? '$' + Number(p.gdp_billions).toFixed(0) + 'B' : '\u2014') + '<br>' +
+          'GDP/Cap: ' + (p.gdp_percap ? '$' + Number(p.gdp_percap).toLocaleString(undefined,{maximumFractionDigits:0}) : '\u2014') + '<br>' +
+          'Military: ' + (p.mil_pct_gdp ? Number(p.mil_pct_gdp).toFixed(2) + '%' : '\u2014') + '<br>' +
+          'Life Exp: ' + (p.life_exp ? Number(p.life_exp).toFixed(1) + ' yrs' : '\u2014')
+        ).addTo(map);
+      });
+      map.on('mouseleave', 'country-fills', function() {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+      });
+
+      /* Click → country card + flyTo */
+      var cardJustShown = false;
+      map.on('click', 'country-fills', function(e) {
+        if (!e.features || !e.features.length) return;
+        const iso3 = e.features[0].properties.iso3;
+        const match = dataByIso3[iso3];
+        if (!match) return;
+        cardJustShown = true;
+        setTimeout(function() { cardJustShown = false; }, 200);
+        if (match.cap_lat && match.cap_lon) {
+          map.flyTo({ center: [match.cap_lon, match.cap_lat], zoom: 5, duration: 1200 });
+        }
+        showCountryCard(match, e.originalEvent);
+      });
+
+      document.addEventListener('click', function(ev) {
+        if (cardJustShown) return;
+        const card = document.getElementById('country-card');
+        if (card.style.display === 'block' && !card.contains(ev.target)) hideCountryCard();
+      });
+      document.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Escape') hideCountryCard();
+      });
+    });
+});
+
+document.getElementById('region-map-indicator').addEventListener('change', function() {
+  currentIndicator = this.value;
+  if (map.getLayer('country-fills')) {
+    map.setPaintProperty('country-fills', 'fill-color', buildColorExpr(currentIndicator));
+  }
+});
+
+document.getElementById('show-capitals').addEventListener('change', function() {
+  const vis = this.checked ? 'visible' : 'none';
+  if (map.getLayer('capital-dots')) map.setLayoutProperty('capital-dots', 'visibility', vis);
+  if (map.getLayer('capital-labels')) map.setLayoutProperty('capital-labels', 'visibility', vis);
+});
+
 function showCountryCard(country, evt) {
   const card = document.getElementById('country-card');
   document.getElementById('cc-name').textContent = country.name;
@@ -274,6 +478,8 @@ function showCountryCard(country, evt) {
   document.getElementById('cc-gdp').textContent = country.gdp_billions ? '$' + country.gdp_billions.toFixed(0) + 'B' : '\u2014';
   document.getElementById('cc-life').textContent = country.life_exp ? country.life_exp.toFixed(1) + ' yrs' : '\u2014';
   document.getElementById('cc-mil').textContent = country.mil_pct_gdp ? country.mil_pct_gdp.toFixed(2) + '%' : '\u2014';
+  document.getElementById('cc-gdpcap').textContent = country.gdp_percap ? '$' + country.gdp_percap.toLocaleString(undefined, {maximumFractionDigits:0}) : '\u2014';
+  document.getElementById('cc-popgr').textContent = country.pop_growth != null ? country.pop_growth.toFixed(2) + '%' : '\u2014';
   document.getElementById('cc-link').href = '/analysis/dossier/' + country.iso2;
   card.style.display = 'block';
   if (window.innerWidth <= 800) {
@@ -288,61 +494,45 @@ function showCountryCard(country, evt) {
     card.style.top = y + 'px';
   }
 }
-var cardJustShown = false;
 function hideCountryCard() {
   document.getElementById('country-card').style.display = 'none';
 }
-document.getElementById('region-map').on('plotly_click', function(eventData) {
-  if (eventData.points && eventData.points.length > 0) {
-    const iso3 = eventData.points[0].location;
-    const match = data.find(d => d.iso3 === iso3);
-    if (match) {
-      cardJustShown = true;
-      setTimeout(function() { cardJustShown = false; }, 200);
-      showCountryCard(match, eventData.event);
-      return;
-    }
-  }
-  hideCountryCard();
-});
-document.addEventListener('click', function(e) {
-  if (cardJustShown) return;
-  const card = document.getElementById('country-card');
-  if (card.style.display === 'block' && !card.contains(e.target)) {
-    hideCountryCard();
-  }
-});
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hideCountryCard(); });
 
-// ── Bar Charts ──
+/* ── Bar Charts (Plotly) ── */
+const chartLayout = {
+  paper_bgcolor: '#1C2127',
+  plot_bgcolor: '#1C2127',
+  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
+  margin: { t: 20, r: 20, b: 100, l: 60 },
+  xaxis: { tickangle: -45, gridcolor: '#252A31', fixedrange: true },
+  yaxis: { gridcolor: '#252A31', fixedrange: true },
+};
+
 const gdpData = data.filter(d => d.gdp_billions).sort((a,b) => b.gdp_billions - a.gdp_billions);
 if (gdpData.length) {
   Plotly.newPlot('gdp-chart', [{
-    x: gdpData.map(d => d.name),
-    y: gdpData.map(d => d.gdp_billions),
-    type: 'bar',
-    marker: { color: '#D1980B' },  /* GOLD3 */
-  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: 'GDP ($B PPP)'}}, {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
+    x: gdpData.map(d => d.name), y: gdpData.map(d => d.gdp_billions),
+    type: 'bar', marker: { color: '#D1980B' },
+  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: 'GDP ($B PPP)'}},
+  {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
 }
 
 const milData = data.filter(d => d.mil_pct_gdp).sort((a,b) => b.mil_pct_gdp - a.mil_pct_gdp);
 if (milData.length) {
   Plotly.newPlot('mil-chart', [{
-    x: milData.map(d => d.name),
-    y: milData.map(d => d.mil_pct_gdp),
-    type: 'bar',
-    marker: { color: '#D33D17' },  /* VERMILION3 */
-  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: '% of GDP'}}, {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
+    x: milData.map(d => d.name), y: milData.map(d => d.mil_pct_gdp),
+    type: 'bar', marker: { color: '#D33D17' },
+  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: '% of GDP'}},
+  {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
 }
 
 const lifeData = data.filter(d => d.life_exp).sort((a,b) => a.life_exp - b.life_exp);
 if (lifeData.length) {
   Plotly.newPlot('life-chart', [{
-    x: lifeData.map(d => d.name),
-    y: lifeData.map(d => d.life_exp),
-    type: 'bar',
-    marker: { color: '#29A634' },  /* FOREST3 */
-  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: 'Years'}}, {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
+    x: lifeData.map(d => d.name), y: lifeData.map(d => d.life_exp),
+    type: 'bar', marker: { color: '#29A634' },
+  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: 'Years'}},
+  {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
 }
 </script>
 {% endif %}

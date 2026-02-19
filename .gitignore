@@ -12,7 +12,10 @@ html_samples/
 *.zip
 .claude/
 data/factbook.db
+data/factbook.db.backup_before_repair
+tmp_comms.html
 samples/
 notebooks/
 scripts/archive/
 *.ipynb
+Website_Archive/
