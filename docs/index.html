@@ -367,6 +367,72 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
       </table>
 
       <div class="sec">
+        <span class="sec-num">GALLERY</span>
+        <span class="sec-title">Application Screenshots</span>
+        <hr class="sec-rule">
+      </div>
+
+      <div class="carousel-section">
+        <div class="carousel-container">
+          <button class="carousel-arrow left" onclick="scrollCarousel(-1)" aria-label="Previous">&#10094;</button>
+          <div class="carousel" id="screenshot-carousel">
+            <div class="carousel-slide">
+              <img src="screenshots/homepage.png" alt="Homepage" loading="lazy">
+              <div class="slide-caption"><strong>Homepage</strong>Landing page with database statistics and navigation</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/search_results.png" alt="Full-Text Search" loading="lazy">
+              <div class="slide-caption"><strong>Full-Text Search</strong>Keyword search across 1M+ fields with Library of Congress Z39.58 syntax</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/search_boolean.png" alt="Boolean Search" loading="lazy">
+              <div class="slide-caption"><strong>Boolean Search</strong>"nuclear weapons" AND proliferation -- exact phrase matching with boolean operators</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/country_profile.png" alt="Country Profile" loading="lazy">
+              <div class="slide-caption"><strong>Country Profile</strong>Complete field data for any entity, organized by category</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/regional_dashboard.png" alt="Regional Dashboard" loading="lazy">
+              <div class="slide-caption"><strong>Regional Dashboard</strong>Mapbox GL JS choropleth with COCOM regions, hover popups, and capital markers</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/region_eucom.png" alt="EUCOM Region" loading="lazy">
+              <div class="slide-caption"><strong>COCOM Region Detail</strong>Regional map with country-level KPIs and ranked indicators</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/timeline_map.png" alt="Timeline Map" loading="lazy">
+              <div class="slide-caption"><strong>Timeline Map</strong>Animated Mapbox choropleth across 36 years with multi-country time series</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/map_compare.png" alt="Map Compare" loading="lazy">
+              <div class="slide-caption"><strong>Map Compare</strong>Two synced Mapbox maps for side-by-side year comparison</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/communications.png" alt="Communications Analysis" loading="lazy">
+              <div class="slide-caption"><strong>Communications Analysis</strong>Internet, mobile, and broadband penetration with digital divide indicators</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/dossier.png" alt="Intelligence Dossier" loading="lazy">
+              <div class="slide-caption"><strong>Intelligence Dossier</strong>Country assessments formatted per ICD 203 analytic standards</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/field_timeseries.png" alt="Field Time Series" loading="lazy">
+              <div class="slide-caption"><strong>Field Time Series</strong>Track any data field across 36 years with interactive charts</div>
+            </div>
+            <div class="carousel-slide">
+              <img src="screenshots/country_export.png" alt="Country Export" loading="lazy">
+              <div class="slide-caption"><strong>Factbook Export</strong>Print-ready country report with all parsed fields organized by category</div>
+            </div>
+          </div>
+          <button class="carousel-arrow right" onclick="scrollCarousel(1)" aria-label="Next">&#10095;</button>
+        </div>
+        <div class="carousel-dots" id="carousel-dots"></div>
+      </div>
+
+      <hr class="doc-rule">
+
+      <div class="sec">
         <span class="sec-num">RESTORE</span>
         <span class="sec-title">How to Restore</span>
         <hr class="sec-rule">
@@ -532,70 +598,6 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
       </table>
 
       <hr class="doc-rule">
-
-      <div class="sec">
-        <span class="sec-num">GALLERY</span>
-        <span class="sec-title">Application Screenshots</span>
-        <hr class="sec-rule">
-      </div>
-
-      <div class="carousel-section">
-        <div class="carousel-container">
-          <button class="carousel-arrow left" onclick="scrollCarousel(-1)" aria-label="Previous">&#10094;</button>
-          <div class="carousel" id="screenshot-carousel">
-            <div class="carousel-slide">
-              <img src="screenshots/homepage.png" alt="Homepage" loading="lazy">
-              <div class="slide-caption"><strong>Homepage</strong>Landing page with database statistics and navigation</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/search_results.png" alt="Full-Text Search" loading="lazy">
-              <div class="slide-caption"><strong>Full-Text Search</strong>Keyword search across 1M+ fields with Library of Congress Z39.58 syntax</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/search_boolean.png" alt="Boolean Search" loading="lazy">
-              <div class="slide-caption"><strong>Boolean Search</strong>"nuclear weapons" AND proliferation — exact phrase matching with boolean operators</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/country_profile.png" alt="Country Profile" loading="lazy">
-              <div class="slide-caption"><strong>Country Profile</strong>Complete field data for any entity, organized by category</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/regional_dashboard.png" alt="Regional Dashboard" loading="lazy">
-              <div class="slide-caption"><strong>Regional Dashboard</strong>Mapbox GL JS choropleth with COCOM regions, hover popups, and capital markers</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/region_eucom.png" alt="EUCOM Region" loading="lazy">
-              <div class="slide-caption"><strong>COCOM Region Detail</strong>Regional map with country-level KPIs and ranked indicators</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/timeline_map.png" alt="Timeline Map" loading="lazy">
-              <div class="slide-caption"><strong>Timeline Map</strong>Animated Mapbox choropleth across 36 years with multi-country time series</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/map_compare.png" alt="Map Compare" loading="lazy">
-              <div class="slide-caption"><strong>Map Compare</strong>Two synced Mapbox maps for side-by-side year comparison</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/communications.png" alt="Communications Analysis" loading="lazy">
-              <div class="slide-caption"><strong>Communications Analysis</strong>Internet, mobile, and broadband penetration with digital divide indicators</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/dossier.png" alt="Intelligence Dossier" loading="lazy">
-              <div class="slide-caption"><strong>Intelligence Dossier</strong>Country assessments formatted per ICD 203 analytic standards</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/field_timeseries.png" alt="Field Time Series" loading="lazy">
-              <div class="slide-caption"><strong>Field Time Series</strong>Track any data field across 36 years with interactive charts</div>
-            </div>
-            <div class="carousel-slide">
-              <img src="screenshots/country_export.png" alt="Country Export" loading="lazy">
-              <div class="slide-caption"><strong>Factbook Export</strong>Print-ready country report with all parsed fields organized by category</div>
-            </div>
-          </div>
-          <button class="carousel-arrow right" onclick="scrollCarousel(1)" aria-label="Next">&#10095;</button>
-        </div>
-        <div class="carousel-dots" id="carousel-dots"></div>
-      </div>
 
       <div class="caveat">
         <strong>Note</strong><br>
