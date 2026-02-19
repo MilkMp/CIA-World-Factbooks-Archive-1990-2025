@@ -407,9 +407,10 @@ function renderCapital(data) {
   var div = document.createElement('div');
   div.className = 'clue-item';
   div.style.animationDelay = '0s';
+  var flagImg = data.iso2 ? '<img src="' + flagUrl(data.iso2, 80) + '" style="width:60px;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,0.4);margin-bottom:8px;display:block;"><br>' : '';
   div.innerHTML = '<div class="clue-label">What is the capital of</div>' +
     '<div class="clue-value" style="font-size:1.3rem;font-weight:600;color:#C5CBD3;">' +
-    escHtml(data.country) + '</div>';
+    flagImg + escHtml(data.country) + '</div>';
   clueArea.appendChild(div);
   clueArea.style.display = '';
   document.getElementById('options').style.display = '';
