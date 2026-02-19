@@ -41,6 +41,7 @@
       <a href="/search" class="{{ 'active' if active_page == 'search' else '' }}" @click="navOpen = false">Search Fields</a>
       <a href="/analysis/diff" class="{{ 'active' if active_page == 'diff' else '' }}" @click="navOpen = false">Text Diff</a>
       <a href="/export" class="{{ 'active' if active_page == 'export' else '' }}" @click="navOpen = false">Data Export</a>
+      <a href="/analysis/quiz" class="{{ 'active' if active_page == 'quiz' else '' }}" @click="navOpen = false">Factbook Quiz</a>
 
       <div class="nav-section">Intelligence</div>
       <a href="/analysis" class="{{ 'active' if active_page == 'analysis-home' else '' }}" @click="navOpen = false">Overview</a>
@@ -56,8 +57,6 @@
       <a href="/analysis/dissolved" class="{{ 'active' if active_page == 'dissolved' else '' }}" @click="navOpen = false">Dissolved States</a>
       <a href="/analysis/trends" class="{{ 'active' if active_page == 'trends' else '' }}" @click="navOpen = false">Global Trends</a>
       <a href="/analysis/fields" class="{{ 'active' if active_page == 'field-explorer' else '' }}" @click="navOpen = false">Field Explorer</a>
-      <div class="nav-sub-label">Interactive</div>
-      <a href="/analysis/quiz" class="{{ 'active' if active_page == 'quiz' else '' }}" @click="navOpen = false">Factbook Quiz</a>
 
       <div class="nav-section">Reference</div>
       <a href="/api" class="{{ 'active' if active_page == 'api-docs' else '' }}" @click="navOpen = false">API Documentation</a>
