@@ -2,33 +2,35 @@
 import asyncio
 from playwright.async_api import async_playwright
 
-BASE = "http://127.0.0.1:8080"
-OUT = "C:/Users/milan/CIA-World-Factbooks-Archive-1990-2025/docs/screenshots"
+BASE = "http://127.0.0.1:8000"
+OUT = "C:/Users/milan/CIA_Factbook_Archive/docs/screenshots"
 
+# (name, path, extra_wait_ms, full_page)
+# full_page=False captures only the viewport (1920x1080) — cleaner for README
 PAGES = [
     # Core pages
-    ("homepage",              "/",                                    None),
-    ("search_results",        "/search?q=nuclear",                    None),
-    ("search_boolean",        '/search?q="nuclear+weapons"+AND+treaty', None),
-    ("about",                 "/about",                               None),
+    ("homepage",              "/",                                      None,  False),
+    ("search_results",        "/search?q=nuclear",                      None,  False),
+    ("search_boolean",        '/search?q="nuclear+weapons"+AND+treaty',  None,  False),
+    ("about",                 "/about",                                 None,  False),
 
     # Archive section
-    ("browse_years",          "/archive",                             None),
-    ("country_profile",       "/archive/2025/US",                     None),
-    ("country_dictionary",    "/countries",                           None),
-    ("field_timeseries",      "/archive/field/US/Population",         3000),
-    ("country_export",        "/export",                              None),
+    ("browse_years",          "/archive",                               None,  False),
+    ("country_profile",       "/archive/2025/US",                       None,  False),
+    ("country_dictionary",    "/countries",                             None,  False),
+    ("field_timeseries",      "/archive/field/US/Population",           3000,  False),
+    ("country_export",        "/export",                                None,  False),
 
     # Intelligence Analysis section
-    ("analysis_overview",     "/analysis",                            None),
-    ("regional_dashboard",    "/analysis/regional",                   3000),
-    ("region_eucom",          "/analysis/region/EUCOM",               3000),
-    ("compare_countries",     "/analysis/compare?a=US&b=CN",          None),
-    ("timeline_map",          "/analysis/timeline",                   3000),
-    ("map_compare",           "/analysis/map-compare",                3000),
-    ("communications",        "/analysis/communications",             3000),
-    ("dossier",               "/analysis/dossier/US",                 None),
-    ("threats",               "/analysis/threats/EUCOM",              None),
+    ("analysis_overview",     "/analysis",                              None,  False),
+    ("regional_dashboard",    "/analysis/regional",                     3000,  False),
+    ("region_eucom",          "/analysis/region/EUCOM",                 3000,  False),
+    ("compare_countries",     "/analysis/compare?a=US&b=CN",            None,  False),
+    ("timeline_map",          "/analysis/timeline",                     3000,  False),
+    ("map_compare",           "/analysis/map-compare",                  3000,  False),
+    ("communications",        "/analysis/communications",               3000,  False),
+    ("dossier",               "/analysis/dossier/US",                   None,  False),
+    ("threats",               "/analysis/threats/EUCOM",                None,  False),
 ]
 
 
@@ -37,7 +39,7 @@ async def main():
         browser = await p.chromium.launch()
         page = await browser.new_page(viewport={"width": 1920, "height": 1080})
 
-        for name, path, extra_wait in PAGES:
+        for name, path, extra_wait, full_page in PAGES:
             url = f"{BASE}{path}"
             print(f"  Capturing {name} ... {url}")
             await page.goto(url, wait_until="networkidle")
@@ -45,7 +47,7 @@ async def main():
                 await page.wait_for_timeout(extra_wait)
             await page.screenshot(
                 path=f"{OUT}/{name}.png",
-                full_page=True,
+                full_page=full_page,
             )
             print(f"    -> {name}.png saved")
 
