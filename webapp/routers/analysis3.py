@@ -240,30 +240,55 @@ async def quiz_page(request: Request):
 
 
 @router.get("/api/analysis/quiz/question")
-async def api_quiz_question():
+async def api_quiz_question(exclude: str = ""):
     year = ANALYSIS_YEAR
 
-    # Pick a random sovereign country
-    country = sql_one("""
-        SELECT mc.MasterCountryID, mc.CanonicalName, mc.ISOAlpha2
-        FROM Countries c
-        JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
-        WHERE c.Year = ? AND mc.EntityType = 'sovereign'
-        ORDER BY RANDOM() LIMIT 1
-    """, [year])
+    # Build exclusion list so the same country doesn't repeat in a game
+    exclude_ids = []
+    if exclude:
+        exclude_names = [n.strip() for n in exclude.split(",") if n.strip()]
+        if exclude_names:
+            ph = ','.join(['?'] * len(exclude_names))
+            ex_rows = sql(f"""
+                SELECT MasterCountryID FROM MasterCountries
+                WHERE CanonicalName IN ({ph})
+            """, exclude_names)
+            exclude_ids = [r['MasterCountryID'] for r in ex_rows]
+
+    # Pick a random sovereign country (excluding already-used ones)
+    if exclude_ids:
+        ex_ph = ','.join(['?'] * len(exclude_ids))
+        country = sql_one(f"""
+            SELECT mc.MasterCountryID, mc.CanonicalName, mc.ISOAlpha2
+            FROM Countries c
+            JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
+            WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+              AND mc.MasterCountryID NOT IN ({ex_ph})
+            ORDER BY RANDOM() LIMIT 1
+        """, [year] + exclude_ids)
+    else:
+        country = sql_one("""
+            SELECT mc.MasterCountryID, mc.CanonicalName, mc.ISOAlpha2
+            FROM Countries c
+            JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
+            WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+            ORDER BY RANDOM() LIMIT 1
+        """, [year])
 
     if not country:
         return {"error": "No countries found"}
 
-    # Fetch clue fields
+    # Fetch clue fields (deduplicate by canonical name)
     placeholders = ','.join(['?'] * len(QUIZ_CLUE_FIELDS))
     clue_rows = sql(f"""
-        SELECT fm.CanonicalName AS field, cf.Content AS value
+        SELECT fm.CanonicalName AS field,
+               cf.Content AS value
         FROM CountryFields cf
         JOIN Countries c ON cf.CountryID = c.CountryID
         JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
         WHERE c.Year = ? AND c.MasterCountryID = ? AND fm.IsNoise = 0
           AND fm.CanonicalName IN ({placeholders})
+        GROUP BY fm.CanonicalName
     """, [year, country['MasterCountryID']] + QUIZ_CLUE_FIELDS)
 
     # Build clues, sorted hardest first
@@ -271,7 +296,6 @@ async def api_quiz_question():
     for r in clue_rows:
         val = r['value'].strip() if r['value'] else ''
         if len(val) > 5:
-            # Truncate very long values
             if len(val) > 300:
                 val = val[:300] + '...'
             clues.append({'field': r['field'], 'value': val})
@@ -280,8 +304,7 @@ async def api_quiz_question():
     clues = clues[:5]
 
     if len(clues) < 3:
-        # Not enough clues, try again with another random call
-        return await api_quiz_question()
+        return await api_quiz_question(exclude=exclude)
 
     # Pick 3 wrong answers
     wrong = sql("""
