@@ -734,24 +734,14 @@ def parse_modern_format(soup, html):
             data_divs = current.find_all(class_=re.compile(r'category_data'))
             content_parts = []
             for dd in data_divs:
-                subfield_name = dd.find(class_='subfield-name')
-                subfield_num = dd.find(class_='subfield-number')
-                subfield_note = dd.find(class_='subfield-note')
-
-                parts = []
-                if subfield_name:
-                    parts.append(subfield_name.get_text(strip=True))
-                if subfield_num:
-                    parts.append(subfield_num.get_text(strip=True))
-                if subfield_note:
-                    parts.append(subfield_note.get_text(strip=True))
-
-                if parts:
-                    content_parts.append(' '.join(parts))
-                else:
-                    text = dd.get_text(strip=True)
-                    if text:
-                        content_parts.append(text)
+                # Skip bare ranking divs (class=category_data only, contains rank link)
+                classes = dd.get('class', [])
+                if 'subfield' not in classes and dd.find('a', href=re.compile(r'rank\.html')):
+                    continue
+                # Use full text of the div — captures spans AND loose text nodes
+                text = ' '.join(dd.get_text(separator=' ').split())
+                if text:
+                    content_parts.append(text)
 
             content = ' | '.join(content_parts) if content_parts else ''
             if not content:
