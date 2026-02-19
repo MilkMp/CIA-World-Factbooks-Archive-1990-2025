@@ -75,6 +75,17 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 ## Repository Structure
 
 ```
+webapp/
+  main.py                    # FastAPI application entry point
+  config.py                  # Settings (DB path, tokens)
+  database.py                # SQLite connection pool
+  routers/
+    archive.py               # Browse, search, country profiles, export
+    analysis.py              # Intelligence dashboards, maps, dossiers
+  templates/                 # Jinja2 HTML templates (DG2 dark theme)
+  static/
+    css/intel-theme.css       # Palantir Blueprint-inspired stylesheet
+    data/countries-110m.geojson  # Natural Earth country boundaries for Mapbox
 schema/
   create_tables.sql          # DDL for all 5 tables
 data/
@@ -93,6 +104,7 @@ etl/
   build_field_mappings.py    # Field name standardization
   classify_entities.py       # Entity type classification
   validate_integrity.py      # Data quality checks
+  export_to_sqlite.py        # SQL Server -> SQLite export (with FTS5)
 queries/
   sample_queries.sql         # 18 analytical queries for Power BI / analysis
   search_cli.py              # Command-line search tool
@@ -199,7 +211,27 @@ A pre-built SQLite database (`factbook.db`, ~238 MB) is available for users who 
 | **Best for** | Power BI, enterprise analytics, large-scale joins | Quick exploration, scripting, lightweight apps |
 | **Schema** | Identical 5-table structure | Identical 5-table structure |
 
-The SQLite database contains the same 5 tables, same indexes, and same 1,061,341 fields as the SQL Server version. This is what the [live webapp](https://cia-factbook-archive.fly.dev/) runs on.
+The SQLite database contains the same 5 tables, same indexes, and same 1,061,341 fields as the SQL Server version, plus an FTS5 full-text search index for fast keyword and boolean search. This is what the [live webapp](https://cia-factbook-archive.fly.dev/) runs on.
+
+## Live Web Application
+
+The archive is served as a FastAPI + Jinja2 web application at **[cia-factbook-archive.fly.dev](https://cia-factbook-archive.fly.dev/)**. Key features:
+
+- **Full-text search** with Library of Congress boolean syntax (AND, OR, NOT, "phrase", truncation)
+- **Browse archive** by year (1990-2025) and country (281 entities)
+- **Country profiles** with category drill-down, field time series, and data export (CSV, Excel, PDF)
+- **Country dictionary** with ISO codes, entity types, and COCOM region assignments
+- **Intelligence analysis dashboards** powered by Mapbox GL JS:
+  - **Regional Dashboard** — global choropleth with 6 COCOM regions, hover popups, capital city markers, and click-to-zoom
+  - **COCOM Region Detail** — per-region map with ranked bar charts for GDP, population, military spending
+  - **Timeline Map** — animated choropleth across 36 years with multi-country time series
+  - **Map Compare** — two synced maps for side-by-side year comparison with shared color scale
+  - **Communications Analysis** — internet, mobile, broadband penetration with digital divide indicators
+- **Intelligence dossiers** following ICD 203 analytic standards
+- **Regional threat briefs** with instability and security indicators
+- **Bug reporting** via GitHub Issues integration
+
+**Stack:** Python 3.12, FastAPI, Jinja2, SQLite (FTS5), Mapbox GL JS v3, deployed on Fly.io.
 
 ## Entity Types
 
@@ -247,7 +279,7 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 | ![Homepage](docs/screenshots/homepage.png) | ![About](docs/screenshots/about.png) |
 | **Homepage** — Database statistics, navigation, and live search | **About** — Project mission, architecture, and methodology |
 | ![Full-Text Search](docs/screenshots/search_results.png) | ![Boolean Search](docs/screenshots/search_boolean.png) |
-| **Full-Text Search** — Keyword search across 1,071,213 fields | **Boolean Search** — AND/OR/NOT operators with phrase matching |
+| **Full-Text Search** — Keyword search across 1,061,341 fields | **Boolean Search** — AND/OR/NOT operators with phrase matching |
 
 ### The Archive
 | | |
@@ -263,13 +295,13 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 | | |
 |---|---|
 | ![Analysis Overview](docs/screenshots/analysis_overview.png) | ![Regional Dashboard](docs/screenshots/regional_dashboard.png) |
-| **Analysis Overview** — Available dashboards and analytical products | **Regional Dashboard** — Global choropleth with COCOM region drill-down |
+| **Analysis Overview** — Available dashboards and analytical products | **Regional Dashboard** — Mapbox GL JS choropleth with hover popups, capital markers, and COCOM drill-down |
 | ![Region Detail](docs/screenshots/region_eucom.png) | ![Compare Countries](docs/screenshots/compare_countries.png) |
-| **COCOM Region Detail** — Country-level KPIs within a command region | **Compare Countries** — Side-by-side comparison of any two nations |
+| **COCOM Region Detail** — Mapbox regional map with country-level KPIs | **Compare Countries** — Side-by-side comparison of any two nations |
 | ![Timeline Map](docs/screenshots/timeline_map.png) | ![Map Compare](docs/screenshots/map_compare.png) |
-| **Timeline Map** — Animated choropleth 1990-2025 with multi-country time series | **Map Compare** — Side-by-side world maps across two different years |
+| **Timeline Map** — Animated Mapbox choropleth 1990-2025 with multi-country time series | **Map Compare** — Two synced Mapbox maps for side-by-side year comparison |
 | ![Communications](docs/screenshots/communications.png) | ![Intelligence Dossier](docs/screenshots/dossier.png) |
-| **Communications Analysis** — Internet, mobile, broadband with digital divide analysis | **Intelligence Dossier** — Per-country assessment following ICD 203 standards |
+| **Communications Analysis** — Mapbox choropleth with internet, mobile, broadband indicators | **Intelligence Dossier** — Per-country assessment following ICD 203 standards |
 | ![Threat Brief](docs/screenshots/threats.png) | |
 | **Regional Threat Brief** — COCOM-level instability and security indicators | |
 
