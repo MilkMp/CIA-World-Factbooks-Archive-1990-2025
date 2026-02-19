@@ -142,6 +142,27 @@
     letter-spacing: 1px; margin-bottom: 8px;
   }
 
+  /* ── Flag image in H/L ── */
+  .hl-flag {
+    width: 40px; height: auto; border-radius: 2px; vertical-align: middle;
+    margin-right: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  /* ── Answer reveal with flag ── */
+  .answer-reveal {
+    display: none; text-align: center; padding: 16px;
+    background: #1C2127; border: 1px solid #2F343C; border-radius: 4px;
+    margin-bottom: 12px;
+  }
+  .answer-reveal.show { display: block; }
+  .answer-reveal img {
+    width: 80px; height: auto; border-radius: 3px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5); margin-bottom: 8px;
+  }
+  .answer-reveal .answer-name {
+    font-size: 0.92rem; color: #C5CBD3; font-weight: 600;
+  }
+
   /* ── Feedback ── */
   .feedback {
     text-align: center; padding: 12px; font-size: 0.85rem;
@@ -248,6 +269,11 @@
       <div class="hl-reveal" id="hl-reveal"></div>
     </div>
 
+    <div class="answer-reveal" id="answer-reveal">
+      <img id="answer-flag" src="" alt="">
+      <div class="answer-name" id="answer-name"></div>
+    </div>
+
     <div class="feedback" id="feedback"></div>
 
     <div class="options-grid" id="options" style="display:none;"></div>
@@ -273,6 +299,11 @@ var currentMode = 'country';
 
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function flagUrl(iso2, w) {
+  if (!iso2) return '';
+  return 'https://flagcdn.com/w' + (w || 80) + '/' + iso2.toLowerCase() + '.png';
 }
 
 /* ── Mode switching ── */
@@ -320,6 +351,7 @@ function loadQuestion() {
   feedback.classList.remove('show', 'correct-fb', 'wrong-fb');
   nextBtn.classList.remove('show');
   hlDisplay.style.display = 'none';
+  document.getElementById('answer-reveal').classList.remove('show');
 
   ['hl-higher', 'hl-lower'].forEach(function(id) {
     var btn = document.getElementById(id);
@@ -392,9 +424,11 @@ function renderHL(data) {
     });
   }
   document.getElementById('hl-stat-label').textContent = data.stat_label;
-  document.getElementById('hl-country-a').textContent = data.country_a;
+  var flagA = data.iso2_a ? '<img class="hl-flag" src="' + flagUrl(data.iso2_a, 40) + '"> ' : '';
+  var flagB = data.iso2_b ? '<img class="hl-flag" src="' + flagUrl(data.iso2_b, 40) + '"> ' : '';
+  document.getElementById('hl-country-a').innerHTML = flagA + escHtml(data.country_a);
   document.getElementById('hl-value-a').textContent = data.value_a;
-  document.getElementById('hl-country-b').textContent = data.country_b;
+  document.getElementById('hl-country-b').innerHTML = flagB + escHtml(data.country_b);
   document.getElementById('hl-display').style.display = '';
 }
 
@@ -519,6 +553,7 @@ function submitHL(guess) {
 /* ── Shared post-answer ── */
 function resolveQuestion(isCorrect, correctLabel) {
   var feedback = document.getElementById('feedback');
+  var data = state.current;
 
   if (isCorrect) {
     state.score++;
@@ -530,6 +565,18 @@ function resolveQuestion(isCorrect, correctLabel) {
     state.streak = 0;
     feedback.textContent = 'The answer was ' + correctLabel;
     feedback.classList.add('show', 'wrong-fb');
+  }
+
+  // Show flag reveal for the correct answer
+  var iso2 = data.iso2 || null;
+  var answerName = data.answer || correctLabel;
+  if (data.mode === 'higher-lower') {
+    // No separate flag reveal for H/L -- flags are already inline
+  } else if (iso2) {
+    var reveal = document.getElementById('answer-reveal');
+    document.getElementById('answer-flag').src = flagUrl(iso2, 160);
+    document.getElementById('answer-name').textContent = answerName;
+    reveal.classList.add('show');
   }
 
   updateScoreBar();

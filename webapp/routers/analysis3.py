@@ -355,6 +355,7 @@ def _quiz_country(year, exclude_ids, exclude_str):
     return {
         "mode": "country",
         "answer": country['CanonicalName'],
+        "iso2": country['ISOAlpha2'],
         "clues": clues,
         "options": options,
     }
@@ -409,6 +410,7 @@ def _quiz_capital(year, exclude_ids):
     return {
         "mode": "capital",
         "country": country['CanonicalName'],
+        "iso2": country['ISOAlpha2'],
         "answer": correct_cap,
         "options": options,
     }
@@ -418,7 +420,7 @@ def _quiz_higher_lower(year, exclude_ids):
     stat = random.choice(HIGHER_LOWER_STATS)
 
     rows = sql("""
-        SELECT mc.MasterCountryID, mc.CanonicalName, cf.Content
+        SELECT mc.MasterCountryID, mc.CanonicalName, mc.ISOAlpha2, cf.Content
         FROM CountryFields cf
         JOIN Countries c ON cf.CountryID = c.CountryID
         JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
@@ -434,6 +436,7 @@ def _quiz_higher_lower(year, exclude_ids):
             candidates.append({
                 'id': r['MasterCountryID'],
                 'name': r['CanonicalName'],
+                'iso2': r['ISOAlpha2'],
                 'value': val,
             })
 
@@ -456,8 +459,10 @@ def _quiz_higher_lower(year, exclude_ids):
         "mode": "higher-lower",
         "stat_label": stat['label'],
         "country_a": a['name'],
+        "iso2_a": a['iso2'],
         "value_a": stat['format'].format(a['value']),
         "country_b": b['name'],
+        "iso2_b": b['iso2'],
         "answer": answer,
         "reveal_value": stat['format'].format(b['value']),
         "used_names": [a['name'], b['name']],
@@ -500,6 +505,7 @@ def _quiz_flag(year, exclude_ids, exclude_str):
     return {
         "mode": "flag",
         "answer": country['CanonicalName'],
+        "iso2": country['ISOAlpha2'],
         "clues": clues,
         "options": options,
     }
