@@ -1,4 +1,5 @@
 """Analysis routes: global trends, field explorer, quiz game."""
+import re
 import random
 from collections import defaultdict
 from fastapi import APIRouter, Request
@@ -8,6 +9,7 @@ from webapp.database import sql, sql_one
 from webapp.parsers import (
     extract_number, extract_pct_gdp, extract_pct,
     extract_gdp_percap, parse_life_exp, extract_growth_rate,
+    extract_capital_name, extract_area,
 )
 
 router = APIRouter()
@@ -223,42 +225,49 @@ QUIZ_CLUE_FIELDS = [
     'Languages',
     'Religions',
     'Area - comparative',
-    'Flag description',
+    'Flag',
     'Capital',
     'Population',
 ]
 
-# Ordered from hardest (first revealed) to easiest (last revealed)
 CLUE_PRIORITY = {f: i for i, f in enumerate(QUIZ_CLUE_FIELDS)}
 
+HIGHER_LOWER_STATS = [
+    {'field': 'Population',              'label': 'Population',
+     'parser': extract_number,           'format': '{:,}'},
+    {'field': 'Area',                    'label': 'Total Area (sq km)',
+     'parser': extract_area,             'format': '{:,}'},
+    {'field': 'Real GDP per capita',     'label': 'GDP per Capita',
+     'parser': extract_gdp_percap,       'format': '${:,}'},
+    {'field': 'Life expectancy at birth', 'label': 'Life Expectancy',
+     'parser': parse_life_exp,           'format': '{:.1f} yrs'},
+]
 
-@router.get("/analysis/quiz")
-async def quiz_page(request: Request):
-    return templates.TemplateResponse("analysis/quiz.html", {
-        "request": request,
-    })
+
+def _strip_flag_text(text):
+    """Remove 'description:' prefix and 'meaning:'/'history:' subsections."""
+    text = re.sub(r'^description\s*:\s*', '', text.strip(), flags=re.IGNORECASE)
+    m = re.search(r'\b(meaning|history)\s*:', text, re.IGNORECASE)
+    if m:
+        text = text[:m.start()].strip().rstrip(',;')
+    return text
 
 
-@router.get("/api/analysis/quiz/question")
-async def api_quiz_question(exclude: str = ""):
-    year = ANALYSIS_YEAR
+def _build_exclude_ids(exclude):
+    if not exclude:
+        return []
+    names = [n.strip() for n in exclude.split(",") if n.strip()]
+    if not names:
+        return []
+    ph = ','.join(['?'] * len(names))
+    rows = sql(f"SELECT MasterCountryID FROM MasterCountries WHERE CanonicalName IN ({ph})", names)
+    return [r['MasterCountryID'] for r in rows]
 
-    # Build exclusion list so the same country doesn't repeat in a game
-    exclude_ids = []
-    if exclude:
-        exclude_names = [n.strip() for n in exclude.split(",") if n.strip()]
-        if exclude_names:
-            ph = ','.join(['?'] * len(exclude_names))
-            ex_rows = sql(f"""
-                SELECT MasterCountryID FROM MasterCountries
-                WHERE CanonicalName IN ({ph})
-            """, exclude_names)
-            exclude_ids = [r['MasterCountryID'] for r in ex_rows]
 
-    # Pick a random sovereign country (excluding already-used ones)
+def _pick_random_country(year, exclude_ids):
     if exclude_ids:
         ex_ph = ','.join(['?'] * len(exclude_ids))
-        country = sql_one(f"""
+        return sql_one(f"""
             SELECT mc.MasterCountryID, mc.CanonicalName, mc.ISOAlpha2
             FROM Countries c
             JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
@@ -266,23 +275,55 @@ async def api_quiz_question(exclude: str = ""):
               AND mc.MasterCountryID NOT IN ({ex_ph})
             ORDER BY RANDOM() LIMIT 1
         """, [year] + exclude_ids)
-    else:
-        country = sql_one("""
-            SELECT mc.MasterCountryID, mc.CanonicalName, mc.ISOAlpha2
-            FROM Countries c
-            JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
-            WHERE c.Year = ? AND mc.EntityType = 'sovereign'
-            ORDER BY RANDOM() LIMIT 1
-        """, [year])
+    return sql_one("""
+        SELECT mc.MasterCountryID, mc.CanonicalName, mc.ISOAlpha2
+        FROM Countries c
+        JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
+        WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+        ORDER BY RANDOM() LIMIT 1
+    """, [year])
 
+
+def _pick_wrong_countries(year, exclude_id, n=3):
+    rows = sql("""
+        SELECT DISTINCT mc.CanonicalName
+        FROM Countries c
+        JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
+        WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+          AND mc.MasterCountryID != ?
+        ORDER BY RANDOM() LIMIT ?
+    """, [year, exclude_id, n])
+    return [r['CanonicalName'] for r in rows]
+
+
+@router.get("/analysis/quiz")
+async def quiz_page(request: Request):
+    return templates.TemplateResponse("analysis/quiz.html", {"request": request})
+
+
+@router.get("/api/analysis/quiz/question")
+async def api_quiz_question(mode: str = "country", exclude: str = ""):
+    year = ANALYSIS_YEAR
+    exclude_ids = _build_exclude_ids(exclude)
+
+    if mode == "capital":
+        return _quiz_capital(year, exclude_ids)
+    elif mode == "higher-lower":
+        return _quiz_higher_lower(year, exclude_ids)
+    elif mode == "flag":
+        return _quiz_flag(year, exclude_ids, exclude)
+    else:
+        return _quiz_country(year, exclude_ids, exclude)
+
+
+def _quiz_country(year, exclude_ids, exclude_str):
+    country = _pick_random_country(year, exclude_ids)
     if not country:
         return {"error": "No countries found"}
 
-    # Fetch clue fields (deduplicate by canonical name)
     placeholders = ','.join(['?'] * len(QUIZ_CLUE_FIELDS))
     clue_rows = sql(f"""
-        SELECT fm.CanonicalName AS field,
-               cf.Content AS value
+        SELECT fm.CanonicalName AS field, cf.Content AS value
         FROM CountryFields cf
         JOIN Countries c ON cf.CountryID = c.CountryID
         JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
@@ -291,10 +332,11 @@ async def api_quiz_question(exclude: str = ""):
         GROUP BY fm.CanonicalName
     """, [year, country['MasterCountryID']] + QUIZ_CLUE_FIELDS)
 
-    # Build clues, sorted hardest first
     clues = []
     for r in clue_rows:
         val = r['value'].strip() if r['value'] else ''
+        if r['field'] == 'Flag':
+            val = _strip_flag_text(val)
         if len(val) > 5:
             if len(val) > 300:
                 val = val[:300] + '...'
@@ -304,24 +346,160 @@ async def api_quiz_question(exclude: str = ""):
     clues = clues[:5]
 
     if len(clues) < 3:
-        return await api_quiz_question(exclude=exclude)
+        return _quiz_country(year, exclude_ids + [country['MasterCountryID']], exclude_str)
 
-    # Pick 3 wrong answers
-    wrong = sql("""
-        SELECT DISTINCT mc.CanonicalName
-        FROM Countries c
-        JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
-        WHERE c.Year = ? AND mc.EntityType = 'sovereign'
-          AND mc.MasterCountryID != ?
-        ORDER BY RANDOM() LIMIT 3
-    """, [year, country['MasterCountryID']])
-
-    options = [w['CanonicalName'] for w in wrong] + [country['CanonicalName']]
+    wrong = _pick_wrong_countries(year, country['MasterCountryID'])
+    options = wrong + [country['CanonicalName']]
     random.shuffle(options)
 
     return {
+        "mode": "country",
         "answer": country['CanonicalName'],
-        "iso2": country['ISOAlpha2'],
+        "clues": clues,
+        "options": options,
+    }
+
+
+def _quiz_capital(year, exclude_ids):
+    country = _pick_random_country(year, exclude_ids)
+    if not country:
+        return {"error": "No countries found"}
+
+    cap_row = sql_one("""
+        SELECT cf.Content
+        FROM CountryFields cf
+        JOIN Countries c ON cf.CountryID = c.CountryID
+        JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+        WHERE c.Year = ? AND c.MasterCountryID = ?
+          AND fm.CanonicalName = 'Capital' AND fm.IsNoise = 0
+        LIMIT 1
+    """, [year, country['MasterCountryID']])
+
+    correct_cap = extract_capital_name(cap_row['Content']) if cap_row else None
+    if not correct_cap:
+        return _quiz_capital(year, exclude_ids + [country['MasterCountryID']])
+
+    # Fetch 15 random capitals for wrong answers
+    wrong_rows = sql("""
+        SELECT cf.Content
+        FROM CountryFields cf
+        JOIN Countries c ON cf.CountryID = c.CountryID
+        JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
+        JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+        WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+          AND mc.MasterCountryID != ?
+          AND fm.CanonicalName = 'Capital' AND fm.IsNoise = 0
+        ORDER BY RANDOM() LIMIT 15
+    """, [year, country['MasterCountryID']])
+
+    wrong_caps = []
+    for r in wrong_rows:
+        cap = extract_capital_name(r['Content'])
+        if cap and cap != correct_cap and cap not in wrong_caps:
+            wrong_caps.append(cap)
+        if len(wrong_caps) == 3:
+            break
+
+    if len(wrong_caps) < 3:
+        return {"error": "Not enough capital data"}
+
+    options = wrong_caps + [correct_cap]
+    random.shuffle(options)
+
+    return {
+        "mode": "capital",
+        "country": country['CanonicalName'],
+        "answer": correct_cap,
+        "options": options,
+    }
+
+
+def _quiz_higher_lower(year, exclude_ids):
+    stat = random.choice(HIGHER_LOWER_STATS)
+
+    rows = sql("""
+        SELECT mc.MasterCountryID, mc.CanonicalName, cf.Content
+        FROM CountryFields cf
+        JOIN Countries c ON cf.CountryID = c.CountryID
+        JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
+        JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+        WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+          AND fm.CanonicalName = ? AND fm.IsNoise = 0
+    """, [year, stat['field']])
+
+    candidates = []
+    for r in rows:
+        val = stat['parser'](r['Content'])
+        if val is not None and r['MasterCountryID'] not in exclude_ids:
+            candidates.append({
+                'id': r['MasterCountryID'],
+                'name': r['CanonicalName'],
+                'value': val,
+            })
+
+    if len(candidates) < 2:
+        return {"error": "Not enough data"}
+
+    a, b = random.sample(candidates, 2)
+
+    # Avoid ties -- pick a new b if values match
+    if a['value'] == b['value']:
+        others = [c for c in candidates if c['id'] != a['id'] and c['value'] != a['value']]
+        if others:
+            b = random.choice(others)
+        else:
+            return {"error": "Not enough distinct values"}
+
+    answer = "higher" if b['value'] > a['value'] else "lower"
+
+    return {
+        "mode": "higher-lower",
+        "stat_label": stat['label'],
+        "country_a": a['name'],
+        "value_a": stat['format'].format(a['value']),
+        "country_b": b['name'],
+        "answer": answer,
+        "reveal_value": stat['format'].format(b['value']),
+        "used_names": [a['name'], b['name']],
+    }
+
+
+def _quiz_flag(year, exclude_ids, exclude_str):
+    country = _pick_random_country(year, exclude_ids)
+    if not country:
+        return {"error": "No countries found"}
+
+    flag_row = sql_one("""
+        SELECT cf.Content
+        FROM CountryFields cf
+        JOIN Countries c ON cf.CountryID = c.CountryID
+        JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+        WHERE c.Year = ? AND c.MasterCountryID = ?
+          AND fm.CanonicalName = 'Flag' AND fm.IsNoise = 0
+        LIMIT 1
+    """, [year, country['MasterCountryID']])
+
+    if not flag_row:
+        return _quiz_flag(year, exclude_ids + [country['MasterCountryID']], exclude_str)
+
+    raw = _strip_flag_text(flag_row['Content'])
+    if len(raw) < 20:
+        return _quiz_flag(year, exclude_ids + [country['MasterCountryID']], exclude_str)
+
+    # Split into sentences for progressive reveal
+    sentences = re.split(r'(?<=[.;])\s+', raw)
+    clues = [s.strip() for s in sentences if len(s.strip()) > 5][:4]
+
+    if not clues:
+        return _quiz_flag(year, exclude_ids + [country['MasterCountryID']], exclude_str)
+
+    wrong = _pick_wrong_countries(year, country['MasterCountryID'])
+    options = wrong + [country['CanonicalName']]
+    random.shuffle(options)
+
+    return {
+        "mode": "flag",
+        "answer": country['CanonicalName'],
         "clues": clues,
         "options": options,
     }

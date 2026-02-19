@@ -96,3 +96,26 @@ def extract_total_subs(t):
     if m:
         return int(m.group(1).replace(',', ''))
     return None
+
+
+def extract_capital_name(t):
+    """Extract city name from Capital field: 'name: Kabul geographic coordinates: ...'"""
+    t = str(t)
+    # Match up to geographic, time difference, or semicolon
+    m = re.search(r'name\s*:\s*(.+?)(?:\s+geographic|\s+time\s+(?:difference|zone)|;)', t, re.IGNORECASE)
+    if not m:
+        m = re.search(r'name\s*:\s*(.+?)$', t, re.IGNORECASE)
+    if m:
+        name = m.group(1).strip().rstrip(',;')
+        # Strip parenthetical notes
+        name = re.split(r'\s*\(', name)[0].strip()
+        return name if name else None
+    return None
+
+
+def extract_area(t):
+    """Extract total area in sq km: 'total : 652,230 sq km land: ...'"""
+    m = re.search(r'total\s*:?\s*([\d,]+)\s*sq\s*km', str(t), re.IGNORECASE)
+    if m:
+        return int(m.group(1).replace(',', ''))
+    return None

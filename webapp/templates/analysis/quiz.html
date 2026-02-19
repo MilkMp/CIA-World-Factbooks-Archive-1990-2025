@@ -9,6 +9,19 @@
     margin: 0 auto;
   }
 
+  /* ── Mode selector ── */
+  .mode-tabs {
+    display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .mode-tab {
+    background: #1C2127; border: 1px solid #383E47; border-radius: 3px;
+    color: #8F99A8; padding: 7px 16px; font-size: 0.78rem;
+    cursor: pointer; font-family: -apple-system, 'Segoe UI', sans-serif;
+    transition: background 100ms, border-color 100ms, color 100ms;
+  }
+  .mode-tab:hover { background: #252A31; color: #C5CBD3; border-color: #4C90F0; }
+  .mode-tab.active { background: #2D72D2; border-color: #2D72D2; color: #fff; }
+
   /* ── Score bar ── */
   .score-bar {
     display: flex; justify-content: space-between; align-items: center;
@@ -81,6 +94,54 @@
   }
   .opt-btn.disabled { pointer-events: none; opacity: 0.6; }
 
+  /* ── Higher-or-Lower ── */
+  .hl-display {
+    background: #1C2127; border: 1px solid #2F343C; border-radius: 4px;
+    padding: 24px; margin-bottom: 16px; text-align: center;
+  }
+  .hl-stat-label {
+    font-size: 0.68rem; color: #5F6B7C; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 16px;
+  }
+  .hl-country { font-size: 1.1rem; color: #C5CBD3; margin-bottom: 4px; }
+  .hl-value {
+    font-family: 'Consolas', monospace; font-size: 1.6rem; color: #4C90F0;
+    margin-bottom: 20px;
+  }
+  .hl-divider {
+    border-top: 1px solid #2F343C; padding-top: 16px; margin-bottom: 4px;
+    font-size: 0.72rem; color: #5F6B7C; text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .hl-question {
+    font-size: 0.82rem; color: #8F99A8; margin-bottom: 16px;
+  }
+  .hl-buttons {
+    display: flex; gap: 12px; justify-content: center; margin-bottom: 12px;
+  }
+  .hl-btn {
+    background: #1C2127; border: 1px solid #383E47; border-radius: 4px;
+    color: #C5CBD3; padding: 14px 36px; font-size: 0.95rem;
+    cursor: pointer; font-family: -apple-system, 'Segoe UI', sans-serif;
+    transition: background 100ms, border-color 100ms;
+    min-width: 130px;
+  }
+  .hl-btn:hover { background: #252A31; border-color: #4C90F0; }
+  .hl-btn.correct { background: #1a3a2a; border-color: #32A467; color: #32A467; }
+  .hl-btn.wrong { background: #3a1a1a; border-color: #CD4246; color: #CD4246; }
+  .hl-btn.disabled { pointer-events: none; opacity: 0.6; }
+  .hl-reveal {
+    font-family: 'Consolas', monospace; font-size: 1.3rem;
+    color: #32A467; margin: 8px 0; display: none;
+  }
+  .hl-reveal.show { display: block; }
+
+  /* ── Flag quiz intro ── */
+  .flag-intro {
+    font-size: 0.68rem; color: #5F6B7C; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+
   /* ── Feedback ── */
   .feedback {
     text-align: center; padding: 12px; font-size: 0.85rem;
@@ -133,6 +194,9 @@
 
   @media (max-width: 600px) {
     .options-grid { grid-template-columns: 1fr; }
+    .hl-buttons { flex-direction: column; align-items: center; }
+    .mode-tabs { gap: 6px; }
+    .mode-tab { padding: 6px 12px; font-size: 0.72rem; }
   }
 </style>
 {% endblock %}
@@ -148,6 +212,13 @@
 
 <div class="quiz-wrap">
 
+  <div class="mode-tabs" id="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('country')" id="tab-country">Guess Country</button>
+    <button class="mode-tab" onclick="setMode('capital')" id="tab-capital">Guess Capital</button>
+    <button class="mode-tab" onclick="setMode('higher-lower')" id="tab-hl">Higher or Lower</button>
+    <button class="mode-tab" onclick="setMode('flag')" id="tab-flag">Flag Quiz</button>
+  </div>
+
   <div class="score-bar" id="score-bar">
     <span>Question <span class="score-val" id="q-num">1</span> / 10</span>
     <span>Score: <span class="score-val" id="score">0</span></span>
@@ -162,6 +233,20 @@
     <button class="reveal-btn" id="reveal-btn" onclick="revealClue()" style="display:none;">
       Reveal Next Clue (<span id="clues-remaining">4</span> remaining)
     </button>
+
+    <div class="hl-display" id="hl-display" style="display:none;">
+      <div class="hl-stat-label" id="hl-stat-label"></div>
+      <div class="hl-country" id="hl-country-a"></div>
+      <div class="hl-value" id="hl-value-a"></div>
+      <div class="hl-divider">vs</div>
+      <div class="hl-country" id="hl-country-b" style="margin-top:16px;"></div>
+      <div class="hl-question">Is this higher or lower?</div>
+      <div class="hl-buttons">
+        <button class="hl-btn" id="hl-higher" onclick="submitHL('higher')">Higher</button>
+        <button class="hl-btn" id="hl-lower" onclick="submitHL('lower')">Lower</button>
+      </div>
+      <div class="hl-reveal" id="hl-reveal"></div>
+    </div>
 
     <div class="feedback" id="feedback"></div>
 
@@ -184,7 +269,23 @@
 <script>
 var TOTAL_QUESTIONS = 10;
 var state = {};
+var currentMode = 'country';
 
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── Mode switching ── */
+function setMode(mode) {
+  if (mode === currentMode) return;
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(function(t) { t.classList.remove('active'); });
+  var tabId = mode === 'higher-lower' ? 'tab-hl' : 'tab-' + mode;
+  document.getElementById(tabId).classList.add('active');
+  startGame();
+}
+
+/* ── Game init ── */
 function startGame() {
   state = {q: 0, score: 0, streak: 0, maxStreak: 0, used: []};
   document.getElementById('summary').classList.remove('show');
@@ -200,13 +301,15 @@ function updateScoreBar() {
   document.getElementById('streak').textContent = state.streak;
 }
 
+/* ── Load question ── */
 function loadQuestion() {
-  var loading = document.getElementById('loading');
-  var clueArea = document.getElementById('clue-area');
+  var loading   = document.getElementById('loading');
+  var clueArea  = document.getElementById('clue-area');
   var revealBtn = document.getElementById('reveal-btn');
-  var options = document.getElementById('options');
-  var feedback = document.getElementById('feedback');
-  var nextBtn = document.getElementById('next-btn');
+  var options   = document.getElementById('options');
+  var feedback  = document.getElementById('feedback');
+  var nextBtn   = document.getElementById('next-btn');
+  var hlDisplay = document.getElementById('hl-display');
 
   loading.style.display = '';
   clueArea.style.display = 'none';
@@ -216,10 +319,18 @@ function loadQuestion() {
   options.innerHTML = '';
   feedback.classList.remove('show', 'correct-fb', 'wrong-fb');
   nextBtn.classList.remove('show');
+  hlDisplay.style.display = 'none';
 
-  var url = '/api/analysis/quiz/question';
+  ['hl-higher', 'hl-lower'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    btn.classList.remove('correct', 'wrong', 'disabled');
+  });
+  document.getElementById('hl-reveal').classList.remove('show');
+  document.getElementById('hl-reveal').textContent = '';
+
+  var url = '/api/analysis/quiz/question?mode=' + currentMode;
   if (state.used.length > 0) {
-    url += '?exclude=' + encodeURIComponent(state.used.join(','));
+    url += '&exclude=' + encodeURIComponent(state.used.join(','));
   }
 
   fetch(url)
@@ -232,25 +343,13 @@ function loadQuestion() {
       }
 
       state.current = data;
-      state.used.push(data.answer);
-      state.clueIndex = 0;
       state.answered = false;
-
       loading.style.display = 'none';
-      clueArea.style.display = '';
-      options.style.display = '';
 
-      // Show first clue
-      revealClue();
-
-      // Render options
-      data.options.forEach(function(opt) {
-        var btn = document.createElement('button');
-        btn.className = 'opt-btn';
-        btn.textContent = opt;
-        btn.onclick = function() { submitAnswer(opt); };
-        options.appendChild(btn);
-      });
+      if (data.mode === 'capital')           renderCapital(data);
+      else if (data.mode === 'higher-lower') renderHL(data);
+      else if (data.mode === 'flag')         renderFlag(data);
+      else                                   renderCountry(data);
     })
     .catch(function() {
       loading.textContent = 'Connection error. Retrying...';
@@ -258,16 +357,94 @@ function loadQuestion() {
     });
 }
 
+/* ── Render: Guess Country ── */
+function renderCountry(data) {
+  state.used.push(data.answer);
+  state.clueIndex = 0;
+  document.getElementById('clue-area').style.display = '';
+  document.getElementById('options').style.display = '';
+  revealClue();
+  renderOptions(data.options, function(opt) { submitAnswer(opt); });
+}
+
+/* ── Render: Guess Capital ── */
+function renderCapital(data) {
+  state.used.push(data.country);
+  var clueArea = document.getElementById('clue-area');
+  clueArea.innerHTML = '';
+  var div = document.createElement('div');
+  div.className = 'clue-item';
+  div.style.animationDelay = '0s';
+  div.innerHTML = '<div class="clue-label">What is the capital of</div>' +
+    '<div class="clue-value" style="font-size:1.3rem;font-weight:600;color:#C5CBD3;">' +
+    escHtml(data.country) + '</div>';
+  clueArea.appendChild(div);
+  clueArea.style.display = '';
+  document.getElementById('options').style.display = '';
+  renderOptions(data.options, function(opt) { submitAnswer(opt); });
+}
+
+/* ── Render: Higher or Lower ── */
+function renderHL(data) {
+  if (data.used_names) {
+    data.used_names.forEach(function(n) {
+      if (state.used.indexOf(n) === -1) state.used.push(n);
+    });
+  }
+  document.getElementById('hl-stat-label').textContent = data.stat_label;
+  document.getElementById('hl-country-a').textContent = data.country_a;
+  document.getElementById('hl-value-a').textContent = data.value_a;
+  document.getElementById('hl-country-b').textContent = data.country_b;
+  document.getElementById('hl-display').style.display = '';
+}
+
+/* ── Render: Flag Quiz ── */
+function renderFlag(data) {
+  state.used.push(data.answer);
+  state.clueIndex = 0;
+  var clueArea = document.getElementById('clue-area');
+  clueArea.innerHTML = '';
+  var intro = document.createElement('div');
+  intro.className = 'flag-intro';
+  intro.textContent = 'Flag Description';
+  clueArea.appendChild(intro);
+  clueArea.style.display = '';
+  document.getElementById('options').style.display = '';
+  revealClue();
+  renderOptions(data.options, function(opt) { submitAnswer(opt); });
+}
+
+/* ── Shared: render 4 option buttons ── */
+function renderOptions(opts, onClickFn) {
+  var container = document.getElementById('options');
+  container.innerHTML = '';
+  opts.forEach(function(opt) {
+    var btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.onclick = function() { onClickFn(opt); };
+    container.appendChild(btn);
+  });
+}
+
+/* ── Clue reveal (country + flag) ── */
 function revealClue() {
   var data = state.current;
-  if (!data || state.clueIndex >= data.clues.length) return;
+  if (!data || !data.clues) return;
+  if (state.clueIndex >= data.clues.length) return;
 
   var clue = data.clues[state.clueIndex];
   var div = document.createElement('div');
   div.className = 'clue-item';
   div.style.animationDelay = '0s';
-  div.innerHTML = '<div class="clue-label">' + clue.field + '</div>' +
-    '<div class="clue-value">' + clue.value.replace(/</g, '&lt;') + '</div>';
+
+  if (data.mode === 'flag') {
+    div.innerHTML = '<div class="clue-value">' + escHtml(clue) + '</div>';
+  } else {
+    div.innerHTML = '<div class="clue-label">' + escHtml(clue.field) + '</div>' +
+      '<div class="clue-value">' + escHtml(clue.value) + '</div>';
+  }
+
   document.getElementById('clue-area').appendChild(div);
   state.clueIndex++;
 
@@ -283,23 +460,22 @@ function revealClue() {
   }
 }
 
+/* ── Submit: 4-option modes ── */
 function submitAnswer(chosen) {
   if (state.answered) return;
   state.answered = true;
 
   var correct = state.current.answer;
   var isCorrect = chosen === correct;
-  var feedback = document.getElementById('feedback');
-  var revealBtn = document.getElementById('reveal-btn');
 
-  revealBtn.style.display = 'none';
+  document.getElementById('reveal-btn').style.display = 'none';
 
-  // Show all remaining clues
-  while (state.clueIndex < state.current.clues.length) {
-    revealClue();
+  if (state.current.clues) {
+    while (state.clueIndex < state.current.clues.length) {
+      revealClue();
+    }
   }
 
-  // Highlight buttons
   var buttons = document.querySelectorAll('.opt-btn');
   buttons.forEach(function(btn) {
     if (btn.textContent === correct) {
@@ -310,6 +486,40 @@ function submitAnswer(chosen) {
     btn.classList.add('disabled');
   });
 
+  resolveQuestion(isCorrect, correct);
+}
+
+/* ── Submit: Higher or Lower ── */
+function submitHL(guess) {
+  if (state.answered) return;
+  state.answered = true;
+
+  var data = state.current;
+  var isCorrect = (guess === data.answer);
+
+  document.getElementById('hl-higher').classList.add('disabled');
+  document.getElementById('hl-lower').classList.add('disabled');
+
+  if (guess === 'higher') {
+    document.getElementById('hl-higher').classList.add(isCorrect ? 'correct' : 'wrong');
+    if (!isCorrect) document.getElementById('hl-lower').classList.add('correct');
+  } else {
+    document.getElementById('hl-lower').classList.add(isCorrect ? 'correct' : 'wrong');
+    if (!isCorrect) document.getElementById('hl-higher').classList.add('correct');
+  }
+
+  var revealEl = document.getElementById('hl-reveal');
+  revealEl.textContent = data.reveal_value;
+  revealEl.classList.add('show');
+
+  var label = data.country_b + ': ' + data.reveal_value;
+  resolveQuestion(isCorrect, label);
+}
+
+/* ── Shared post-answer ── */
+function resolveQuestion(isCorrect, correctLabel) {
+  var feedback = document.getElementById('feedback');
+
   if (isCorrect) {
     state.score++;
     state.streak++;
@@ -318,7 +528,7 @@ function submitAnswer(chosen) {
     feedback.classList.add('show', 'correct-fb');
   } else {
     state.streak = 0;
-    feedback.textContent = 'The answer was ' + correct;
+    feedback.textContent = 'The answer was ' + correctLabel;
     feedback.classList.add('show', 'wrong-fb');
   }
 
@@ -346,7 +556,6 @@ function showSummary() {
   document.getElementById('summary').classList.add('show');
 }
 
-// Start on load
 startGame();
 </script>
 {% endblock %}
