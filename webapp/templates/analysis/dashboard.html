@@ -588,6 +588,7 @@ function showCountryCard(country, evt) {
   }
 }
 
+var cardJustShown = false;
 function hideCountryCard() {
   document.getElementById('country-card').style.display = 'none';
 }
@@ -597,6 +598,8 @@ document.getElementById('world-map').on('plotly_click', function(eventData) {
     const iso3 = eventData.points[0].location;
     const match = mapData.find(d => d.iso3 === iso3);
     if (match) {
+      cardJustShown = true;
+      setTimeout(function() { cardJustShown = false; }, 200);
       showCountryCard(match, eventData.event);
       return;
     }
@@ -605,8 +608,9 @@ document.getElementById('world-map').on('plotly_click', function(eventData) {
 });
 
 document.addEventListener('click', function(e) {
+  if (cardJustShown) return;
   const card = document.getElementById('country-card');
-  if (card.style.display === 'block' && !card.contains(e.target) && !e.target.closest('.js-plotly-plot')) {
+  if (card.style.display === 'block' && !card.contains(e.target)) {
     hideCountryCard();
   }
 });
