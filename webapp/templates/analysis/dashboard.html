@@ -324,6 +324,15 @@
   text-decoration: none;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
+.country-card .cc-close {
+  position: absolute;
+  top: 8px; right: 10px;
+  background: none; border: none;
+  color: #5F6B7C; font-size: 1.2rem;
+  cursor: pointer; padding: 2px 6px;
+  line-height: 1;
+}
+.country-card .cc-close:hover { color: #C5CBD3; }
 .country-card .cc-dossier:hover {
   background: #252A31;
   border-color: #404854;
@@ -434,6 +443,7 @@
 
 <!-- ── Country Info Card (map click popup) ── -->
 <div id="country-card" class="country-card">
+  <button class="cc-close" onclick="hideCountryCard()" aria-label="Close">&times;</button>
   <div class="cc-name" id="cc-name"></div>
   <div class="cc-region" id="cc-region"></div>
   <div class="cc-stats">
