@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+{% set active_page = "quiz" %}
+{% block title %}Factbook Quiz — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<style>
+  .quiz-wrap {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* ── Score bar ── */
+  .score-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px; background: #1C2127; border: 1px solid #2F343C;
+    border-radius: 4px; margin-bottom: 16px;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.78rem; color: #8F99A8;
+  }
+  .score-bar .score-val {
+    font-family: 'Consolas', monospace; color: #C5CBD3;
+    font-size: 0.9rem; font-weight: 600;
+  }
+  .score-bar .streak { color: #F0B726; }
+
+  /* ── Clue card ── */
+  .clue-area {
+    background: #1C2127; border: 1px solid #2F343C; border-radius: 4px;
+    padding: 20px 24px; margin-bottom: 16px; min-height: 200px;
+  }
+  .clue-item {
+    padding: 8px 0; border-bottom: 1px solid #252A31;
+    font-size: 0.85rem; color: #ABB3BF;
+    opacity: 0; transform: translateY(8px);
+    animation: clueIn 0.35s ease forwards;
+  }
+  .clue-item:last-child { border-bottom: none; }
+  .clue-label {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: #5F6B7C; margin-bottom: 3px;
+  }
+  .clue-value {
+    color: #C5CBD3; line-height: 1.5;
+  }
+  @keyframes clueIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal-btn {
+    display: inline-block; background: #252A31; border: 1px solid #383E47;
+    border-radius: 3px; color: #8F99A8; padding: 8px 18px;
+    font-size: 0.78rem; cursor: pointer; margin-bottom: 16px;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    transition: background 100ms, color 100ms;
+  }
+  .reveal-btn:hover { background: #2F343C; color: #C5CBD3; }
+  .reveal-btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* ── Options ── */
+  .options-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .opt-btn {
+    background: #1C2127; border: 1px solid #383E47; border-radius: 4px;
+    color: #C5CBD3; padding: 14px 16px; font-size: 0.88rem;
+    cursor: pointer; text-align: center;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    transition: background 100ms, border-color 100ms;
+  }
+  .opt-btn:hover { background: #252A31; border-color: #4C90F0; }
+  .opt-btn.correct {
+    background: #1a3a2a; border-color: #32A467; color: #32A467;
+  }
+  .opt-btn.wrong {
+    background: #3a1a1a; border-color: #CD4246; color: #CD4246;
+  }
+  .opt-btn.reveal {
+    background: #1a3a2a; border-color: #32A467; color: #32A467;
+  }
+  .opt-btn.disabled { pointer-events: none; opacity: 0.6; }
+
+  /* ── Feedback ── */
+  .feedback {
+    text-align: center; padding: 12px; font-size: 0.85rem;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    border-radius: 4px; margin-bottom: 12px; display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct-fb { background: #1a3a2a; border: 1px solid #32A467; color: #32A467; }
+  .feedback.wrong-fb { background: #3a1a1a; border: 1px solid #CD4246; color: #CD4246; }
+
+  .next-btn {
+    display: none; width: 100%; background: #2D72D2; border: none;
+    border-radius: 4px; color: #fff; padding: 12px; font-size: 0.88rem;
+    cursor: pointer; font-family: -apple-system, 'Segoe UI', sans-serif;
+    transition: background 100ms;
+  }
+  .next-btn:hover { background: #4C90F0; }
+  .next-btn.show { display: block; }
+
+  /* ── Summary screen ── */
+  .summary {
+    display: none; text-align: center; padding: 40px 20px;
+    background: #1C2127; border: 1px solid #2F343C; border-radius: 4px;
+  }
+  .summary.show { display: block; }
+  .summary h2 {
+    font-size: 1.1rem; color: #C5CBD3; font-weight: 400;
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;
+  }
+  .summary .final-score {
+    font-family: 'Consolas', monospace; font-size: 2.4rem;
+    color: #4C90F0; margin-bottom: 8px;
+  }
+  .summary .final-label {
+    font-size: 0.78rem; color: #5F6B7C; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 24px;
+  }
+  .play-again {
+    background: #2D72D2; border: none; border-radius: 4px;
+    color: #fff; padding: 12px 32px; font-size: 0.88rem;
+    cursor: pointer; font-family: -apple-system, 'Segoe UI', sans-serif;
+  }
+  .play-again:hover { background: #4C90F0; }
+
+  /* ── Loading ── */
+  .loading {
+    text-align: center; padding: 40px;
+    font-size: 0.82rem; color: #5F6B7C;
+  }
+
+  @media (max-width: 600px) {
+    .options-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE DIRECTORATE // TRAINING EXERCISE</div>
+  <h1>Factbook Quiz</h1>
+  <p class="subtitle">Test your knowledge of world facts from CIA Factbook data</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div class="quiz-wrap">
+
+  <div class="score-bar" id="score-bar">
+    <span>Question <span class="score-val" id="q-num">1</span> / 10</span>
+    <span>Score: <span class="score-val" id="score">0</span></span>
+    <span>Streak: <span class="score-val streak" id="streak">0</span></span>
+  </div>
+
+  <div id="game-area">
+    <div class="loading" id="loading">Loading question...</div>
+
+    <div class="clue-area" id="clue-area" style="display:none;"></div>
+
+    <button class="reveal-btn" id="reveal-btn" onclick="revealClue()" style="display:none;">
+      Reveal Next Clue (<span id="clues-remaining">4</span> remaining)
+    </button>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="options-grid" id="options" style="display:none;"></div>
+
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question</button>
+  </div>
+
+  <div class="summary" id="summary">
+    <h2>Training Complete</h2>
+    <div class="final-score" id="final-score">0 / 10</div>
+    <div class="final-label" id="final-pct">0% accuracy</div>
+    <button class="play-again" onclick="startGame()">Play Again</button>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var TOTAL_QUESTIONS = 10;
+var state = {};
+
+function startGame() {
+  state = {q: 0, score: 0, streak: 0, maxStreak: 0};
+  document.getElementById('summary').classList.remove('show');
+  document.getElementById('game-area').style.display = '';
+  document.getElementById('score-bar').style.display = '';
+  updateScoreBar();
+  loadQuestion();
+}
+
+function updateScoreBar() {
+  document.getElementById('q-num').textContent = state.q + 1;
+  document.getElementById('score').textContent = state.score;
+  document.getElementById('streak').textContent = state.streak;
+}
+
+function loadQuestion() {
+  var loading = document.getElementById('loading');
+  var clueArea = document.getElementById('clue-area');
+  var revealBtn = document.getElementById('reveal-btn');
+  var options = document.getElementById('options');
+  var feedback = document.getElementById('feedback');
+  var nextBtn = document.getElementById('next-btn');
+
+  loading.style.display = '';
+  clueArea.style.display = 'none';
+  clueArea.innerHTML = '';
+  revealBtn.style.display = 'none';
+  options.style.display = 'none';
+  options.innerHTML = '';
+  feedback.classList.remove('show', 'correct-fb', 'wrong-fb');
+  nextBtn.classList.remove('show');
+
+  fetch('/api/analysis/quiz/question')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) {
+        loading.textContent = 'Error loading question. Retrying...';
+        setTimeout(loadQuestion, 1000);
+        return;
+      }
+
+      state.current = data;
+      state.clueIndex = 0;
+      state.answered = false;
+
+      loading.style.display = 'none';
+      clueArea.style.display = '';
+      options.style.display = '';
+
+      // Show first clue
+      revealClue();
+
+      // Render options
+      data.options.forEach(function(opt) {
+        var btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.textContent = opt;
+        btn.onclick = function() { submitAnswer(opt); };
+        options.appendChild(btn);
+      });
+    })
+    .catch(function() {
+      loading.textContent = 'Connection error. Retrying...';
+      setTimeout(loadQuestion, 2000);
+    });
+}
+
+function revealClue() {
+  var data = state.current;
+  if (!data || state.clueIndex >= data.clues.length) return;
+
+  var clue = data.clues[state.clueIndex];
+  var div = document.createElement('div');
+  div.className = 'clue-item';
+  div.style.animationDelay = '0s';
+  div.innerHTML = '<div class="clue-label">' + clue.field + '</div>' +
+    '<div class="clue-value">' + clue.value.replace(/</g, '&lt;') + '</div>';
+  document.getElementById('clue-area').appendChild(div);
+  state.clueIndex++;
+
+  var remaining = data.clues.length - state.clueIndex;
+  var revealBtn = document.getElementById('reveal-btn');
+  document.getElementById('clues-remaining').textContent = remaining;
+
+  if (remaining > 0 && !state.answered) {
+    revealBtn.style.display = '';
+    revealBtn.disabled = false;
+  } else {
+    revealBtn.style.display = 'none';
+  }
+}
+
+function submitAnswer(chosen) {
+  if (state.answered) return;
+  state.answered = true;
+
+  var correct = state.current.answer;
+  var isCorrect = chosen === correct;
+  var feedback = document.getElementById('feedback');
+  var revealBtn = document.getElementById('reveal-btn');
+
+  revealBtn.style.display = 'none';
+
+  // Show all remaining clues
+  while (state.clueIndex < state.current.clues.length) {
+    revealClue();
+  }
+
+  // Highlight buttons
+  var buttons = document.querySelectorAll('.opt-btn');
+  buttons.forEach(function(btn) {
+    if (btn.textContent === correct) {
+      btn.classList.add(isCorrect ? 'correct' : 'reveal');
+    } else if (btn.textContent === chosen && !isCorrect) {
+      btn.classList.add('wrong');
+    }
+    btn.classList.add('disabled');
+  });
+
+  if (isCorrect) {
+    state.score++;
+    state.streak++;
+    if (state.streak > state.maxStreak) state.maxStreak = state.streak;
+    feedback.textContent = 'Correct!';
+    feedback.classList.add('show', 'correct-fb');
+  } else {
+    state.streak = 0;
+    feedback.textContent = 'The answer was ' + correct;
+    feedback.classList.add('show', 'wrong-fb');
+  }
+
+  updateScoreBar();
+  document.getElementById('next-btn').classList.add('show');
+}
+
+function nextQuestion() {
+  state.q++;
+  if (state.q >= TOTAL_QUESTIONS) {
+    showSummary();
+    return;
+  }
+  updateScoreBar();
+  loadQuestion();
+}
+
+function showSummary() {
+  document.getElementById('game-area').style.display = 'none';
+  document.getElementById('score-bar').style.display = 'none';
+  var pct = Math.round((state.score / TOTAL_QUESTIONS) * 100);
+  document.getElementById('final-score').textContent = state.score + ' / ' + TOTAL_QUESTIONS;
+  document.getElementById('final-pct').textContent = pct + '% accuracy' +
+    (state.maxStreak > 1 ? ' | Best streak: ' + state.maxStreak : '');
+  document.getElementById('summary').classList.add('show');
+}
+
+// Start on load
+startGame();
+</script>
+{% endblock %}

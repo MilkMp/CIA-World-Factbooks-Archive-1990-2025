@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% set active_page = "field-explorer" %}
+{% block title %}Field Explorer — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  .fe-search {
+    display: flex; align-items: center; gap: 10px;
+    margin: 16px 0; flex-wrap: wrap;
+  }
+  .fe-search input {
+    background: #1C2127; border: 1px solid #383E47; border-radius: 3px;
+    color: #C5CBD3; padding: 8px 14px; font-size: 0.85rem; width: 320px;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+  }
+  .fe-search input::placeholder { color: #5F6B7C; }
+  .fe-search input:focus { outline: none; border-color: #4C90F0; }
+  .fe-count {
+    font-size: 0.72rem; color: #5F6B7C; letter-spacing: 0.5px;
+  }
+
+  .fe-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .fe-table th {
+    font-family: -apple-system, 'Segoe UI', sans-serif; text-align: left;
+    padding: 8px 12px; border-bottom: 1px solid #383E47; color: #8F99A8;
+    font-weight: 600; font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 1px; cursor: pointer; user-select: none;
+  }
+  .fe-table th:hover { color: #C5CBD3; }
+  .fe-table td {
+    padding: 7px 12px; border-bottom: 1px solid #252A31; color: #ABB3BF;
+  }
+  .fe-table td.r { text-align: right; font-family: 'Consolas', monospace; font-size: 0.8rem; }
+  .fe-table tr { cursor: pointer; }
+  .fe-table tr:hover td { background: #252A31; }
+  .fe-table tr.active td { background: #1C2127; border-bottom-color: #383E47; }
+  .fe-table .field-name { color: #C5CBD3; font-weight: 500; }
+
+  .fe-detail {
+    display: none; background: #1C2127; border: 1px solid #2F343C;
+    border-radius: 4px; padding: 16px; margin: 12px 0;
+  }
+  .fe-detail.visible { display: block; }
+  .fe-detail h3 {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.2px; color: #8F99A8; margin-bottom: 12px;
+  }
+  .fe-detail-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  #coverage-chart { width: 100%; height: 200px; }
+  .variant-list, .sample-list {
+    font-size: 0.78rem; color: #8F99A8; margin: 0; padding: 0; list-style: none;
+  }
+  .variant-list li, .sample-list li {
+    padding: 4px 0; border-bottom: 1px solid #252A31;
+  }
+  .variant-list .vname { color: #C5CBD3; font-family: 'Consolas', monospace; font-size: 0.76rem; }
+  .variant-list .vmeta { color: #5F6B7C; font-size: 0.7rem; margin-left: 8px; }
+  .sample-list .scountry { color: #C5CBD3; min-width: 140px; display: inline-block; }
+  .sample-list .svalue {
+    color: #8F99A8; font-size: 0.75rem;
+    display: inline-block; max-width: 500px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  @media (max-width: 800px) {
+    .fe-detail-grid { grid-template-columns: 1fr; }
+    .fe-search input { width: 100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE DIRECTORATE // DATA CATALOG</div>
+  <h1>Field Explorer</h1>
+  <p class="subtitle">Browse all canonical field names across 36 years of CIA Factbook data</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:8px;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/rankings" class="btn">Global Rankings</a>
+</div>
+
+<div class="stat-grid" style="margin:20px 0;">
+  <div class="stat-card">
+    <div class="stat-value">{{ total_canonical }}</div>
+    <div class="stat-label">Canonical Fields</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ '{:,}'.format(total_variants) }}</div>
+    <div class="stat-label">Raw Variants</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">36</div>
+    <div class="stat-label">Years Covered</div>
+  </div>
+</div>
+
+<div class="fe-search">
+  <input type="text" id="field-filter" placeholder="Filter fields..." oninput="filterFields()">
+  <span class="fe-count" id="filter-count">{{ fields|length }} fields</span>
+</div>
+
+<div class="fe-detail" id="detail-panel">
+  <h3 id="detail-title">Field Detail</h3>
+  <div class="fe-detail-grid">
+    <div>
+      <h3 style="font-size:0.68rem;margin-bottom:6px;">Coverage by Year</h3>
+      <div id="coverage-chart"></div>
+    </div>
+    <div>
+      <h3 style="font-size:0.68rem;margin-bottom:6px;">Name Variants</h3>
+      <ul class="variant-list" id="variant-list"></ul>
+      <h3 style="font-size:0.68rem;margin:12px 0 6px;">Sample Values (<span id="sample-year"></span>)</h3>
+      <ul class="sample-list" id="sample-list"></ul>
+    </div>
+  </div>
+</div>
+
+<table class="fe-table" id="fields-table">
+  <thead>
+    <tr>
+      <th onclick="sortTable(0)">Field Name</th>
+      <th onclick="sortTable(1)" style="width:80px;text-align:right;">Variants</th>
+      <th onclick="sortTable(2)" style="width:120px;text-align:right;">Year Range</th>
+      <th onclick="sortTable(3)" style="width:100px;text-align:right;">Total Uses</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for f in fields %}
+    <tr data-name="{{ f.CanonicalName }}" onclick="showDetail('{{ f.CanonicalName|e }}')">
+      <td class="field-name">{{ f.CanonicalName }}</td>
+      <td class="r">{{ f.Variants }}</td>
+      <td class="r">{{ f.FirstYear or '?' }} - {{ f.LastYear or '?' }}</td>
+      <td class="r">{{ '{:,}'.format(f.TotalUses) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var activeField = null;
+var chartLayout = {
+  paper_bgcolor: '#1C2127', plot_bgcolor: '#1C2127',
+  font: {family: "-apple-system, 'Segoe UI', sans-serif", color: '#8F99A8', size: 10},
+  margin: {t: 5, r: 10, b: 30, l: 40},
+  xaxis: {gridcolor: '#2F343C', tickcolor: '#383E47', dtick: 5},
+  yaxis: {gridcolor: '#2F343C', tickcolor: '#383E47', title: {text: 'Countries', font: {size: 10}}},
+  bargap: 0.15,
+  showlegend: false,
+};
+var chartConfig = {displayModeBar: false, responsive: true};
+
+function filterFields() {
+  var q = document.getElementById('field-filter').value.toLowerCase();
+  var rows = document.querySelectorAll('#fields-table tbody tr');
+  var visible = 0;
+  rows.forEach(function(r) {
+    var name = r.getAttribute('data-name').toLowerCase();
+    var show = !q || name.indexOf(q) !== -1;
+    r.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('filter-count').textContent = visible + ' fields';
+}
+
+function showDetail(name) {
+  if (activeField === name) {
+    document.getElementById('detail-panel').classList.remove('visible');
+    activeField = null;
+    return;
+  }
+  activeField = name;
+  document.getElementById('detail-title').textContent = name;
+  document.getElementById('detail-panel').classList.add('visible');
+
+  // Highlight active row
+  document.querySelectorAll('#fields-table tbody tr').forEach(function(r) {
+    r.classList.toggle('active', r.getAttribute('data-name') === name);
+  });
+
+  // Fetch detail
+  fetch('/api/analysis/field-explorer/' + encodeURIComponent(name))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      // Coverage chart
+      var years = data.coverage.map(function(d) { return d.Year; });
+      var counts = data.coverage.map(function(d) { return d.Countries; });
+      Plotly.newPlot('coverage-chart', [{
+        x: years, y: counts, type: 'bar',
+        marker: {color: '#4C90F0'},
+        hovertemplate: '%{x}: %{y} countries<extra></extra>',
+      }], chartLayout, chartConfig);
+
+      // Variants
+      var vl = document.getElementById('variant-list');
+      vl.innerHTML = '';
+      data.variants.forEach(function(v) {
+        var li = document.createElement('li');
+        li.innerHTML = '<span class="vname">' + v.OriginalName + '</span>' +
+          '<span class="vmeta">' + (v.FirstYear || '?') + '-' + (v.LastYear || '?') +
+          ' (' + (v.UseCount || 0).toLocaleString() + ' uses)</span>';
+        vl.appendChild(li);
+      });
+
+      // Sample year
+      document.getElementById('sample-year').textContent = data.sample_year;
+
+      // Samples
+      var sl = document.getElementById('sample-list');
+      sl.innerHTML = '';
+      data.samples.forEach(function(s) {
+        var li = document.createElement('li');
+        var val = s.Content || '';
+        if (val.length > 120) val = val.substring(0, 120) + '...';
+        li.innerHTML = '<span class="scountry">' + s.Country + '</span>' +
+          '<span class="svalue">' + val.replace(/</g, '&lt;') + '</span>';
+        sl.appendChild(li);
+      });
+    });
+}
+
+var sortCol = -1, sortAsc = true;
+function sortTable(col) {
+  var tbody = document.querySelector('#fields-table tbody');
+  var rows = Array.from(tbody.querySelectorAll('tr'));
+  if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+  rows.sort(function(a, b) {
+    var va = a.children[col].textContent.trim();
+    var vb = b.children[col].textContent.trim();
+    if (col > 0) {
+      va = parseFloat(va.replace(/[^0-9.-]/g, '')) || 0;
+      vb = parseFloat(vb.replace(/[^0-9.-]/g, '')) || 0;
+    }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+  rows.forEach(function(r) { tbody.appendChild(r); });
+}
+</script>
+{% endblock %}

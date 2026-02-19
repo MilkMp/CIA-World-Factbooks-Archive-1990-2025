@@ -54,6 +54,10 @@
       <a href="/analysis/communications" class="{{ 'active' if active_page == 'communications' else '' }}" @click="navOpen = false">Communications</a>
       <a href="/analysis/changes" class="{{ 'active' if active_page == 'changes' else '' }}" @click="navOpen = false">Change Detection</a>
       <a href="/analysis/dissolved" class="{{ 'active' if active_page == 'dissolved' else '' }}" @click="navOpen = false">Dissolved States</a>
+      <a href="/analysis/trends" class="{{ 'active' if active_page == 'trends' else '' }}" @click="navOpen = false">Global Trends</a>
+      <a href="/analysis/fields" class="{{ 'active' if active_page == 'field-explorer' else '' }}" @click="navOpen = false">Field Explorer</a>
+      <div class="nav-sub-label">Interactive</div>
+      <a href="/analysis/quiz" class="{{ 'active' if active_page == 'quiz' else '' }}" @click="navOpen = false">Factbook Quiz</a>
 
       <div class="nav-section">Reference</div>
       <a href="/api" class="{{ 'active' if active_page == 'api-docs' else '' }}" @click="navOpen = false">API Documentation</a>

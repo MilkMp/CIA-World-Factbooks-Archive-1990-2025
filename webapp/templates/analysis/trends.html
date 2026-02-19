@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% set active_page = "trends" %}
+{% block title %}Global Trends — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  .trends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .trend-card {
+    background: #1C2127;
+    border: 1px solid #2F343C;
+    border-radius: 4px;
+    padding: 14px;
+  }
+  .trend-card h3 {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #8F99A8;
+    margin-bottom: 8px;
+  }
+  .trend-chart {
+    width: 100%;
+    height: 280px;
+  }
+  @media (max-width: 800px) {
+    .trends-grid { grid-template-columns: 1fr; }
+    .trend-chart { height: 220px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE DIRECTORATE // GLOBAL ANALYSIS</div>
+  <h1>Global Trends 1990 - 2025</h1>
+  <p class="subtitle">Aggregate indicators across sovereign states over 36 years</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:8px;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/rankings" class="btn">Global Rankings</a>
+</div>
+
+{# ── KPI strip ── #}
+<div class="stat-grid" style="margin:20px 0;">
+  {% for key, (label, fmt) in indicators.items() %}
+  <div class="stat-card">
+    <div class="stat-value">
+      {% if kpis[key] is not none %}
+        {% if key == 'population' %}{{ '{:,.0f}'.format(kpis[key]) }}
+        {% elif key == 'gdp_percap' %}${{ '{:,}'.format(kpis[key]|int) }}
+        {% elif key == 'life_exp' %}{{ '{:.1f}'.format(kpis[key]) }}
+        {% elif key == 'internet_pct' %}{{ '{:.1f}'.format(kpis[key]) }}%
+        {% elif key == 'mil_pct_gdp' %}{{ '{:.2f}'.format(kpis[key]) }}%
+        {% elif key == 'pop_growth' %}{{ '{:.2f}'.format(kpis[key]) }}%
+        {% endif %}
+      {% else %}&mdash;{% endif %}
+    </div>
+    <div class="stat-label">{{ label }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+{# ── Charts grid ── #}
+<div class="trends-grid">
+  {% for key, (label, fmt) in indicators.items() %}
+  <div class="trend-card">
+    <h3>{{ label }}</h3>
+    <div class="trend-chart" id="chart-{{ key }}"></div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="methodology-note" style="margin:24px 0;padding:12px 16px;background:#1C2127;border:1px solid #2F343C;border-radius:4px;font-size:0.78rem;color:#5F6B7C;">
+  <strong style="color:#8F99A8;">Methodology:</strong>
+  Population is summed across all sovereign states. All other indicators are averaged.
+  Years with fewer than 20 reporting countries are excluded. Data parsed from raw CIA Factbook text fields.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var trendsData = {{ trends | tojson }};
+var COLORS = {{ colors | tojson }};
+
+var MILESTONES = [
+  {year: 1991, label: 'USSR collapse'},
+  {year: 2001, label: '9/11'},
+  {year: 2008, label: 'Financial crisis'},
+  {year: 2020, label: 'COVID-19'},
+];
+
+var chartLayout = {
+  paper_bgcolor: '#1C2127',
+  plot_bgcolor: '#1C2127',
+  font: {family: "-apple-system, 'Segoe UI', sans-serif", color: '#8F99A8', size: 11},
+  margin: {t: 10, r: 20, b: 40, l: 60},
+  xaxis: {
+    gridcolor: '#2F343C',
+    tickcolor: '#383E47',
+    dtick: 5,
+  },
+  yaxis: {
+    gridcolor: '#2F343C',
+    tickcolor: '#383E47',
+  },
+  hovermode: 'x unified',
+  showlegend: false,
+};
+
+var chartConfig = {displayModeBar: false, responsive: true};
+
+Object.keys(trendsData).forEach(function(key) {
+  var series = trendsData[key];
+  if (!series || !series.length) return;
+
+  var years = series.map(function(d) { return d.year; });
+  var vals = series.map(function(d) { return d.value; });
+  var ns = series.map(function(d) { return d.n; });
+
+  var hovertemplate;
+  if (key === 'population') {
+    hovertemplate = '%{y:,.0f}<br>%{customdata} countries<extra></extra>';
+  } else if (key === 'gdp_percap') {
+    hovertemplate = '$%{y:,.0f}<br>%{customdata} countries<extra></extra>';
+  } else if (key === 'life_exp') {
+    hovertemplate = '%{y:.1f} yrs<br>%{customdata} countries<extra></extra>';
+  } else {
+    hovertemplate = '%{y:.2f}<br>%{customdata} countries<extra></extra>';
+  }
+
+  var trace = {
+    x: years,
+    y: vals,
+    customdata: ns,
+    type: 'scatter',
+    mode: 'lines+markers',
+    line: {color: COLORS[key], width: 2},
+    marker: {size: 3, color: COLORS[key]},
+    hovertemplate: hovertemplate,
+  };
+
+  var layout = JSON.parse(JSON.stringify(chartLayout));
+
+  // Add milestone annotations
+  var shapes = [];
+  var annotations = [];
+  MILESTONES.forEach(function(m) {
+    if (m.year >= years[0] && m.year <= years[years.length - 1]) {
+      shapes.push({
+        type: 'line', x0: m.year, x1: m.year,
+        y0: 0, y1: 1, yref: 'paper',
+        line: {color: '#383E47', width: 1, dash: 'dot'},
+      });
+      annotations.push({
+        x: m.year, y: 1, yref: 'paper',
+        text: m.label, showarrow: false,
+        font: {size: 9, color: '#5F6B7C'},
+        yanchor: 'bottom',
+      });
+    }
+  });
+  layout.shapes = shapes;
+  layout.annotations = annotations;
+
+  Plotly.newPlot('chart-' + key, [trace], layout, chartConfig);
+});
+</script>
+{% endblock %}

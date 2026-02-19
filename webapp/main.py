@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from webapp.config import settings
 from webapp.database import sql_one
-from webapp.routers import archive, countries, analysis, analysis2, export
+from webapp.routers import archive, countries, analysis, analysis2, analysis3, export
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,7 @@ app.include_router(archive.router)
 app.include_router(countries.router)
 app.include_router(analysis.router)
 app.include_router(analysis2.router)
+app.include_router(analysis3.router)
 app.include_router(export.router)
 
 
