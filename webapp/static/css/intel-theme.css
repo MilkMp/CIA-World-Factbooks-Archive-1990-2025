@@ -719,18 +719,22 @@ mark.search-hit {
 
 /* Small tablet / large phone */
 @media (max-width: 800px) {
+  .banner { position: relative; }
   .layout { flex-direction: column; }
   .sidebar {
     width: 100%;
     height: auto;
-    position: relative;
+    position: sticky;
     top: 0;
+    z-index: 90;
     border-right: none;
     border-bottom: 1px solid #2F343C;
     padding: 0;
     display: block;
     overflow: visible;
+    transition: transform 300ms ease;
   }
+  .sidebar.nav-hidden { transform: translateY(-100%); }
   .sidebar-header {
     padding: 10px 16px;
     margin-bottom: 0;

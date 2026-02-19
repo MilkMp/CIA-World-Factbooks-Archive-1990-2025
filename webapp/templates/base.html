@@ -14,7 +14,7 @@
   <meta name="twitter:title" content="CIA World Factbook Archive">
   <meta name="twitter:description" content="36 years of structured intelligence data (1990-2025). 281 entities, 1,071,213 fields.">
   <meta name="twitter:image" content="https://cia-factbook-archive.fly.dev/static/og-image.png">
-  <link rel="stylesheet" href="/static/css/intel-theme.css?v=12">
+  <link rel="stylesheet" href="/static/css/intel-theme.css?v=13">
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   {% block head %}{% endblock %}
 </head>
@@ -86,6 +86,29 @@
   </span>
 </footer>
 
+<script>
+/* Smart sticky nav — hide on scroll down, show on scroll up (mobile only) */
+(function() {
+  var sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
+  var lastY = 0, ticking = false;
+  function onScroll() {
+    if (window.innerWidth > 800) { sidebar.classList.remove('nav-hidden'); return; }
+    if (sidebar.classList.contains('nav-open') || sidebar.querySelector('.nav-open')) return;
+    var y = window.scrollY;
+    if (y > lastY && y > 60) {
+      sidebar.classList.add('nav-hidden');
+    } else {
+      sidebar.classList.remove('nav-hidden');
+    }
+    lastY = y;
+    ticking = false;
+  }
+  window.addEventListener('scroll', function() {
+    if (!ticking) { requestAnimationFrame(onScroll); ticking = true; }
+  }, { passive: true });
+})();
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -29,6 +29,18 @@
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 .country-card .cc-dossier:hover { background: #252A31; border-color: #404854; color: #C5CBD3; text-decoration: none; }
+@media (max-width: 800px) {
+  .country-card {
+    position: fixed;
+    bottom: 0; left: 0; right: 0; top: auto;
+    min-width: 0; max-width: none; width: 100%;
+    border-radius: 12px 12px 0 0;
+    padding: 20px 20px 24px;
+    border-bottom: none;
+  }
+  .country-card .cc-stats { grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+  .country-card .cc-dossier { display: block; text-align: center; padding: 10px; }
+}
 </style>
 {% endblock %}
 
@@ -256,14 +268,18 @@ function showCountryCard(country, evt) {
   document.getElementById('cc-life').textContent = country.life_exp ? country.life_exp.toFixed(1) + ' yrs' : '\u2014';
   document.getElementById('cc-mil').textContent = country.mil_pct_gdp ? country.mil_pct_gdp.toFixed(2) + '%' : '\u2014';
   document.getElementById('cc-link').href = '/analysis/dossier/' + country.iso2;
-  let x = evt.clientX + 12, y = evt.clientY - 20;
   card.style.display = 'block';
-  const rect = card.getBoundingClientRect();
-  if (x + rect.width > window.innerWidth - 16) x = evt.clientX - rect.width - 12;
-  if (y + rect.height > window.innerHeight - 16) y = window.innerHeight - rect.height - 16;
-  if (y < 8) y = 8;
-  card.style.left = x + 'px';
-  card.style.top = y + 'px';
+  if (window.innerWidth <= 800) {
+    card.style.left = ''; card.style.top = '';
+  } else {
+    let x = evt.clientX + 12, y = evt.clientY - 20;
+    const rect = card.getBoundingClientRect();
+    if (x + rect.width > window.innerWidth - 16) x = evt.clientX - rect.width - 12;
+    if (y + rect.height > window.innerHeight - 16) y = window.innerHeight - rect.height - 16;
+    if (y < 8) y = 8;
+    card.style.left = x + 'px';
+    card.style.top = y + 'px';
+  }
 }
 function hideCountryCard() {
   document.getElementById('country-card').style.display = 'none';
