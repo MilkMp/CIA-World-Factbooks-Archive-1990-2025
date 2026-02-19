@@ -189,6 +189,22 @@ def main():
     lite.executescript(INDEXES)
     lite.commit()
 
+    # Full-text search index
+    print("Creating FTS5 full-text search index...")
+    lite.execute("""
+        CREATE VIRTUAL TABLE CountryFieldsFTS USING fts5(
+            Content,
+            content='CountryFields',
+            content_rowid='FieldID'
+        )
+    """)
+    lite.execute("""
+        INSERT INTO CountryFieldsFTS(rowid, Content)
+        SELECT FieldID, Content FROM CountryFields
+    """)
+    lite.commit()
+    print("  FTS5 index built.")
+
     # Compact
     print("Vacuuming...")
     lite.execute("PRAGMA journal_mode=DELETE")
