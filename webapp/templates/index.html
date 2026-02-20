@@ -201,6 +201,108 @@
   border-top: 1px solid #2F343C;
 }
 
+/* ── Gallery — Palantir-style interactive ── */
+.gallery-section { margin: 0 0 36px; perspective: 1200px; }
+.gallery-track {
+  display: flex; gap: 18px; padding: 20px 4px 28px;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none; -ms-overflow-style: none;
+  cursor: grab; user-select: none;
+  -webkit-overflow-scrolling: touch;
+}
+.gallery-track::-webkit-scrollbar { display: none; }
+.gallery-track.dragging { cursor: grabbing; scroll-behavior: auto; }
+.gallery-card {
+  flex: 0 0 380px; position: relative;
+  border-radius: 6px; overflow: hidden;
+  background: #1C2127; border: 1px solid #2F343C;
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.03, 0.98, 0.52, 0.99),
+              box-shadow 0.4s cubic-bezier(0.03, 0.98, 0.52, 0.99),
+              border-color 0.3s ease;
+  will-change: transform;
+}
+.gallery-card:hover {
+  border-color: #404854;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45), 0 0 30px rgba(45, 114, 210, 0.07);
+  z-index: 2;
+}
+.gallery-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(500px circle at var(--mx, 50%) var(--my, 50%), rgba(45, 114, 210, 0.06), transparent 40%);
+  z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.3s;
+}
+.gallery-card:hover::before { opacity: 1; }
+.gallery-card::after {
+  content: ''; position: absolute; inset: -1px;
+  background: radial-gradient(350px circle at var(--mx, 50%) var(--my, 50%), rgba(45, 114, 210, 0.2), transparent 40%);
+  z-index: -1; border-radius: 7px; opacity: 0; transition: opacity 0.3s;
+}
+.gallery-card:hover::after { opacity: 1; }
+.card-arrow {
+  position: absolute; top: 50%; transform: translateY(-70%);
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(17, 20, 24, 0.75); border: 1px solid rgba(255,255,255,0.12);
+  color: #ABB3BF; font-size: 0.9rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 5; backdrop-filter: blur(8px);
+  opacity: 0; transition: opacity 200ms, background 150ms, color 150ms, transform 150ms;
+}
+.gallery-card:hover .card-arrow { opacity: 1; }
+.card-arrow:hover { background: rgba(17, 20, 24, 0.95); border-color: rgba(255,255,255,0.35); color: #fff; }
+.card-arrow:active { transform: translateY(-70%) scale(0.88); }
+.card-arrow.left { left: 8px; }
+.card-arrow.right { right: 8px; }
+.gallery-img-wrap { overflow: hidden; height: 240px; position: relative; }
+.gallery-img-wrap img {
+  width: 110%; height: 110%; object-fit: cover; object-position: top left; display: block;
+  transform: translate(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -10px));
+  transition: transform 0.4s cubic-bezier(0.03, 0.98, 0.52, 0.99);
+}
+.gallery-caption {
+  padding: 14px 16px; border-top: 1px solid #252A31; position: relative; z-index: 2;
+}
+.gallery-caption strong {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  color: #C5CBD3; font-size: 0.82rem; display: block; margin-bottom: 2px;
+}
+.gallery-caption span {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.72rem; color: #5F6B7C; line-height: 1.5;
+}
+.gallery-progress {
+  display: flex; justify-content: center; gap: 5px; margin-top: 4px;
+}
+.gallery-pip {
+  height: 3px; flex: 1; max-width: 40px;
+  background: #252A31; border-radius: 2px; overflow: hidden; cursor: pointer;
+}
+.gallery-pip:hover { background: #383E47; }
+.gallery-pip.active { background: transparent; }
+.gallery-pip-fill { height: 100%; width: 0; background: #5F6B7C; border-radius: 2px; }
+.gallery-pip.active .gallery-pip-fill { width: 100%; transition: width 6s linear; }
+.gallery-pip.past .gallery-pip-fill { width: 100%; background: #383E47; }
+.gallery-lightbox {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(17, 20, 24, 0.92); backdrop-filter: blur(12px);
+  display: none; align-items: center; justify-content: center; cursor: zoom-out;
+}
+.gallery-lightbox.open { display: flex; }
+.gallery-lightbox img {
+  max-width: 92vw; max-height: 88vh; object-fit: contain;
+  border-radius: 6px; border: 1px solid #2F343C; box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+}
+.gallery-lightbox .lb-cap {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.82rem;
+  color: #8F99A8; background: rgba(28, 33, 39, 0.85); padding: 10px 20px;
+  border-radius: 4px; border: 1px solid #2F343C; text-align: center;
+  max-width: 600px; backdrop-filter: blur(8px);
+}
+.gallery-lightbox .lb-cap strong { color: #C5CBD3; display: block; margin-bottom: 2px; }
+.gallery-section.fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.gallery-section.visible { opacity: 1; transform: translateY(0); }
+
 /* ── About Footer ── */
 .landing-footer {
   padding: 14px 16px;
@@ -232,6 +334,10 @@
   .platform { padding: 20px 18px; }
   .platform:hover { box-shadow: none; }
   .platform-link:hover { padding-left: 0; }
+  .gallery-card { flex: 0 0 300px; }
+  .gallery-img-wrap { height: 180px; }
+  .gallery-track { gap: 12px; padding: 14px 4px 20px; }
+  .card-arrow { width: 28px; height: 28px; font-size: 0.75rem; }
 }
 @media (max-width: 480px) {
   .stats-strip { grid-template-columns: 1fr 1fr; }
@@ -372,6 +478,80 @@
 
 </div>
 
+<!-- ── Feature Gallery ── -->
+<div class="section-label">Preview</div>
+<div class="gallery-section fade-in" id="gallery-section">
+  <div class="gallery-track" id="gallery-track">
+    <div class="gallery-card" data-idx="0">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/regional_dashboard.png" alt="Regional Dashboard" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Regional Dashboard</strong><span>Globe choropleth with COCOM regions and capital markers</span></div>
+    </div>
+    <div class="gallery-card" data-idx="1">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/timeline_map.png" alt="Timeline Map" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Timeline Map</strong><span>Animated choropleth across 36 years with time series</span></div>
+    </div>
+    <div class="gallery-card" data-idx="2">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/search_results.png" alt="Full-Text Search" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Full-Text Search</strong><span>Keyword search across 1M+ fields with Z39.58 syntax</span></div>
+    </div>
+    <div class="gallery-card" data-idx="3">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/region_eucom.png" alt="EUCOM Region" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>COCOM Region Detail</strong><span>Regional map with country-level KPIs and indicators</span></div>
+    </div>
+    <div class="gallery-card" data-idx="4">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/map_compare.png" alt="Map Compare" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Map Compare</strong><span>Two synced maps for side-by-side year comparison</span></div>
+    </div>
+    <div class="gallery-card" data-idx="5">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/communications.png" alt="Communications Analysis" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Communications Analysis</strong><span>Internet, mobile, broadband penetration indicators</span></div>
+    </div>
+    <div class="gallery-card" data-idx="6">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/dossier.png" alt="Intelligence Dossier" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Intelligence Dossier</strong><span>ICD 203 country assessments</span></div>
+    </div>
+    <div class="gallery-card" data-idx="7">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/country_profile.png" alt="Country Profile" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Country Profile</strong><span>Complete field data for any entity by category</span></div>
+    </div>
+    <div class="gallery-card" data-idx="8">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/field_timeseries.png" alt="Field Time Series" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Field Time Series</strong><span>Track any data field across 36 years</span></div>
+    </div>
+    <div class="gallery-card" data-idx="9">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/country_export.png" alt="Factbook Export" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Factbook Export</strong><span>Print-ready country report with all fields</span></div>
+    </div>
+  </div>
+  <div class="gallery-progress" id="gallery-progress"></div>
+</div>
+
+<!-- Lightbox -->
+<div class="gallery-lightbox" id="gallery-lightbox">
+  <img src="" alt="">
+  <div class="lb-cap"><strong></strong><span></span></div>
+</div>
+
 <!-- ── About ── -->
 <div class="section-label">About</div>
 <div class="landing-footer">
@@ -395,4 +575,136 @@
 </div>
 
 </div>
+
+<script>
+(function() {
+  var track = document.getElementById('gallery-track');
+  var cards = track.querySelectorAll('.gallery-card');
+  var section = document.getElementById('gallery-section');
+  var progC = document.getElementById('gallery-progress');
+  var lb = document.getElementById('gallery-lightbox');
+  var lbImg = lb.querySelector('img');
+  var lbCap = lb.querySelector('.lb-cap');
+
+  /* Scroll-triggered reveal */
+  var obs = new IntersectionObserver(function(e) {
+    e.forEach(function(en) { if (en.isIntersecting) { en.target.classList.add('visible'); obs.unobserve(en.target); } });
+  }, { threshold: 0.1 });
+  obs.observe(section);
+
+  /* 3D tilt + parallax + glow */
+  var wasDragging = false;
+  cards.forEach(function(card) {
+    var img = card.querySelector('.gallery-img-wrap img');
+    card.addEventListener('mousemove', function(e) {
+      var r = card.getBoundingClientRect();
+      var x = e.clientX - r.left, y = e.clientY - r.top;
+      var cx = r.width / 2, cy = r.height / 2;
+      var nx = (x - cx) / cx, ny = (y - cy) / cy;
+      card.style.transform = 'perspective(800px) rotateX(' + (-ny * 6) + 'deg) rotateY(' + (nx * 8) + 'deg) scale(1.03)';
+      card.style.setProperty('--px', nx.toFixed(3));
+      card.style.setProperty('--py', ny.toFixed(3));
+      card.style.setProperty('--mx', x + 'px');
+      card.style.setProperty('--my', y + 'px');
+    });
+    card.addEventListener('mouseleave', function() {
+      card.style.transform = '';
+      card.style.setProperty('--px', '0');
+      card.style.setProperty('--py', '0');
+    });
+    card.addEventListener('click', function(e) {
+      if (wasDragging || e.target.closest('.card-arrow')) return;
+      lbImg.src = img.src; lbImg.alt = img.alt;
+      var cap = card.querySelector('.gallery-caption');
+      lbCap.querySelector('strong').textContent = cap.querySelector('strong').textContent;
+      lbCap.querySelector('span').textContent = cap.querySelector('span').textContent;
+      lb.classList.add('open');
+    });
+  });
+
+  lb.addEventListener('click', function() { lb.classList.remove('open'); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') lb.classList.remove('open'); });
+
+  /* Per-card arrows */
+  cards.forEach(function(card) {
+    var idx = parseInt(card.dataset.idx, 10);
+    var la = card.querySelector('.card-arrow.left');
+    var ra = card.querySelector('.card-arrow.right');
+    if (la) la.addEventListener('click', function(e) { e.stopPropagation(); if (idx > 0) scrollToCard(idx - 1); });
+    if (ra) ra.addEventListener('click', function(e) { e.stopPropagation(); if (idx < cards.length - 1) scrollToCard(idx + 1); });
+  });
+
+  /* Drag-to-scroll with momentum */
+  var isDragging = false, startX = 0, scrollLeft = 0;
+  var velocity = 0, lastX = 0, lastTime = 0, momentumId = null;
+
+  track.addEventListener('mousedown', function(e) {
+    isDragging = true; wasDragging = false; track.classList.add('dragging');
+    startX = e.pageX - track.offsetLeft; scrollLeft = track.scrollLeft;
+    velocity = 0; lastX = e.pageX; lastTime = Date.now();
+    if (momentumId) cancelAnimationFrame(momentumId);
+    pauseAuto();
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return; e.preventDefault();
+    var x = e.pageX - track.offsetLeft, walk = (x - startX) * 1.2;
+    track.scrollLeft = scrollLeft - walk;
+    var now = Date.now(), dt = now - lastTime;
+    if (dt > 0) { velocity = (e.pageX - lastX) / dt; lastX = e.pageX; lastTime = now; }
+    if (Math.abs(walk) > 4) wasDragging = true;
+  });
+  document.addEventListener('mouseup', function() {
+    if (!isDragging) return; isDragging = false; track.classList.remove('dragging');
+    if (Math.abs(velocity) > 0.15) {
+      var v = velocity * 300;
+      (function coast() { if (Math.abs(v) < 0.5) return; track.scrollLeft -= v * 0.016; v *= 0.95; momentumId = requestAnimationFrame(coast); })();
+    }
+    setTimeout(function() { wasDragging = false; }, 50);
+    scheduleAuto();
+  });
+
+  /* Auto-advance with pips */
+  var currentPip = 0, autoTimer = null;
+  cards.forEach(function(_, i) {
+    var pip = document.createElement('div');
+    pip.className = 'gallery-pip' + (i === 0 ? ' active' : '');
+    pip.innerHTML = '<div class="gallery-pip-fill"></div>';
+    pip.onclick = function() { scrollToCard(i); };
+    progC.appendChild(pip);
+  });
+  var pips = progC.querySelectorAll('.gallery-pip');
+
+  function updatePips(idx) {
+    pips.forEach(function(p, i) { p.classList.remove('active', 'past'); if (i < idx) p.classList.add('past'); if (i === idx) p.classList.add('active'); });
+    currentPip = idx;
+  }
+  function scrollToCard(idx) {
+    var c = cards[idx]; if (!c) return;
+    var tr = track.getBoundingClientRect(), cr = c.getBoundingClientRect();
+    var off = cr.left - tr.left + track.scrollLeft - (tr.width / 2 - cr.width / 2);
+    track.scrollTo({ left: off, behavior: 'smooth' });
+    updatePips(idx); restartAuto();
+  }
+  function scheduleAuto() { clearInterval(autoTimer); autoTimer = setInterval(function() { scrollToCard((currentPip + 1) % cards.length); }, 6000); }
+  function pauseAuto() { clearInterval(autoTimer); }
+  function restartAuto() { pauseAuto(); scheduleAuto(); }
+
+  track.addEventListener('mouseenter', pauseAuto);
+  track.addEventListener('mouseleave', scheduleAuto);
+
+  var scrollDb;
+  track.addEventListener('scroll', function() {
+    clearTimeout(scrollDb);
+    scrollDb = setTimeout(function() {
+      var cw = cards[0].offsetWidth + 18;
+      var idx = Math.round(track.scrollLeft / cw);
+      idx = Math.max(0, Math.min(idx, cards.length - 1));
+      if (idx !== currentPip) updatePips(idx);
+    }, 80);
+  });
+
+  updatePips(0);
+  scheduleAuto();
+})();
+</script>
 {% endblock %}
