@@ -39,6 +39,16 @@ The text format changed frequently:
 ### Why 2001 uses text
 The 2001 HTML zip from the Wayback Machine was corrupted. The Project Gutenberg text edition serves as a reliable fallback.
 
+### 1996 Data Repair: CIA Original Text
+
+The Gutenberg edition for 1996 (ebook #27675) is truncated for 7 sovereign countries (Venezuela, Armenia, Greece, Luxembourg, Malta, Monaco, Tuvalu). Their entries end mid-sentence in the source file.
+
+The CIA's own complete text file (`wfb-96.txt.gz`) was recovered from the Wayback Machine at `odci.gov/cia/publications/nsolo/` (captured May 1997). This 3.8 MB file uses a different format from the Gutenberg version: page headers (`FACTBOOK COUNTRY REPORT Page NNN`), centered country/section names, and 5-space indented fields with 10-space indented values.
+
+The repair script (`etl/repair_1996_truncated.py`) parses the CIA original and replaces the 7 truncated entries in the database. The CIA original is stored at `samples/text_samples/1996_cia_original.txt`.
+
+**Note**: 1996 is the only year where the CIA published a downloadable text file. For 1990-1995 and 1997-1999, no CIA-original download archives exist -- Project Gutenberg is the only bulk text source. Validation confirmed those years have no truncation issues.
+
 ## Pipeline 2: Wayback Machine HTML (2000, 2002-2020)
 
 ### Source
