@@ -1,6 +1,6 @@
 # CIA World Factbooks Archive 1990-2025
 
-A complete, structured archive of the CIA World Factbook spanning **36 years** (1990-2025), covering **281 entities** with **1,061,341 data fields** in a normalized SQL Server database.
+A complete, structured archive of the CIA World Factbook spanning **36 years** (1990-2025), covering **281 entities** with **1,061,522 data fields** in a normalized SQLite database.
 
 The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves every edition published since 1990 and creates a structured, queryable dataset.
 
@@ -15,8 +15,8 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 | **Entities** | 281 (192 sovereign states, 65 territories, 6 disputed, and more) |
 | **Country-year records** | 9,500 |
 | **Category records** | 83,599 |
-| **Data fields** | 1,061,341 |
-| **Content size** | ~263 MB |
+| **Data fields** | 1,061,522 |
+| **Content size** | ~324 MB |
 | **Field name variants** | 1,090 mapped to 414 canonical names |
 
 
@@ -24,7 +24,8 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 
 | Years | Source | Method |
 |-------|--------|--------|
-| 1990-1999 | [Project Gutenberg](https://www.gutenberg.org/) | Plain text parsing (4 format variants across the decade) |
+| 1990-1995, 1997-1999 | [Project Gutenberg](https://www.gutenberg.org/) | Plain text parsing (4 format variants across the decade) |
+| 1996 | [CIA original](https://web.archive.org/web/19970528151800id_/http://www.odci.gov:80/cia/publications/nsolo/wfb-96.txt.gz) + Gutenberg | CIA's own text file from Wayback Machine (replaced truncated Gutenberg data for 7 countries) |
 | 2000 | [Wayback Machine](https://web.archive.org/) | HTML zip download + classic format parser |
 | 2001 | Project Gutenberg | Text fallback (HTML zip was corrupted) |
 | 2002-2020 | Wayback Machine | HTML zip archives from cia.gov, 4 parser generations |
@@ -38,11 +39,11 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 | 1991 | Text | 247 | 14,903 |
 | 1992 | Text | 264 | 17,372 |
 | 1993 | Text | 266 | 18,509 |
-| 1994 | Text | 266 | 18,761 |
-| 1995 | Text | 266 | 19,599 |
-| 1996 | Text | 266 | 20,764 |
+| 1994 | Text | 266 | 18,762 |
+| 1995 | Text | 266 | 19,600 |
+| 1996 | Text | 266 | 21,119 |
 | 1997 | Text | 266 | 23,405 |
-| 1998 | Text | 266 | 23,524 |
+| 1998 | Text | 266 | 23,348 |
 | 1999 | Text | 266 | 25,178 |
 | 2000 | HTML | 267 | 25,724 |
 | 2001 | Text | 265 | 27,281 |
@@ -103,6 +104,7 @@ etl/
   reload_json_years.py       # JSON loader (2021-2025)
   build_field_mappings.py    # Field name standardization
   classify_entities.py       # Entity type classification
+  repair_1996_truncated.py   # CIA original text parser for 7 truncated 1996 countries
   validate_integrity.py      # Data quality checks
   export_to_sqlite.py        # SQL Server -> SQLite export (with FTS5)
 queries/
@@ -133,6 +135,7 @@ The raw CIA World Factbook changed format **at least 10 times** between 1990 and
 | `reload_json_years.py` | 413 | 2021-2025 | Checks out year-end git commits from the factbook/cache.factbook.json repo and loads structured JSON. Strips embedded HTML from content fields. |
 | `build_field_mappings.py` | 783 | All | Maps 1,090 raw field name variants to 414 canonical names using a 7-rule system: identity, dash normalization, CIA renames, consolidation, country-specific entries, noise detection, and manual review. |
 | `classify_entities.py` | 283 | All | Auto-classifies 281 entities into 9 types (sovereign, territory, disputed, etc.) based on Dependency Status and Government Type fields, with hardcoded overrides for edge cases. |
+| `repair_1996_truncated.py` | 189 | 1996 | Parses CIA's original `wfb-96.txt.gz` (page-header format with centered country/section names) and replaces truncated Gutenberg entries for 7 countries: Venezuela, Armenia, Greece, Luxembourg, Malta, Monaco, Tuvalu. |
 | `validate_integrity.py` | 296 | All | Read-only validation suite with 9 checks: field count benchmarks, US population/GDP ground truth, year-over-year consistency, source provenance, and NULL detection. |
 
 ### Why parsing was so difficult
@@ -196,22 +199,22 @@ See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) and [docs/ETL_PIPELINE.md](docs/E
 
 5. **Verify:**
    ```sql
-   SELECT COUNT(*) FROM CountryFields;  -- Should return 1,061,341
+   SELECT COUNT(*) FROM CountryFields;  -- Should return 1,061,522
    ```
 
 ### Alternative: SQLite (No SQL Server Required)
 
-A pre-built SQLite database (`factbook.db`, ~238 MB) is available for users who don't need SQL Server. SQLite requires no installation — Python's built-in `sqlite3` module can query it directly.
+A pre-built SQLite database (`factbook.db`, ~324 MB) is available for users who don't need SQL Server. SQLite requires no installation — Python's built-in `sqlite3` module can query it directly.
 
 | | SQL Server | SQLite |
 |--|-----------|--------|
 | **Setup** | Install SQL Server + ODBC driver, run schema + import scripts | Download one `.db` file |
-| **Size** | ~263 MB across 36 gzipped SQL files | 238 MB single file |
+| **Size** | ~263 MB across 36 gzipped SQL files | ~324 MB single file |
 | **Query tool** | SSMS, sqlcmd, pyodbc | Python `sqlite3`, DB Browser, any SQLite client |
 | **Best for** | Power BI, enterprise analytics, large-scale joins | Quick exploration, scripting, lightweight apps |
 | **Schema** | Identical 5-table structure | Identical 5-table structure |
 
-The SQLite database contains the same 5 tables, same indexes, and same 1,061,341 fields as the SQL Server version, plus an FTS5 full-text search index for fast keyword and boolean search. This is what the [live webapp](https://cia-factbook-archive.fly.dev/) runs on.
+The SQLite database contains the same 5 tables, same indexes, and same 1,061,522 fields as the SQL Server version, plus an FTS5 full-text search index for fast keyword and boolean search. This is what the [live webapp](https://cia-factbook-archive.fly.dev/) runs on.
 
 ## Live Web Application
 
@@ -221,17 +224,20 @@ The archive is served as a FastAPI + Jinja2 web application at **[cia-factbook-a
 - **Browse archive** by year (1990-2025) and country (281 entities)
 - **Country profiles** with category drill-down, field time series, and data export (CSV, Excel, PDF)
 - **Country dictionary** with ISO codes, entity types, and COCOM region assignments
-- **Intelligence analysis dashboards** powered by Mapbox GL JS:
+- **Intelligence analysis dashboards** powered by Mapbox GL JS and Apache ECharts:
   - **Regional Dashboard** — global choropleth with 6 COCOM regions, hover popups, capital city markers, and click-to-zoom
   - **COCOM Region Detail** — per-region map with ranked bar charts for GDP, population, military spending
-  - **Timeline Map** — animated choropleth across 36 years with multi-country time series
+  - **Timeline Map** — animated choropleth across 36 years with multi-country time series and playback speed controls
   - **Map Compare** — two synced maps for side-by-side year comparison with shared color scale
   - **Communications Analysis** — internet, mobile, broadband penetration with digital divide indicators
+  - **Global Trends** — multi-indicator time series for any country
+  - **Advanced Analytics Explorer** — correlation scatter, heatmap matrix, ranking race, and treemap visualizations
 - **Intelligence dossiers** following ICD 203 analytic standards
 - **Regional threat briefs** with instability and security indicators
+- **Factbook Quiz** — 4 modes: country identification, capital cities, higher-or-lower, and flag recognition
 - **Bug reporting** via GitHub Issues integration
 
-**Stack:** Python 3.12, FastAPI, Jinja2, SQLite (FTS5), Mapbox GL JS v3, deployed on Fly.io.
+**Stack:** Python 3.12, FastAPI, Jinja2, SQLite (FTS5), Mapbox GL JS v3, Apache ECharts 5, deployed on Fly.io.
 
 ## Entity Types
 
@@ -279,7 +285,7 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 | ![Homepage](docs/screenshots/homepage.png) | ![About](docs/screenshots/about.png) |
 | **Homepage** — Database statistics, navigation, and live search | **About** — Project mission, architecture, and methodology |
 | ![Full-Text Search](docs/screenshots/search_results.png) | ![Boolean Search](docs/screenshots/search_boolean.png) |
-| **Full-Text Search** — Keyword search across 1,061,341 fields | **Boolean Search** — AND/OR/NOT operators with phrase matching |
+| **Full-Text Search** — Keyword search across 1,061,522 fields | **Boolean Search** — AND/OR/NOT operators with phrase matching |
 
 ### The Archive
 | | |
@@ -287,7 +293,7 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 | ![Browse Years](docs/screenshots/browse_years.png) | ![Country Profile](docs/screenshots/country_profile.png) |
 | **Browse Archive** — Navigate all 281 entities across 36 years | **Country Profile** — Complete factbook data by category |
 | ![Field Time Series](docs/screenshots/field_timeseries.png) | ![Data Export](docs/screenshots/country_export.png) |
-| **Field Time Series** — Track any field across 36 years with Plotly charts | **Data Export** — CSV, Excel, and print-ready PDF reports |
+| **Field Time Series** — Track any field across 36 years with Apache ECharts | **Data Export** — CSV, Excel, and print-ready PDF reports |
 | ![Country Dictionary](docs/screenshots/country_dictionary.png) | |
 | **Country Dictionary** — All 281 entities with type, region, and ISO codes | |
 
