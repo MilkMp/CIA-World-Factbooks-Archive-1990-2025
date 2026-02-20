@@ -570,7 +570,7 @@ function addLayersToMap(map, geoData) {
     id: 'country-fills',
     type: 'fill',
     source: 'countries',
-    filter: ['==', ['get', 'ft'], 'poly'],
+    filter: ['!=', ['geometry-type'], 'Point'],
     paint: {
       'fill-color': '#252A31',
       'fill-opacity': 0.85,
@@ -582,7 +582,7 @@ function addLayersToMap(map, geoData) {
     id: 'country-borders',
     type: 'line',
     source: 'countries',
-    filter: ['==', ['get', 'ft'], 'poly'],
+    filter: ['!=', ['geometry-type'], 'Point'],
     paint: {
       'line-color': '#2F343C',
       'line-width': 0.5,
@@ -593,7 +593,8 @@ function addLayersToMap(map, geoData) {
     id: 'country-circles',
     type: 'circle',
     source: 'countries',
-    filter: ['==', ['get', 'ft'], 'pt'],
+    filter: ['==', ['geometry-type'], 'Point'],
+    minzoom: 4,
     paint: {
       'circle-radius': 5,
       'circle-color': '#252A31',
@@ -617,7 +618,7 @@ function onMapLoaded() {
   mapsLoaded++;
   if (mapsLoaded < 2) return;
 
-  fetch('/static/data/countries-110m.geojson?v=50m3')
+  fetch('/static/data/countries-110m.geojson?v=50m4')
     .then(r => r.json())
     .then(geo => {
       baseGeoJSON = geo;

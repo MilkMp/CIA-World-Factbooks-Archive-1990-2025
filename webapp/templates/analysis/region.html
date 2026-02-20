@@ -319,7 +319,7 @@ function buildColorExpr(indicator) {
 }
 
 map.on('load', function() {
-  fetch('/static/data/countries-110m.geojson?v=50m3')
+  fetch('/static/data/countries-110m.geojson?v=50m4')
     .then(r => r.json())
     .then(geo => {
       /* Embed data into GeoJSON properties */
@@ -347,7 +347,7 @@ map.on('load', function() {
         id: 'country-fills',
         type: 'fill',
         source: 'countries',
-        filter: ['==', ['get', 'ft'], 'poly'],
+        filter: ['!=', ['geometry-type'], 'Point'],
         paint: {
           'fill-color': buildColorExpr(currentIndicator),
           'fill-opacity': 0.85,
@@ -359,7 +359,7 @@ map.on('load', function() {
         id: 'country-borders',
         type: 'line',
         source: 'countries',
-        filter: ['==', ['get', 'ft'], 'poly'],
+        filter: ['!=', ['geometry-type'], 'Point'],
         paint: { 'line-color': '#2F343C', 'line-width': 0.5 },
       });
 
@@ -367,7 +367,8 @@ map.on('load', function() {
         id: 'country-circles',
         type: 'circle',
         source: 'countries',
-        filter: ['==', ['get', 'ft'], 'pt'],
+        filter: ['==', ['geometry-type'], 'Point'],
+        minzoom: 4,
         paint: {
           'circle-radius': 5,
           'circle-color': buildColorExpr(currentIndicator),
