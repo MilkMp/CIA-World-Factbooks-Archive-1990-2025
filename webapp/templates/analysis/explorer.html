@@ -230,6 +230,8 @@
     <div id="scatter-x" class="ss-wrap"></div>
     <label>Y Axis</label>
     <div id="scatter-y" class="ss-wrap"></div>
+    <label>Year</label>
+    <select id="scatter-year" style="background:#111418;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:4px 8px;font-size:0.8rem;"></select>
     <label class="ex-toggle"><input type="checkbox" id="scatter-log"> Log scale</label>
   </div>
   <div class="region-filters" id="scatter-regions"></div>
@@ -304,13 +306,15 @@
   <div class="ex-controls">
     <label>Size by</label>
     <div id="treemap-ind" class="ss-wrap"></div>
+    <label>Year</label>
+    <select id="treemap-year" style="background:#111418;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:4px 8px;font-size:0.8rem;"></select>
   </div>
   <div class="ex-chart" id="chart-treemap"></div>
 </div>
 
 <div class="methodology-note" style="margin:24px 0;padding:12px 16px;background:#1C2127;border:1px solid #2F343C;border-radius:4px;font-size:0.78rem;color:#5F6B7C;">
   <strong style="color:#8F99A8;">Data source:</strong>
-  {{ year }} CIA World Factbook (latest year). Heatmap and Ranking Race pull all years 1990&ndash;2025.
+  All tabs support year selection (1990&ndash;{{ year }}). Heatmap and Ranking Race show all years by default.
   Bubble size on the scatter plot represents population. Countries without data for a given indicator are excluded.
   <br><br>
   <strong style="color:#8F99A8;">Military Data Note:</strong>
@@ -568,10 +572,13 @@
   });
 
   /* ── Data fetchers ── */
-  function fetchMapData() {
-    if (mapDataCache) return Promise.resolve(mapDataCache);
-    return fetch('/api/analysis/map-data').then(function(r) { return r.json(); })
-      .then(function(data) { mapDataCache = data; return data; });
+  var mapDataByYear = {};
+  function fetchMapData(year) {
+    if (!year) year = {{ year }};
+    if (mapDataByYear[year]) { mapDataCache = mapDataByYear[year]; return Promise.resolve(mapDataCache); }
+    var url = year === {{ year }} ? '/api/analysis/map-data' : '/api/analysis/map-data/' + year;
+    return fetch(url).then(function(r) { return r.json(); })
+      .then(function(data) { mapDataByYear[year] = data; mapDataCache = data; return data; });
   }
 
   function fetchAllYears(indicator) {
@@ -639,8 +646,23 @@
     });
   })();
 
+  /* Populate scatter year dropdown */
+  (function() {
+    var sel = document.getElementById('scatter-year');
+    for (var y = {{ year }}; y >= 1990; y--) {
+      var o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === {{ year }}) o.selected = true;
+      sel.appendChild(o);
+    }
+    sel.addEventListener('change', function() {
+      fetchMapData(+sel.value).then(function(data) { renderScatter(data); });
+    });
+  })();
+
   function loadScatter() {
-    fetchMapData().then(function(data) { renderScatter(data); });
+    var yr = +document.getElementById('scatter-year').value || {{ year }};
+    fetchMapData(yr).then(function(data) { renderScatter(data); });
   }
 
   function renderScatter(data) {
@@ -1090,8 +1112,23 @@
   /* ════════════════════════════════════════════════════════════
      TAB 4 — Treemap
      ════════════════════════════════════════════════════════════ */
+  /* Populate treemap year dropdown */
+  (function() {
+    var sel = document.getElementById('treemap-year');
+    for (var y = {{ year }}; y >= 1990; y--) {
+      var o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === {{ year }}) o.selected = true;
+      sel.appendChild(o);
+    }
+    sel.addEventListener('change', function() {
+      fetchMapData(+sel.value).then(function(data) { renderTreemap(data); });
+    });
+  })();
+
   function loadTreemap() {
-    fetchMapData().then(function(data) { renderTreemap(data); });
+    var yr = +document.getElementById('treemap-year').value || {{ year }};
+    fetchMapData(yr).then(function(data) { renderTreemap(data); });
   }
 
   function renderTreemap(data) {
@@ -1172,7 +1209,8 @@
   }
 
   ssTreemapInd = new SearchSelect('treemap-ind', TREEMAP_OPTS, 'population', function() {
-    if (mapDataCache) renderTreemap(mapDataCache);
+    var yr = +document.getElementById('treemap-year').value || {{ year }};
+    fetchMapData(yr).then(function(data) { renderTreemap(data); });
   });
 
   /* ── Initialize first tab ── */

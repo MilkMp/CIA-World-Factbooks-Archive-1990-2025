@@ -25,6 +25,12 @@ def _latest_year():
 
 ANALYSIS_YEAR = _latest_year()
 
+
+def _all_years():
+    """Return list of all available years, descending."""
+    rows = sql("SELECT DISTINCT Year FROM Countries ORDER BY Year DESC")
+    return [r['Year'] for r in rows]
+
 # Fields to extract for regional overview
 INDICATOR_FIELDS = [
     'Population', 'GDP (purchasing power parity)',
@@ -124,22 +130,26 @@ def _get_country_indicators(iso_codes, year=ANALYSIS_YEAR):
     return result
 
 
-def _all_country_map_data():
+def _all_country_map_data(year=None):
     """Return map data for all countries across all COCOM regions."""
+    if year is None:
+        year = ANALYSIS_YEAR
     all_data = []
     for region, codes in COCOM.items():
-        indicators = _get_country_indicators(codes)
+        indicators = _get_country_indicators(codes, year=year)
         for c in indicators:
             c['cocom'] = region
             all_data.append(c)
     return all_data
 
 
-def _region_summary():
+def _region_summary(year=None):
     """Build summary stats for each COCOM region."""
+    if year is None:
+        year = ANALYSIS_YEAR
     summaries = []
     for region, codes in COCOM.items():
-        indicators = _get_country_indicators(codes)
+        indicators = _get_country_indicators(codes, year=year)
         pops = [x['population'] for x in indicators if x['population']]
         gdps = [x['gdp_billions'] for x in indicators if x['gdp_billions']]
         mils = [x['mil_pct_gdp'] for x in indicators if x['mil_pct_gdp']]
@@ -169,9 +179,10 @@ async def analysis_home(request: Request):
 
 
 @router.get("/analysis/regional")
-async def analysis_dashboard(request: Request):
-    summaries = _region_summary()
-    map_data = _all_country_map_data()
+async def analysis_dashboard(request: Request, year: int = None):
+    yr = year if year and 1990 <= year <= ANALYSIS_YEAR else ANALYSIS_YEAR
+    summaries = _region_summary(year=yr)
+    map_data = _all_country_map_data(year=yr)
 
     # Global aggregate KPIs
     total_entities = sum(s['country_count'] for s in summaries)
@@ -186,7 +197,8 @@ async def analysis_dashboard(request: Request):
         "request": request,
         "summaries": summaries,
         "map_data": map_data,
-        "year": ANALYSIS_YEAR,
+        "year": yr,
+        "years": _all_years(),
         "mapbox_token": settings.MAPBOX_TOKEN,
         "global_kpi": {
             "entities": total_entities,
@@ -199,29 +211,32 @@ async def analysis_dashboard(request: Request):
 
 
 @router.get("/analysis/region/{cocom}")
-async def region_detail(request: Request, cocom: str):
+async def region_detail(request: Request, cocom: str, year: int = None):
     cocom = cocom.upper()
+    yr = year if year and 1990 <= year <= ANALYSIS_YEAR else ANALYSIS_YEAR
     codes = COCOM.get(cocom, [])
     if not codes:
         return templates.TemplateResponse("analysis/region.html", {
             "request": request, "region": cocom,
-            "region_name": "Unknown Region", "indicators": [], "year": ANALYSIS_YEAR,
+            "region_name": "Unknown Region", "indicators": [], "year": yr,
+            "years": _all_years(),
         })
 
-    indicators = _get_country_indicators(codes)
+    indicators = _get_country_indicators(codes, year=yr)
 
     return templates.TemplateResponse("analysis/region.html", {
         "request": request,
         "region": cocom,
         "region_name": COCOM_NAMES.get(cocom, cocom),
         "indicators": indicators,
-        "year": ANALYSIS_YEAR,
+        "year": yr,
+        "years": _all_years(),
         "mapbox_token": settings.MAPBOX_TOKEN,
     })
 
 
 @router.get("/analysis/dossier/{code}")
-async def country_dossier(request: Request, code: str):
+async def country_dossier(request: Request, code: str, year: int = None):
     # Find country
     master = sql_one("""
         SELECT MasterCountryID, CanonicalName, ISOAlpha2, EntityType
@@ -232,15 +247,22 @@ async def country_dossier(request: Request, code: str):
     if not master:
         return templates.TemplateResponse("analysis/dossier.html", {
             "request": request, "master": None, "code": code,
-            "sections": {}, "year": ANALYSIS_YEAR,
+            "sections": {}, "year": ANALYSIS_YEAR, "years": _all_years(),
         })
 
-    # Find the most recent year with data for this country
-    latest = sql_one("""
-        SELECT MAX(c.Year) AS yr FROM Countries c
+    # Get available years for this country
+    country_years = sql("""
+        SELECT DISTINCT c.Year FROM Countries c
         WHERE c.MasterCountryID = ?
+        ORDER BY c.Year DESC
     """, [master['MasterCountryID']])
-    data_year = latest['yr'] if latest and latest['yr'] else ANALYSIS_YEAR
+    available_years = [r['Year'] for r in country_years]
+
+    # Use requested year if valid, otherwise latest available
+    if year and year in available_years:
+        data_year = year
+    else:
+        data_year = available_years[0] if available_years else ANALYSIS_YEAR
 
     # Get all fields for that year
     fields = sql("""
@@ -326,6 +348,7 @@ async def country_dossier(request: Request, code: str):
         "code": code,
         "sections": sections,
         "year": data_year,
+        "years": available_years,
         "confidence": conf,
         "cocom": cocom_region,
         "cocom_name": COCOM_NAMES.get(cocom_region, ''),
@@ -399,7 +422,8 @@ def _parse_compare_value(field, raw):
 
 
 @router.get("/analysis/compare")
-async def compare_page(request: Request, a: str = "", b: str = ""):
+async def compare_page(request: Request, a: str = "", b: str = "", year: int = None):
+    yr = year if year and 1990 <= year <= ANALYSIS_YEAR else ANALYSIS_YEAR
     country_a = None
     country_b = None
     data_a = {}
@@ -425,7 +449,7 @@ async def compare_page(request: Request, a: str = "", b: str = ""):
                 JOIN Countries c ON cf.CountryID = c.CountryID
                 JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
                 WHERE c.MasterCountryID = ? AND c.Year = ? AND fm.IsNoise = 0
-            """, [country_a['MasterCountryID'], ANALYSIS_YEAR])
+            """, [country_a['MasterCountryID'], yr])
             data_a = {f['Field']: _parse_compare_value(f['Field'], f['Val']) for f in fields}
 
     if b:
@@ -440,7 +464,7 @@ async def compare_page(request: Request, a: str = "", b: str = ""):
                 JOIN Countries c ON cf.CountryID = c.CountryID
                 JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
                 WHERE c.MasterCountryID = ? AND c.Year = ? AND fm.IsNoise = 0
-            """, [country_b['MasterCountryID'], ANALYSIS_YEAR])
+            """, [country_b['MasterCountryID'], yr])
             data_b = {f['Field']: _parse_compare_value(f['Field'], f['Val']) for f in fields}
 
     # Get all countries for the selector dropdowns
@@ -467,7 +491,8 @@ async def compare_page(request: Request, a: str = "", b: str = ""):
         "all_countries": all_countries,
         "a": a,
         "b": b,
-        "year": ANALYSIS_YEAR,
+        "year": yr,
+        "years": _all_years(),
     })
 
 
@@ -515,8 +540,9 @@ async def explorer_page(request: Request):
 
 
 @router.get("/analysis/threats/{cocom}")
-async def threats_page(request: Request, cocom: str):
+async def threats_page(request: Request, cocom: str, year: int = None):
     cocom = cocom.upper()
+    yr = year if year and 1990 <= year <= ANALYSIS_YEAR else ANALYSIS_YEAR
     codes = COCOM.get(cocom, [])
 
     threat_fields = [
@@ -527,7 +553,8 @@ async def threats_page(request: Request, cocom: str):
     if not codes:
         return templates.TemplateResponse("analysis/threats.html", {
             "request": request, "region": cocom,
-            "region_name": "Unknown", "threats": [], "year": ANALYSIS_YEAR,
+            "region_name": "Unknown", "threats": [], "year": yr,
+            "years": _all_years(),
         })
 
     placeholders = ','.join(['?'] * len(codes))
@@ -550,7 +577,7 @@ async def threats_page(request: Request, cocom: str):
           AND fm.CanonicalName IN ('Terrorist group(s)','Illicit drugs',
               'Trafficking in persons','Disputes - international',
               'Refugees and internally displaced persons')
-    """, list(codes) + [ANALYSIS_YEAR])
+    """, list(codes) + [yr])
 
     by_country = {}
     for r in rows:
@@ -571,7 +598,8 @@ async def threats_page(request: Request, cocom: str):
         "region_name": COCOM_NAMES.get(cocom, cocom),
         "threats": threats,
         "threat_fields": threat_fields,
-        "year": ANALYSIS_YEAR,
+        "year": yr,
+        "years": _all_years(),
     })
 
 
@@ -747,6 +775,13 @@ async def api_all_years_data(indicator: str = "life_exp"):
     return _all_years_indicator(indicator)
 
 
+@router.get("/analysis/query-builder")
+async def query_builder_page(request: Request):
+    return templates.TemplateResponse("analysis/query_builder.html", {
+        "request": request, "year": ANALYSIS_YEAR,
+    })
+
+
 @router.get("/api/analysis/dossier/{code}")
 async def api_dossier(code: str):
     master = sql_one("""
@@ -778,6 +813,7 @@ _COMMS_FIELDS = (
     'Telephones - mobile cellular',
     'Telephones - fixed lines',
     'Broadband - fixed subscriptions',
+    'Population',
 )
 
 
@@ -818,11 +854,19 @@ def _get_comms_indicators(iso_codes, year=ANALYSIS_YEAR):
 
     result = []
     for iso, d in by_country.items():
+        inet_pct = extract_pct(d.get('Internet users', ''))
+        # Pre-2015: CIA only published raw user counts, no percentage.
+        # Estimate percentage from raw count / population.
+        if inet_pct is None:
+            raw_users = extract_number(d.get('Internet users', ''))
+            pop = extract_number(d.get('Population', ''))
+            if raw_users and pop and pop > 0:
+                inet_pct = round(min(raw_users / pop * 100, 100), 1)
         result.append({
             'name': d['name'],
             'iso2': d['iso2'],
             'iso3': d['iso3'],
-            'internet_pct': extract_pct(d.get('Internet users', '')),
+            'internet_pct': inet_pct,
             'mobile_per100': extract_per_100(d.get('Telephones - mobile cellular', '')),
             'fixed_per100': extract_per_100(d.get('Telephones - fixed lines', '')),
             'broadband_per100': extract_per_100(d.get('Broadband - fixed subscriptions', '')),
@@ -832,12 +876,13 @@ def _get_comms_indicators(iso_codes, year=ANALYSIS_YEAR):
 
 
 @router.get("/analysis/communications")
-async def communications_page(request: Request):
+async def communications_page(request: Request, year: int = None):
     """Communications infrastructure analysis dashboard."""
+    yr = year if year and 1990 <= year <= ANALYSIS_YEAR else ANALYSIS_YEAR
     all_data = []
     region_summaries = []
     for region, codes in COCOM.items():
-        indicators = _get_comms_indicators(codes)
+        indicators = _get_comms_indicators(codes, year=yr)
         for c in indicators:
             c['cocom'] = region
             all_data.append(c)
@@ -862,7 +907,8 @@ async def communications_page(request: Request):
 
     return templates.TemplateResponse("analysis/communications.html", {
         "request": request,
-        "year": ANALYSIS_YEAR,
+        "year": yr,
+        "years": _all_years(),
         "all_data": all_data,
         "region_summaries": region_summaries,
         "top10": top10,

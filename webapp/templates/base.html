@@ -16,6 +16,43 @@
   <meta name="twitter:image" content="https://cia-factbook-archive.fly.dev/static/og-image.png">
   <link rel="stylesheet" href="/static/css/intel-theme.css?v=15">
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "CIA World Factbook Archive",
+    "url": "https://cia-factbook-archive.fly.dev",
+    "description": "36 years of CIA World Factbook data (1990-2025). Search, browse, compare, and export over 1 million parsed fields across 281 entities.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://cia-factbook-archive.fly.dev/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "CIA World Factbook Archive 1990-2025",
+    "description": "Structured archive of 36 editions of the CIA World Factbook covering 281 entities with over 1 million parsed data fields. Includes demographics, economics, geography, military, communications, and government data.",
+    "url": "https://cia-factbook-archive.fly.dev",
+    "license": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "creator": {
+      "@type": "Organization",
+      "name": "Central Intelligence Agency",
+      "url": "https://www.cia.gov/the-world-factbook/"
+    },
+    "temporalCoverage": "1990/2025",
+    "spatialCoverage": { "@type": "Place", "name": "World" },
+    "distribution": {
+      "@type": "DataDownload",
+      "encodingFormat": "text/csv",
+      "contentUrl": "https://cia-factbook-archive.fly.dev/export"
+    },
+    "keywords": ["CIA World Factbook", "geopolitics", "country data", "demographics", "world statistics", "OSINT", "open source intelligence"]
+  }
+  </script>
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -58,6 +95,7 @@
       <a href="/analysis/changes" class="{{ 'active' if active_page == 'changes' else '' }}" @click="navOpen = false">Change Detection</a>
       <a href="/analysis/dissolved" class="{{ 'active' if active_page == 'dissolved' else '' }}" @click="navOpen = false">Dissolved States</a>
       <a href="/analysis/explorer" class="{{ 'active' if active_page == 'explorer' else '' }}" @click="navOpen = false">Advanced Analytics</a>
+      <a href="/analysis/query-builder" class="{{ 'active' if active_page == 'query-builder' else '' }}" @click="navOpen = false">Query Builder</a>
       <div class="nav-sub-label">Data Catalog</div>
       <a href="/analysis/fields" class="{{ 'active' if active_page == 'field-explorer' else '' }}" @click="navOpen = false">Field Explorer</a>
 

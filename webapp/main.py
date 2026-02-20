@@ -5,9 +5,9 @@ from pathlib import Path
 from fastapi import FastAPI, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from webapp.config import settings
-from webapp.database import sql_one
+from webapp.database import sql, sql_one
 from webapp.routers import archive, countries, analysis, analysis2, analysis3, export
 
 logger = logging.getLogger(__name__)
@@ -118,6 +118,99 @@ async def report_bug_submit(request: Request,
     return templates.TemplateResponse("report.html", {
         "request": request, "submitted": True,
     })
+
+
+BASE_URL = "https://cia-factbook-archive.fly.dev"
+
+STATIC_PAGES = [
+    ("/", "1.0", "weekly"),
+    ("/archive", "0.9", "weekly"),
+    ("/archive/library", "0.9", "weekly"),
+    ("/countries", "0.9", "monthly"),
+    ("/search", "0.8", "monthly"),
+    ("/analysis", "0.9", "weekly"),
+    ("/analysis/regional", "0.9", "weekly"),
+    ("/analysis/timeline", "0.8", "monthly"),
+    ("/analysis/map-compare", "0.8", "monthly"),
+    ("/analysis/rankings", "0.8", "weekly"),
+    ("/analysis/compare", "0.8", "monthly"),
+    ("/analysis/communications", "0.7", "monthly"),
+    ("/analysis/changes", "0.7", "monthly"),
+    ("/analysis/dissolved", "0.6", "monthly"),
+    ("/analysis/trends", "0.8", "weekly"),
+    ("/analysis/fields", "0.7", "monthly"),
+    ("/analysis/explorer", "0.7", "monthly"),
+    ("/analysis/query-builder", "0.7", "monthly"),
+    ("/analysis/quiz", "0.6", "monthly"),
+    ("/analysis/diff", "0.7", "monthly"),
+    ("/export", "0.7", "monthly"),
+    ("/api", "0.5", "monthly"),
+    ("/about", "0.4", "yearly"),
+    ("/sources", "0.4", "yearly"),
+    ("/report", "0.3", "yearly"),
+]
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap():
+    urls = []
+    for path, priority, freq in STATIC_PAGES:
+        urls.append(
+            f'  <url><loc>{BASE_URL}{path}</loc>'
+            f'<changefreq>{freq}</changefreq>'
+            f'<priority>{priority}</priority></url>'
+        )
+
+    # Dynamic: /archive/{year}
+    years = sql("SELECT DISTINCT Year FROM Countries ORDER BY Year")
+    for row in years:
+        y = row["Year"]
+        urls.append(
+            f'  <url><loc>{BASE_URL}/archive/{y}</loc>'
+            f'<changefreq>yearly</changefreq><priority>0.6</priority></url>'
+        )
+
+    # Dynamic: /archive/{year}/{code} for latest year
+    if years:
+        latest = years[-1]["Year"]
+        country_years = sql(
+            "SELECT mc.Code FROM Countries c JOIN MasterCountries mc ON c.CountryID = mc.CountryID WHERE c.Year = ?",
+            (latest,)
+        )
+        for row in country_years:
+            urls.append(
+                f'  <url><loc>{BASE_URL}/archive/{latest}/{row["Code"]}</loc>'
+                f'<changefreq>yearly</changefreq><priority>0.5</priority></url>'
+            )
+
+    # Dynamic: /analysis/dossier/{code}
+    master = sql("SELECT Code FROM MasterCountries WHERE Type = 'country' ORDER BY Code")
+    for row in master:
+        urls.append(
+            f'  <url><loc>{BASE_URL}/analysis/dossier/{row["Code"]}</loc>'
+            f'<changefreq>monthly</changefreq><priority>0.6</priority></url>'
+        )
+
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    xml += '\n'.join(urls)
+    xml += '\n</urlset>'
+    return Response(content=xml, media_type="application/xml")
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    content = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /api/\n"
+        "Disallow: /report\n"
+        "Disallow: /export/bulk/\n"
+        "Disallow: /export/print\n"
+        "\n"
+        f"Sitemap: {BASE_URL}/sitemap.xml\n"
+    )
+    return Response(content=content, media_type="text/plain")
 
 
 @app.get("/")

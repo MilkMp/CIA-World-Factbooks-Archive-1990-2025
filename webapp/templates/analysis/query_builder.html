@@ -1,0 +1,1074 @@
+{% extends "base.html" %}
+{% set active_page = "query-builder" %}
+{% block title %}Query Builder — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/js/dg2-echarts.js"></script>
+<style>
+  /* ── Controls panel ── */
+  .qb-panel {
+    background: #1C2127; border: 1px solid #2F343C; border-radius: 4px;
+    padding: 16px 20px; margin: 16px 0 0;
+  }
+  .qb-row {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;
+  }
+  .qb-row:last-child { margin-bottom: 0; }
+  .qb-row label {
+    font-size: 0.68rem; color: #8F99A8; letter-spacing: 0.8px;
+    text-transform: uppercase; font-weight: 600; min-width: 80px;
+  }
+
+  /* ── Searchable select ── */
+  .ss-wrap { position: relative; display: inline-block; min-width: 180px; }
+  .ss-input {
+    width: 100%; box-sizing: border-box;
+    background: #111418; border: 1px solid #383E47; border-radius: 3px;
+    color: #C5CBD3; padding: 5px 10px; font-size: 0.8rem; cursor: pointer;
+  }
+  .ss-input::placeholder { color: #5F6B7C; }
+  .ss-drop {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    max-height: 240px; overflow-y: auto; z-index: 60;
+    background: #1C2127; border: 1px solid #383E47; border-top: none;
+    border-radius: 0 0 3px 3px;
+  }
+  .ss-drop.open { display: block; }
+  .ss-item {
+    padding: 6px 10px; cursor: pointer; font-size: 0.78rem; color: #ABB3BF;
+  }
+  .ss-item:hover { background: #252A31; color: #C5CBD3; }
+  .ss-item.active { color: #2D72D2; font-weight: 600; }
+
+  /* ── Country picker ── */
+  .cpick { position: relative; flex: 1; min-width: 200px; max-width: 360px; }
+  .cpick-input {
+    width: 100%; box-sizing: border-box;
+    background: #111418; border: 1px solid #383E47; border-radius: 3px;
+    color: #C5CBD3; padding: 5px 10px; font-size: 0.8rem;
+  }
+  .cpick-input::placeholder { color: #5F6B7C; }
+  .cpick-drop {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    max-height: 280px; overflow-y: auto; z-index: 50;
+    background: #1C2127; border: 1px solid #383E47; border-top: none;
+    border-radius: 0 0 3px 3px;
+  }
+  .cpick-drop.open { display: block; }
+  .cpick-item {
+    padding: 5px 10px; cursor: pointer; font-size: 0.78rem; color: #ABB3BF;
+  }
+  .cpick-item:hover { background: #252A31; color: #C5CBD3; }
+  .cpick-item.in-list { color: #5F6B7C; font-style: italic; pointer-events: none; }
+
+  /* ── Country tags ── */
+  .ctags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .ctag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #252A31; border: 1px solid #383E47; border-radius: 3px;
+    padding: 2px 8px; font-size: 0.7rem; color: #ABB3BF;
+  }
+  .ctag-x {
+    cursor: pointer; color: #5F6B7C; font-size: 0.8rem; line-height: 1;
+  }
+  .ctag-x:hover { color: #CD4246; }
+
+  /* ── Region filters ── */
+  .region-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+  .region-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 3px; cursor: pointer;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; border: 1px solid #383E47;
+    background: #252A31; color: #ABB3BF;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  .region-btn .rdot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+  }
+  .region-btn.off { opacity: 0.35; }
+  .region-btn:hover { background: #2F343C; }
+
+  /* ── Range inputs ── */
+  .qb-row input[type="range"] { width: 100px; padding: 0; accent-color: #2D72D2; }
+  .range-val {
+    font-size: 0.75rem; color: #ABB3BF; min-width: 28px; text-align: center;
+    font-family: 'Consolas', monospace;
+  }
+
+  /* ── Run button ── */
+  .qb-run {
+    padding: 6px 24px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: #FFF; background: #2D72D2;
+    border: none; border-radius: 3px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .qb-run:hover { background: #215DB0; }
+  .qb-run:disabled { background: #383E47; color: #5F6B7C; cursor: not-allowed; }
+
+  /* ── Year select ── */
+  .qb-year {
+    background: #111418; border: 1px solid #383E47; border-radius: 3px;
+    color: #C5CBD3; padding: 5px 10px; font-size: 0.8rem;
+  }
+
+  /* ── Results area ── */
+  .qb-results { margin-top: 20px; display: none; }
+  .qb-results.visible { display: block; }
+  .qb-chart { width: 100%; height: 500px; background: #1C2127; border: 1px solid #2F343C; border-radius: 4px; }
+
+  /* ── Result controls ── */
+  .qb-result-bar {
+    display: flex; align-items: center; gap: 8px; margin-top: 12px; margin-bottom: 8px;
+  }
+  .qb-view-btn {
+    padding: 5px 14px; font-size: 0.7rem; font-weight: 600; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    background: #1C2127; border: 1px solid #383E47; color: #8F99A8;
+    transition: background 0.15s, color 0.15s; border-radius: 3px;
+  }
+  .qb-view-btn.active { background: #2D72D2; border-color: #2D72D2; color: #FFF; }
+  .qb-view-btn:hover:not(.active) { background: #252A31; }
+  .qb-export {
+    margin-left: auto;
+    padding: 5px 14px; font-size: 0.7rem; font-weight: 600; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    background: #252A31; border: 1px solid #383E47; color: #ABB3BF;
+    border-radius: 3px; transition: background 0.15s;
+  }
+  .qb-export:hover { background: #2F343C; }
+
+  /* ── Data table ── */
+  .qb-table-wrap {
+    max-height: 500px; overflow: auto; border: 1px solid #2F343C; border-radius: 4px;
+  }
+  .qb-table {
+    width: 100%; border-collapse: collapse; font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.78rem;
+  }
+  .qb-table th {
+    position: sticky; top: 0; z-index: 2;
+    background: #1C2127; color: #8F99A8; padding: 8px 10px; text-align: left;
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.8px;
+    border-bottom: 1px solid #2F343C; cursor: pointer; user-select: none;
+    white-space: nowrap;
+  }
+  .qb-table th:hover { color: #C5CBD3; }
+  .qb-table th .sort-arrow { margin-left: 4px; font-size: 0.6rem; }
+  .qb-table td {
+    padding: 6px 10px; color: #ABB3BF; border-bottom: 1px solid #1C2127;
+  }
+  .qb-table tr:hover td { background: #1C2127; }
+  .qb-table td.num {
+    text-align: right; font-family: 'Consolas', monospace; font-size: 0.75rem;
+  }
+  .qb-table td.pos { color: #29A634; }
+  .qb-table td.neg { color: #CD4246; }
+
+  /* ── Conditional controls ── */
+  .qb-cond { display: none; }
+  .qb-cond.visible { display: flex; }
+
+  /* ── Loading ── */
+  .qb-loading {
+    display: flex; align-items: center; justify-content: center;
+    height: 200px; color: #5F6B7C; font-size: 0.85rem;
+  }
+
+  @media (max-width: 800px) {
+    .qb-row { gap: 8px; }
+    .qb-row label { min-width: 60px; font-size: 0.62rem; }
+    .ss-wrap { min-width: 140px; }
+    .cpick { min-width: 140px; max-width: 100%; }
+    .qb-chart { height: 360px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE DIRECTORATE // QUERY BUILDER</div>
+  <h1>Structured Query Builder</h1>
+  <p class="subtitle">Compose data queries visually across 36 years of global indicators</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:8px;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/rankings" class="btn">Global Rankings</a>
+  <a href="/analysis/explorer" class="btn">Advanced Analytics</a>
+</div>
+
+<!-- ══════════ QUERY PANEL ══════════ -->
+<div class="qb-panel">
+  <!-- Row 1: Question type -->
+  <div class="qb-row">
+    <label>Question</label>
+    <div id="ss-qtype" class="ss-wrap" style="min-width:220px;"></div>
+  </div>
+
+  <!-- Row 2: Indicator (hidden for Compare) -->
+  <div class="qb-row qb-cond visible" id="row-indicator">
+    <label>Indicator</label>
+    <div id="ss-indicator" class="ss-wrap" style="min-width:220px;"></div>
+  </div>
+
+  <!-- Row 3a: Year + Top N + Region (Rank / Changes) -->
+  <div class="qb-row qb-cond visible" id="row-rank-filters">
+    <label>Year</label>
+    <select class="qb-year" id="sel-year"></select>
+    <label>Top N</label>
+    <input type="range" id="rng-topn" min="5" max="50" value="20">
+    <span class="range-val" id="val-topn">20</span>
+  </div>
+  <div class="qb-row qb-cond visible" id="row-rank-regions">
+    <label>Region</label>
+    <div class="region-filters" id="region-btns"></div>
+  </div>
+
+  <!-- Row 3b: Country picker (Track / Compare) -->
+  <div class="qb-row qb-cond" id="row-countries">
+    <label>Countries</label>
+    <div class="cpick" id="cpick-qb">
+      <input type="text" class="cpick-input" placeholder="Click to browse or type to search countries...">
+      <div class="cpick-drop"></div>
+    </div>
+  </div>
+  <div class="qb-cond" id="row-ctags" style="margin-bottom:10px;padding-left:92px;">
+    <div class="ctags" id="ctags-qb"></div>
+  </div>
+
+  <!-- Row 3c: Year range (Track) -->
+  <div class="qb-row qb-cond" id="row-year-range">
+    <label>Year Range</label>
+    <select class="qb-year" id="sel-year-start"></select>
+    <span style="color:#5F6B7C;">to</span>
+    <select class="qb-year" id="sel-year-end"></select>
+  </div>
+
+  <!-- Row 3d: Year + Bins (Distribution) -->
+  <div class="qb-row qb-cond" id="row-dist-filters">
+    <label>Year</label>
+    <select class="qb-year" id="sel-dist-year"></select>
+    <label>Bins</label>
+    <input type="range" id="rng-bins" min="5" max="25" value="12">
+    <span class="range-val" id="val-bins">12</span>
+  </div>
+
+  <!-- Row 3e: Year for Compare -->
+  <div class="qb-row qb-cond" id="row-compare-year">
+    <label>Year</label>
+    <select class="qb-year" id="sel-compare-year"></select>
+  </div>
+
+  <!-- Run button -->
+  <div class="qb-row" style="margin-top:14px;">
+    <label></label>
+    <button class="qb-run" id="btn-run">Run Query</button>
+    <span id="qb-status" style="font-size:0.75rem;color:#5F6B7C;margin-left:12px;"></span>
+  </div>
+</div>
+
+<!-- ══════════ RESULTS ══════════ -->
+<div class="qb-results" id="results-area">
+  <div class="qb-chart" id="qb-chart"></div>
+
+  <div class="qb-result-bar">
+    <button class="qb-view-btn active" data-view="chart">Chart</button>
+    <button class="qb-view-btn" data-view="table">Table</button>
+    <button class="qb-export" id="btn-csv">Export CSV</button>
+  </div>
+
+  <div id="view-chart" style="display:none;"></div>
+  <div id="view-table" style="display:none;">
+    <div class="qb-table-wrap">
+      <table class="qb-table" id="qb-table">
+        <thead id="qb-thead"></thead>
+        <tbody id="qb-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="methodology-note" style="margin:24px 0;padding:12px 16px;background:#1C2127;border:1px solid #2F343C;border-radius:4px;font-size:0.78rem;color:#5F6B7C;">
+  <strong style="color:#8F99A8;">About the Query Builder:</strong>
+  Select a question type and configure filters to explore 12 indicators across 281 entities and 36 years.
+  All queries run against the {{ year }} CIA World Factbook data. Results can be exported as CSV.
+  <br><br>
+  <strong style="color:#8F99A8;">Military Data Note:</strong>
+  Russia&rsquo;s military expenditure is reported as NA in the CIA Factbook for 1990&ndash;2007.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  'use strict';
+
+  /* ═══════════════════════════════════════════════
+     Constants
+     ═══════════════════════════════════════════════ */
+  var COCOM_COLORS = {
+    EUCOM: '#2D72D2', CENTCOM: '#D1980B', INDOPACOM: '#29A634',
+    AFRICOM: '#D33D17', SOUTHCOM: '#9D3F9D', NORTHCOM: '#00A396',
+  };
+  var COCOM_NAMES_MAP = {
+    EUCOM: 'Europe & Eurasia', CENTCOM: 'Middle East & C. Asia',
+    INDOPACOM: 'Indo-Pacific', AFRICOM: 'Africa',
+    SOUTHCOM: 'C. & S. America', NORTHCOM: 'North America',
+  };
+  var COCOM_ORDER = ['EUCOM','CENTCOM','INDOPACOM','AFRICOM','SOUTHCOM','NORTHCOM'];
+
+  var INDICATORS = [
+    {value: 'gdp_percap',    label: 'GDP per Capita ($)'},
+    {value: 'gdp_billions',  label: 'GDP PPP ($B)'},
+    {value: 'population',    label: 'Population'},
+    {value: 'life_exp',      label: 'Life Expectancy (years)'},
+    {value: 'mil_pct_gdp',   label: 'Military (% GDP)'},
+    {value: 'internet_pct',  label: 'Internet Users (%)'},
+    {value: 'mobile_per100', label: 'Mobile per 100'},
+    {value: 'pop_growth',    label: 'Population Growth (%)'},
+    {value: 'birth_rate',    label: 'Birth Rate (/1k)'},
+    {value: 'death_rate',    label: 'Death Rate (/1k)'},
+    {value: 'unemployment',  label: 'Unemployment (%)'},
+    {value: 'inflation',     label: 'Inflation (%)'},
+  ];
+  var IND_LABELS = {};
+  INDICATORS.forEach(function(o) { IND_LABELS[o.value] = o.label; });
+
+  var QTYPES = [
+    {value: 'rank',     label: 'Rank Countries'},
+    {value: 'track',    label: 'Track Over Time'},
+    {value: 'compare',  label: 'Compare Countries'},
+    {value: 'dist',     label: 'Distribution'},
+    {value: 'changes',  label: 'Biggest Changes'},
+  ];
+
+  var LINE_COLORS = [
+    '#2D72D2','#29A634','#D1980B','#D33D17','#9D3F9D',
+    '#00A396','#DB2C6F','#7961DB','#8EB125','#147EB3',
+  ];
+
+  /* ═══════════════════════════════════════════════
+     State
+     ═══════════════════════════════════════════════ */
+  var state = {
+    qtype: 'rank',
+    indicator: 'gdp_percap',
+    year: {{ year }},
+    topN: 20,
+    bins: 12,
+    regionFilter: null,  // null = all
+    countries: [],
+    yearStart: 1990,
+    yearEnd: {{ year }},
+  };
+  var queryCache = {};
+  var lastTableData = null;
+  var lastTableHeaders = null;
+  var chart = null;
+  var allCountryNames = [];
+  var sortCol = -1, sortAsc = true;
+
+  /* ═══════════════════════════════════════════════
+     SearchSelect (copied from explorer pattern)
+     ═══════════════════════════════════════════════ */
+  function SearchSelect(containerId, options, defaultValue, onChange) {
+    var self = this;
+    this.options = options; this.value = defaultValue; this.onChange = onChange;
+    this.container = document.getElementById(containerId);
+    this.input = document.createElement('input');
+    this.input.type = 'text'; this.input.className = 'ss-input';
+    this.input.value = this.getLabel(defaultValue);
+    this.drop = document.createElement('div');
+    this.drop.className = 'ss-drop';
+    this.container.appendChild(this.input);
+    this.container.appendChild(this.drop);
+    this.input.addEventListener('focus', function() { self.input.select(); self.render(''); });
+    this.input.addEventListener('input', function() { self.render(self.input.value); });
+    document.addEventListener('click', function(e) {
+      if (!self.container.contains(e.target)) {
+        self.drop.classList.remove('open');
+        self.input.value = self.getLabel(self.value);
+      }
+    });
+  }
+  SearchSelect.prototype.getLabel = function(v) {
+    for (var i = 0; i < this.options.length; i++)
+      if (this.options[i].value === v) return this.options[i].label;
+    return '';
+  };
+  SearchSelect.prototype.render = function(q) {
+    var self = this; q = (q || '').toLowerCase().trim();
+    var items = this.options.filter(function(o) { return !q || o.label.toLowerCase().indexOf(q) !== -1; });
+    this.drop.innerHTML = '';
+    items.forEach(function(o) {
+      var d = document.createElement('div');
+      d.className = 'ss-item' + (o.value === self.value ? ' active' : '');
+      d.textContent = o.label;
+      d.addEventListener('click', function() {
+        self.value = o.value; self.input.value = o.label;
+        self.drop.classList.remove('open'); self.onChange(o.value);
+      });
+      self.drop.appendChild(d);
+    });
+    this.drop.classList.add('open');
+  };
+
+  /* ═══════════════════════════════════════════════
+     CountryPicker (copied from explorer pattern)
+     ═══════════════════════════════════════════════ */
+  function CountryPicker(pickerId, tagsId, onChange) {
+    var self = this;
+    this.selected = []; this.allNames = []; this.onChange = onChange;
+    this.container = document.getElementById(pickerId);
+    this.input = this.container.querySelector('.cpick-input');
+    this.drop = this.container.querySelector('.cpick-drop');
+    this.tagsEl = document.getElementById(tagsId);
+    this.input.addEventListener('input', function() { self.showDrop(); });
+    this.input.addEventListener('focus', function() { self.showDrop(); });
+    document.addEventListener('click', function(e) {
+      if (!self.container.contains(e.target)) self.drop.classList.remove('open');
+    });
+  }
+  CountryPicker.prototype.setAvailable = function(names) { this.allNames = names.slice().sort(); };
+  CountryPicker.prototype.setSelected = function(names) {
+    this.selected = names.slice(); this.renderTags(); this.onChange(this.selected);
+  };
+  CountryPicker.prototype.showDrop = function() {
+    var q = this.input.value.toLowerCase().trim(), self = this;
+    var m = this.allNames.filter(function(n) {
+      return !q || n.toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 50);
+    if (!m.length) { this.drop.classList.remove('open'); return; }
+    this.drop.innerHTML = '';
+    m.forEach(function(name) {
+      var d = document.createElement('div'); d.className = 'cpick-item'; d.textContent = name;
+      if (self.selected.indexOf(name) !== -1) {
+        d.classList.add('in-list'); d.textContent = name + ' (added)';
+      } else {
+        d.addEventListener('click', function() {
+          if (self.selected.length >= 10) return;
+          self.selected.push(name); self.input.value = '';
+          self.drop.classList.remove('open'); self.renderTags(); self.onChange(self.selected);
+        });
+      }
+      self.drop.appendChild(d);
+    });
+    this.drop.classList.add('open');
+  };
+  CountryPicker.prototype.renderTags = function() {
+    var self = this; this.tagsEl.innerHTML = '';
+    this.selected.forEach(function(name, i) {
+      var s = document.createElement('span'); s.className = 'ctag';
+      s.innerHTML = name + ' <span class="ctag-x">&times;</span>';
+      s.querySelector('.ctag-x').addEventListener('click', function() {
+        self.selected = self.selected.filter(function(n) { return n !== name; });
+        self.renderTags(); self.onChange(self.selected);
+      });
+      self.tagsEl.appendChild(s);
+    });
+  };
+
+  /* ═══════════════════════════════════════════════
+     Formatters
+     ═══════════════════════════════════════════════ */
+  function fmtVal(key, v) {
+    if (v == null || isNaN(v)) return '\u2014';
+    if (key === 'gdp_billions') return '$' + ecFmtNum(v * 1e9);
+    if (key === 'gdp_percap') return '$' + Number(v).toLocaleString();
+    if (key === 'population') return ecFmtNum(v);
+    if (key === 'life_exp') return v.toFixed(1) + ' yrs';
+    if (key === 'mil_pct_gdp') return v.toFixed(2) + '% GDP';
+    if (key === 'internet_pct' || key === 'pop_growth' || key === 'unemployment' || key === 'inflation') return v.toFixed(1) + '%';
+    if (key === 'birth_rate' || key === 'death_rate') return v.toFixed(1) + '/1k';
+    if (key.indexOf('per100') !== -1) return v.toFixed(1) + '/100';
+    return String(v);
+  }
+
+  /* ═══════════════════════════════════════════════
+     Initialize controls
+     ═══════════════════════════════════════════════ */
+  var ssQtype = new SearchSelect('ss-qtype', QTYPES, 'rank', function(v) {
+    state.qtype = v; updateVisibility();
+  });
+  var ssIndicator = new SearchSelect('ss-indicator', INDICATORS, 'gdp_percap', function(v) {
+    state.indicator = v;
+  });
+
+  // Year selects
+  var years = [];
+  for (var y = {{ year }}; y >= 1990; y--) years.push(y);
+
+  function populateSelect(id, selectedVal) {
+    var sel = document.getElementById(id); sel.innerHTML = '';
+    years.forEach(function(yr) {
+      var o = document.createElement('option');
+      o.value = yr; o.textContent = yr;
+      if (yr === selectedVal) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+  populateSelect('sel-year', {{ year }});
+  populateSelect('sel-dist-year', {{ year }});
+  populateSelect('sel-compare-year', {{ year }});
+  populateSelect('sel-year-start', 1990);
+  populateSelect('sel-year-end', {{ year }});
+
+  // Year event listeners
+  document.getElementById('sel-year').addEventListener('change', function() { state.year = +this.value; });
+  document.getElementById('sel-dist-year').addEventListener('change', function() { state.year = +this.value; });
+  document.getElementById('sel-compare-year').addEventListener('change', function() { state.year = +this.value; });
+  document.getElementById('sel-year-start').addEventListener('change', function() { state.yearStart = +this.value; });
+  document.getElementById('sel-year-end').addEventListener('change', function() { state.yearEnd = +this.value; });
+
+  // Top N slider
+  var rngTopN = document.getElementById('rng-topn');
+  var valTopN = document.getElementById('val-topn');
+  rngTopN.addEventListener('input', function() { state.topN = +this.value; valTopN.textContent = this.value; });
+
+  // Bins slider
+  var rngBins = document.getElementById('rng-bins');
+  var valBins = document.getElementById('val-bins');
+  rngBins.addEventListener('input', function() { state.bins = +this.value; valBins.textContent = this.value; });
+
+  // Region buttons
+  var regionBtnsEl = document.getElementById('region-btns');
+  (function() {
+    // All button
+    var allBtn = document.createElement('div');
+    allBtn.className = 'region-btn'; allBtn.textContent = 'All';
+    allBtn.dataset.region = 'all';
+    allBtn.addEventListener('click', function() {
+      state.regionFilter = null;
+      regionBtnsEl.querySelectorAll('.region-btn').forEach(function(b) { b.classList.remove('off'); });
+    });
+    regionBtnsEl.appendChild(allBtn);
+
+    COCOM_ORDER.forEach(function(key) {
+      var btn = document.createElement('div');
+      btn.className = 'region-btn'; btn.dataset.region = key;
+      btn.innerHTML = '<span class="rdot" style="background:' + COCOM_COLORS[key] + '"></span>' + key;
+      btn.addEventListener('click', function() {
+        state.regionFilter = key;
+        regionBtnsEl.querySelectorAll('.region-btn').forEach(function(b) {
+          b.classList.toggle('off', b.dataset.region !== key && b.dataset.region !== 'all');
+        });
+        regionBtnsEl.querySelector('[data-region="all"]').classList.add('off');
+      });
+      regionBtnsEl.appendChild(btn);
+    });
+  })();
+
+  // Country picker
+  var cpicker = new CountryPicker('cpick-qb', 'ctags-qb', function(sel) {
+    state.countries = sel;
+  });
+
+  // Load country list for picker
+  fetch('/api/countries').then(function(r) { return r.json(); }).then(function(data) {
+    allCountryNames = data.map(function(c) { return c.CanonicalName; }).sort();
+    cpicker.setAvailable(allCountryNames);
+  });
+
+  /* ═══════════════════════════════════════════════
+     Visibility toggling
+     ═══════════════════════════════════════════════ */
+  var condRows = {
+    rank:    ['row-indicator', 'row-rank-filters', 'row-rank-regions'],
+    track:   ['row-indicator', 'row-countries', 'row-ctags', 'row-year-range'],
+    compare: ['row-countries', 'row-ctags', 'row-compare-year'],
+    dist:    ['row-indicator', 'row-dist-filters'],
+    changes: ['row-indicator', 'row-rank-filters', 'row-rank-regions'],
+  };
+  var allConds = ['row-indicator','row-rank-filters','row-rank-regions','row-countries','row-ctags','row-year-range','row-dist-filters','row-compare-year'];
+
+  function updateVisibility() {
+    var show = condRows[state.qtype] || [];
+    allConds.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.toggle('visible', show.indexOf(id) !== -1);
+    });
+    // Hide Top N for changes
+    if (state.qtype === 'changes') {
+      document.getElementById('rng-topn').parentElement.querySelectorAll('label')[1].style.display = 'none';
+      document.getElementById('rng-topn').style.display = 'none';
+      document.getElementById('val-topn').style.display = 'none';
+    } else if (state.qtype === 'rank') {
+      var row = document.getElementById('row-rank-filters');
+      row.querySelectorAll('label').forEach(function(l) { l.style.display = ''; });
+      document.getElementById('rng-topn').style.display = '';
+      document.getElementById('val-topn').style.display = '';
+    }
+  }
+  updateVisibility();
+
+  /* ═══════════════════════════════════════════════
+     View toggles (chart/table)
+     ═══════════════════════════════════════════════ */
+  var viewBtns = document.querySelectorAll('.qb-view-btn');
+  viewBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      viewBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var v = btn.dataset.view;
+      document.getElementById('qb-chart').style.display = v === 'chart' ? '' : 'none';
+      document.getElementById('view-table').style.display = v === 'table' ? '' : 'none';
+    });
+  });
+
+  /* ═══════════════════════════════════════════════
+     RUN QUERY
+     ═══════════════════════════════════════════════ */
+  document.getElementById('btn-run').addEventListener('click', runQuery);
+
+  function runQuery() {
+    var btn = document.getElementById('btn-run');
+    var statusEl = document.getElementById('qb-status');
+    btn.disabled = true; statusEl.textContent = 'Loading...';
+
+    var p;
+    switch (state.qtype) {
+      case 'rank':    p = queryRank(); break;
+      case 'track':   p = queryTrack(); break;
+      case 'compare': p = queryCompare(); break;
+      case 'dist':    p = queryDist(); break;
+      case 'changes': p = queryChanges(); break;
+      default:        p = Promise.resolve();
+    }
+
+    p.then(function() {
+      btn.disabled = false; statusEl.textContent = '';
+      document.getElementById('results-area').classList.add('visible');
+      // Show chart view by default
+      viewBtns.forEach(function(b) { b.classList.toggle('active', b.dataset.view === 'chart'); });
+      document.getElementById('qb-chart').style.display = '';
+      document.getElementById('view-table').style.display = 'none';
+    }).catch(function(err) {
+      btn.disabled = false; statusEl.textContent = 'Error: ' + err.message;
+    });
+  }
+
+  /* ═══════════════════════════════════════════════
+     1. RANK COUNTRIES
+     ═══════════════════════════════════════════════ */
+  function queryRank() {
+    var url = '/api/analysis/rankings?indicator=' + state.indicator + '&year=' + state.year;
+    return cachedFetch(url).then(function(data) {
+      // Filter by region
+      var filtered = state.regionFilter
+        ? data.filter(function(d) { return d.cocom === state.regionFilter; })
+        : data;
+      var top = filtered.slice(0, state.topN);
+
+      if (!chart) chart = initChart('qb-chart');
+      chart.setOption({
+        tooltip: {
+          trigger: 'axis', axisPointer: { type: 'shadow' },
+          formatter: function(params) {
+            var d = params[0];
+            return '<b>' + d.name + '</b><br>' + IND_LABELS[state.indicator] + ': ' + fmtVal(state.indicator, d.value);
+          }
+        },
+        grid: { left: 160, right: 30, top: 20, bottom: 30 },
+        xAxis: { type: 'value', axisLabel: { color: '#8F99A8', fontSize: 11 }, splitLine: { lineStyle: { color: '#2F343C' } } },
+        yAxis: {
+          type: 'category', inverse: true,
+          data: top.map(function(d) { return d.name; }),
+          axisLabel: { color: '#ABB3BF', fontSize: 11 },
+        },
+        series: [{
+          type: 'bar', barMaxWidth: 24,
+          data: top.map(function(d) {
+            return { value: d.value, itemStyle: { color: COCOM_COLORS[d.cocom] || '#5F6B7C' } };
+          }),
+          label: {
+            show: true, position: 'right', color: '#8F99A8', fontSize: 10,
+            formatter: function(p) { return fmtVal(state.indicator, p.value); }
+          },
+        }],
+      }, { replaceMerge: ['series'] });
+
+      // Table
+      lastTableHeaders = ['Rank', 'Country', IND_LABELS[state.indicator], 'Region'];
+      lastTableData = top.map(function(d, i) {
+        return [i + 1, d.name, d.value, d.cocom || '\u2014'];
+      });
+      renderTable(lastTableHeaders, lastTableData, [false, false, true, false]);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════
+     2. TRACK OVER TIME
+     ═══════════════════════════════════════════════ */
+  function queryTrack() {
+    if (!state.countries.length) return Promise.reject(new Error('Select at least one country'));
+    // We need iso2 codes — fetch country list
+    return cachedFetch('/api/countries').then(function(countries) {
+      var nameToIso = {};
+      countries.forEach(function(c) { if (c.ISOAlpha2) nameToIso[c.CanonicalName] = c.ISOAlpha2; });
+      var codes = state.countries.map(function(n) { return nameToIso[n]; }).filter(Boolean);
+      if (!codes.length) return Promise.reject(new Error('No valid country codes found'));
+
+      var url = '/api/analysis/timeseries?indicator=' + state.indicator + '&countries=' + codes.join(',');
+      return cachedFetch(url).then(function(data) {
+        // Group by country
+        var byCountry = {};
+        data.forEach(function(d) {
+          if (!byCountry[d.name]) byCountry[d.name] = [];
+          if (d.year >= state.yearStart && d.year <= state.yearEnd) {
+            byCountry[d.name].push(d);
+          }
+        });
+
+        var names = Object.keys(byCountry);
+        var allYears = [];
+        for (var yr = state.yearStart; yr <= state.yearEnd; yr++) allYears.push(yr);
+
+        if (!chart) chart = initChart('qb-chart');
+        chart.setOption({
+          tooltip: {
+            trigger: 'axis',
+            formatter: function(params) {
+              var lines = '<b>' + params[0].axisValue + '</b>';
+              params.forEach(function(p) {
+                lines += '<br>' + p.marker + ' ' + p.seriesName + ': ' + fmtVal(state.indicator, p.value);
+              });
+              return lines;
+            }
+          },
+          legend: { data: names, textStyle: { color: '#ABB3BF', fontSize: 11 }, top: 0 },
+          grid: { left: 80, right: 30, top: 40, bottom: 30 },
+          xAxis: { type: 'category', data: allYears, axisLabel: { color: '#8F99A8', fontSize: 11 }, boundaryGap: false },
+          yAxis: { type: 'value', axisLabel: { color: '#8F99A8', fontSize: 11, formatter: function(v) { return fmtVal(state.indicator, v); } }, splitLine: { lineStyle: { color: '#2F343C' } } },
+          series: names.map(function(name, i) {
+            var pts = byCountry[name];
+            var yearMap = {};
+            pts.forEach(function(p) { yearMap[p.year] = p.value; });
+            return {
+              name: name, type: 'line', smooth: true,
+              symbol: 'circle', symbolSize: 4,
+              lineStyle: { width: 2 },
+              itemStyle: { color: LINE_COLORS[i % LINE_COLORS.length] },
+              data: allYears.map(function(yr) { return yearMap[yr] != null ? yearMap[yr] : null; }),
+              connectNulls: true,
+            };
+          }),
+        }, { replaceMerge: ['series'] });
+
+        // Table: rows = years, cols = countries
+        lastTableHeaders = ['Year'].concat(names);
+        lastTableData = allYears.map(function(yr) {
+          var row = [yr];
+          names.forEach(function(name) {
+            var pts = byCountry[name];
+            var yearMap = {};
+            pts.forEach(function(p) { yearMap[p.year] = p.value; });
+            row.push(yearMap[yr] != null ? yearMap[yr] : null);
+          });
+          return row;
+        });
+        var numCols = [false]; names.forEach(function() { numCols.push(true); });
+        renderTable(lastTableHeaders, lastTableData, numCols);
+      });
+    });
+  }
+
+  /* ═══════════════════════════════════════════════
+     3. COMPARE COUNTRIES
+     ═══════════════════════════════════════════════ */
+  function queryCompare() {
+    if (state.countries.length < 2) return Promise.reject(new Error('Select at least 2 countries'));
+    var yr = +document.getElementById('sel-compare-year').value || state.year;
+    var url = '/api/analysis/map-data/' + yr;
+    return cachedFetch(url).then(function(data) {
+      var nameSet = {};
+      state.countries.forEach(function(n) { nameSet[n] = true; });
+      var matched = data.filter(function(d) { return nameSet[d.name]; });
+
+      // Available indicators on this data
+      var indKeys = ['life_exp','gdp_percap','gdp_billions','population','mil_pct_gdp','internet_pct','mobile_per100'];
+      var indLabels = indKeys.map(function(k) { return IND_LABELS[k] || k; });
+      var countryNames = matched.map(function(d) { return d.name; });
+
+      if (!chart) chart = initChart('qb-chart');
+
+      chart.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        legend: { data: countryNames, textStyle: { color: '#ABB3BF', fontSize: 11 }, top: 0 },
+        grid: { left: 180, right: 30, top: 40, bottom: 30 },
+        xAxis: { type: 'value', axisLabel: { color: '#8F99A8', fontSize: 11 }, splitLine: { lineStyle: { color: '#2F343C' } } },
+        yAxis: {
+          type: 'category', inverse: true, data: indLabels,
+          axisLabel: { color: '#ABB3BF', fontSize: 11 },
+        },
+        series: matched.map(function(country, ci) {
+          return {
+            name: country.name, type: 'bar', barGap: '10%',
+            itemStyle: { color: LINE_COLORS[ci % LINE_COLORS.length] },
+            data: indKeys.map(function(k) {
+              var raw = country[k];
+              if (raw == null) return null;
+              // Normalize for display: use percentile rank so different scales fit
+              var allVals = data.map(function(d) { return d[k]; }).filter(function(v) { return v != null; }).sort(function(a, b) { return a - b; });
+              var rank = allVals.indexOf(raw);
+              return { value: ((rank / (allVals.length - 1)) * 100).toFixed(1), raw: raw, key: k };
+            }),
+            label: {
+              show: true, position: 'right', color: '#8F99A8', fontSize: 10,
+              formatter: function(p) { return p.data && p.data.raw != null ? fmtVal(p.data.key, p.data.raw) : ''; }
+            },
+          };
+        }),
+      }, { replaceMerge: ['series'] });
+
+      // Table
+      lastTableHeaders = ['Indicator'].concat(countryNames);
+      lastTableData = indKeys.map(function(k, i) {
+        var row = [indLabels[i]];
+        matched.forEach(function(c) { row.push(c[k] != null ? c[k] : null); });
+        return row;
+      });
+      var numCols = [false]; countryNames.forEach(function() { numCols.push(true); });
+      renderTable(lastTableHeaders, lastTableData, numCols);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════
+     4. DISTRIBUTION
+     ═══════════════════════════════════════════════ */
+  function queryDist() {
+    var yr = +document.getElementById('sel-dist-year').value || state.year;
+    var url = '/api/analysis/all-years-data?indicator=' + state.indicator;
+    return cachedFetch(url).then(function(data) {
+      // Filter to selected year
+      var vals = data.filter(function(d) { return d.year === yr; }).map(function(d) { return d.value; });
+      if (!vals.length) return Promise.reject(new Error('No data for this year'));
+
+      vals.sort(function(a, b) { return a - b; });
+      var min = vals[0], max = vals[vals.length - 1];
+      var binCount = state.bins;
+      var binWidth = (max - min) / binCount;
+      if (binWidth === 0) binWidth = 1;
+
+      var bins = [];
+      for (var i = 0; i < binCount; i++) {
+        var lo = min + i * binWidth;
+        var hi = (i === binCount - 1) ? max : lo + binWidth;
+        bins.push({ lo: lo, hi: hi, count: 0 });
+      }
+      vals.forEach(function(v) {
+        var idx = Math.min(Math.floor((v - min) / binWidth), binCount - 1);
+        bins[idx].count++;
+      });
+
+      var mean = vals.reduce(function(s, v) { return s + v; }, 0) / vals.length;
+      var median = vals.length % 2 === 0
+        ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
+        : vals[Math.floor(vals.length / 2)];
+
+      if (!chart) chart = initChart('qb-chart');
+      chart.setOption({
+        tooltip: {
+          trigger: 'axis', axisPointer: { type: 'shadow' },
+          formatter: function(params) {
+            var d = params[0];
+            return d.name + '<br>Countries: <b>' + d.value + '</b>';
+          }
+        },
+        grid: { left: 60, right: 30, top: 30, bottom: 40 },
+        xAxis: {
+          type: 'category',
+          data: bins.map(function(b) { return fmtVal(state.indicator, b.lo) + ' \u2013 ' + fmtVal(state.indicator, b.hi); }),
+          axisLabel: { color: '#8F99A8', fontSize: 10, rotate: 30 },
+        },
+        yAxis: { type: 'value', name: 'Countries', nameTextStyle: { color: '#5F6B7C' }, axisLabel: { color: '#8F99A8', fontSize: 11 }, splitLine: { lineStyle: { color: '#2F343C' } } },
+        series: [{
+          type: 'bar', barMaxWidth: 40,
+          data: bins.map(function(b) { return b.count; }),
+          itemStyle: { color: '#2D72D2' },
+          markLine: {
+            silent: true,
+            data: [
+              { xAxis: Math.min(Math.floor((mean - min) / binWidth), binCount - 1), label: { formatter: 'Mean', color: '#D1980B', fontSize: 10 }, lineStyle: { color: '#D1980B', type: 'dashed' } },
+              { xAxis: Math.min(Math.floor((median - min) / binWidth), binCount - 1), label: { formatter: 'Median', color: '#29A634', fontSize: 10 }, lineStyle: { color: '#29A634', type: 'dashed' } },
+            ]
+          }
+        }],
+      }, { replaceMerge: ['series'] });
+
+      // Table
+      lastTableHeaders = ['Range', 'Count', '% of Total'];
+      lastTableData = bins.map(function(b) {
+        return [
+          fmtVal(state.indicator, b.lo) + ' \u2013 ' + fmtVal(state.indicator, b.hi),
+          b.count,
+          (b.count / vals.length * 100).toFixed(1) + '%',
+        ];
+      });
+      // Add summary row
+      lastTableData.push(['\u2014 Summary \u2014', vals.length + ' total', 'Mean: ' + fmtVal(state.indicator, mean)]);
+      renderTable(lastTableHeaders, lastTableData, [false, true, false]);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════
+     5. BIGGEST CHANGES
+     ═══════════════════════════════════════════════ */
+  function queryChanges() {
+    var yr = state.year;
+    var url = '/api/analysis/changes?year=' + yr + '&indicator=' + state.indicator;
+    if (state.regionFilter) url += '&region=' + state.regionFilter;
+    return cachedFetch(url).then(function(data) {
+      // Sort by absolute pct_change descending
+      data.sort(function(a, b) { return Math.abs(b.pct_change) - Math.abs(a.pct_change); });
+      var top = data.slice(0, 30);
+
+      if (!chart) chart = initChart('qb-chart');
+      chart.setOption({
+        tooltip: {
+          trigger: 'axis', axisPointer: { type: 'shadow' },
+          formatter: function(params) {
+            var d = params[0];
+            var item = top[d.dataIndex];
+            if (!item) return '';
+            return '<b>' + item.name + '</b><br>' +
+              'Previous: ' + fmtVal(state.indicator, item.prev_value) + '<br>' +
+              'Current: ' + fmtVal(state.indicator, item.curr_value) + '<br>' +
+              'Change: ' + (item.pct_change > 0 ? '+' : '') + item.pct_change.toFixed(1) + '%';
+          }
+        },
+        grid: { left: 160, right: 30, top: 20, bottom: 30 },
+        xAxis: {
+          type: 'value', name: '% Change', nameTextStyle: { color: '#5F6B7C' },
+          axisLabel: { color: '#8F99A8', fontSize: 11, formatter: function(v) { return v + '%'; } },
+          splitLine: { lineStyle: { color: '#2F343C' } }
+        },
+        yAxis: {
+          type: 'category', inverse: true,
+          data: top.map(function(d) { return d.name; }),
+          axisLabel: { color: '#ABB3BF', fontSize: 11 },
+        },
+        series: [{
+          type: 'bar', barMaxWidth: 20,
+          data: top.map(function(d) {
+            return {
+              value: +d.pct_change.toFixed(2),
+              itemStyle: { color: d.pct_change >= 0 ? '#29A634' : '#CD4246' },
+            };
+          }),
+          label: {
+            show: true, position: 'right', color: '#8F99A8', fontSize: 10,
+            formatter: function(p) { return (p.value > 0 ? '+' : '') + p.value + '%'; }
+          },
+        }],
+      }, { replaceMerge: ['series'] });
+
+      // Table
+      lastTableHeaders = ['Country', 'Previous', 'Current', 'Change', '% Change'];
+      lastTableData = top.map(function(d) {
+        return [
+          d.name,
+          d.prev_value,
+          d.curr_value,
+          d.abs_change,
+          d.pct_change,
+        ];
+      });
+      renderTable(lastTableHeaders, lastTableData, [false, true, true, true, true]);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════
+     Table rendering + sorting
+     ═══════════════════════════════════════════════ */
+  function renderTable(headers, rows, isNum) {
+    lastTableHeaders = headers;
+    lastTableData = rows;
+    var thead = document.getElementById('qb-thead');
+    var tbody = document.getElementById('qb-tbody');
+
+    thead.innerHTML = '<tr>' + headers.map(function(h, i) {
+      var arrow = sortCol === i ? (sortAsc ? ' \u25B2' : ' \u25BC') : '';
+      return '<th data-col="' + i + '">' + h + '<span class="sort-arrow">' + arrow + '</span></th>';
+    }).join('') + '</tr>';
+
+    // Sort
+    var sorted = rows.slice();
+    if (sortCol >= 0 && sortCol < headers.length) {
+      sorted.sort(function(a, b) {
+        var va = a[sortCol], vb = b[sortCol];
+        if (va == null && vb == null) return 0;
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        if (typeof va === 'number' && typeof vb === 'number') return sortAsc ? va - vb : vb - va;
+        return sortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+      });
+    }
+
+    tbody.innerHTML = sorted.map(function(row) {
+      return '<tr>' + row.map(function(cell, i) {
+        var cls = isNum[i] ? ' class="num"' : '';
+        var display = cell;
+        if (isNum[i] && typeof cell === 'number') {
+          display = fmtVal(state.indicator, cell);
+          if (headers[i] === '% Change') {
+            display = (cell >= 0 ? '+' : '') + cell.toFixed(1) + '%';
+            cls = cell >= 0 ? ' class="num pos"' : ' class="num neg"';
+          } else if (headers[i] === 'Rank') {
+            display = cell;
+            cls = ' class="num"';
+          }
+        }
+        if (cell == null) display = '\u2014';
+        return '<td' + cls + '>' + display + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+
+    // Header click sorting
+    thead.querySelectorAll('th').forEach(function(th) {
+      th.addEventListener('click', function() {
+        var col = +this.dataset.col;
+        if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+        renderTable(headers, rows, isNum);
+      });
+    });
+  }
+
+  /* ═══════════════════════════════════════════════
+     CSV Export
+     ═══════════════════════════════════════════════ */
+  document.getElementById('btn-csv').addEventListener('click', function() {
+    if (!lastTableHeaders || !lastTableData) return;
+    var csv = lastTableHeaders.join(',') + '\n';
+    lastTableData.forEach(function(row) {
+      csv += row.map(function(cell) {
+        if (cell == null) return '';
+        var s = String(cell);
+        if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1) return '"' + s.replace(/"/g, '""') + '"';
+        return s;
+      }).join(',') + '\n';
+    });
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'query_' + state.qtype + '_' + state.indicator + '_' + Date.now() + '.csv';
+    a.click();
+  });
+
+  /* ═══════════════════════════════════════════════
+     Cached fetch
+     ═══════════════════════════════════════════════ */
+  function cachedFetch(url) {
+    if (queryCache[url]) return Promise.resolve(queryCache[url]);
+    return fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+      queryCache[url] = data;
+      return data;
+    });
+  }
+
+})();
+</script>
+{% endblock %}

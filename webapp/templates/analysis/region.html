@@ -123,9 +123,15 @@
 
 <hr class="doc-rule double">
 
-<div style="margin:12px 0;">
+<div style="display:flex;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap;">
   <a href="/analysis/regional" class="btn">Back to Dashboard</a>
-  <a href="/analysis/threats/{{ region }}" class="btn" style="margin-left:8px;">Threat Environment</a>
+  <a href="/analysis/threats/{{ region }}" class="btn">Threat Environment</a>
+  <label style="font-size:0.72rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-left:auto;">Year</label>
+  <select onchange="window.location.href='/analysis/region/{{ region }}?year='+this.value" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+    {% for y in years %}
+    <option value="{{ y }}" {{ 'selected' if y == year else '' }}>{{ y }}</option>
+    {% endfor %}
+  </select>
 </div>
 
 {% if indicators %}
