@@ -858,8 +858,19 @@ def _get_comms_indicators(iso_codes, year=ANALYSIS_YEAR):
         # Pre-2015: CIA only published raw user counts, no percentage.
         # Estimate percentage from raw count / population.
         if inet_pct is None:
-            raw_users = extract_number(d.get('Internet users', ''))
+            inet_text = d.get('Internet users', '').lower()
             pop = extract_number(d.get('Population', ''))
+            # Parse "245 million", "3.449 million", "1.2 billion", or "115,311,958"
+            raw_users = None
+            m = re.search(r'([\d.]+)\s*billion', inet_text)
+            if m:
+                raw_users = float(m.group(1)) * 1e9
+            else:
+                m = re.search(r'([\d.]+)\s*million', inet_text)
+                if m:
+                    raw_users = float(m.group(1)) * 1e6
+                else:
+                    raw_users = extract_number(inet_text)
             if raw_users and pop and pop > 0:
                 inet_pct = round(min(raw_users / pop * 100, 100), 1)
         result.append({
