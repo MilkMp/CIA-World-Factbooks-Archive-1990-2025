@@ -7,6 +7,8 @@ COCOM = {
         'EE','FI','FR','GE','DE','GR','HU','IS','IE','IT','XK','LV','LI',
         'LT','LU','MC','MT','MD','ME','NL','MK','NO','PL','PT','RO','RU',
         'SM','RS','SK','SI','ES','SE','CH','TR','UA','GB','VA',
+        # Territories
+        'GI','FO','SJ',
     ],
     'CENTCOM': [
         'AF','BH','EG','IL','IR','IQ','JO','KW','KZ','KG','LB','OM','PK',
@@ -16,6 +18,8 @@ COCOM = {
         'AU','BD','BN','KH','CN','FJ','IN','ID','JP','KI','KP','KR',
         'LA','MY','MV','MH','FM','MN','MM','NR','NP','NZ','PW','PG',
         'PH','WS','SG','SB','LK','TW','TH','TL','TO','TV','VU','VN',
+        # Territories
+        'GU','AS','MP','NC','PF','WF','CK','NU','CX','CC','NF','HK','MO',
     ],
     'AFRICOM': [
         'DZ','AO','BJ','BW','BF','BI','CV','CM','CF','TD','KM','CG',
@@ -23,13 +27,21 @@ COCOM = {
         'KE','LS','LR','LY','MG','MW','ML','MR','MU','MA','MZ','NA',
         'NE','NG','RW','ST','SN','SC','SL','SO','ZA','SS','SD','TZ',
         'TG','TN','UG','ZM','ZW',
+        # Territories
+        'YT','TF','SH','RE',
     ],
     'SOUTHCOM': [
         'AG','AR','BB','BZ','BO','BR','CL','CO','CR','CU','DM',
         'DO','EC','SV','GD','GT','GY','HT','HN','JM','NI','PA',
         'PY','PE','KN','LC','VC','SR','TT','UY','VE',
+        # Territories
+        'AW','CW','SX','KY','TC','VG','AI','MS','GF','GP','MQ','FK','GS',
+        'PR','VI',
     ],
-    'NORTHCOM': ['US','CA','MX','BS','GL'],
+    'NORTHCOM': ['US','CA','MX','BS','GL',
+        # Territories
+        'BM',
+    ],
 }
 
 COCOM_NAMES = {

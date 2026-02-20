@@ -80,6 +80,7 @@ a:hover { text-decoration: underline; color: #FFFFFF; }
   top: 30px;
   height: calc(100vh - 30px);
   overflow-y: auto;
+  z-index: 10;
 }
 
 .sidebar-header {
