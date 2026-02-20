@@ -174,20 +174,20 @@ async def sitemap():
     if years:
         latest = years[-1]["Year"]
         country_years = sql(
-            "SELECT mc.Code FROM Countries c JOIN MasterCountries mc ON c.CountryID = mc.CountryID WHERE c.Year = ?",
+            "SELECT DISTINCT mc.ISOAlpha2 AS code FROM Countries c JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID WHERE c.Year = ? AND mc.ISOAlpha2 IS NOT NULL",
             (latest,)
         )
         for row in country_years:
             urls.append(
-                f'  <url><loc>{BASE_URL}/archive/{latest}/{row["Code"]}</loc>'
+                f'  <url><loc>{BASE_URL}/archive/{latest}/{row["code"]}</loc>'
                 f'<changefreq>yearly</changefreq><priority>0.5</priority></url>'
             )
 
     # Dynamic: /analysis/dossier/{code}
-    master = sql("SELECT Code FROM MasterCountries WHERE Type = 'country' ORDER BY Code")
+    master = sql("SELECT ISOAlpha2 AS code FROM MasterCountries WHERE EntityType = 'sovereign' AND ISOAlpha2 IS NOT NULL ORDER BY ISOAlpha2")
     for row in master:
         urls.append(
-            f'  <url><loc>{BASE_URL}/analysis/dossier/{row["Code"]}</loc>'
+            f'  <url><loc>{BASE_URL}/analysis/dossier/{row["code"]}</loc>'
             f'<changefreq>monthly</changefreq><priority>0.6</priority></url>'
         )
 
