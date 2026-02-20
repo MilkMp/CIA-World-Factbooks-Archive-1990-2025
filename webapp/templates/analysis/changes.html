@@ -3,7 +3,8 @@
 {% block title %}Change Detection — Intelligence Analysis{% endblock %}
 
 {% block head %}
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/js/dg2-echarts.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -128,22 +129,21 @@
 <script>
 const topMovers = {{ top_movers | tojson }};
 
-/* ── Top movers bar chart ── */
-const colors = topMovers.map(d => d.pct_change >= 0 ? '#29A634' : '#CD4246');
-Plotly.newPlot('movers-chart', [{
-  type: 'bar', orientation: 'h',
-  y: topMovers.map(d => d.name + ' (' + d.indicator_label + ')').reverse(),
-  x: topMovers.map(d => d.pct_change).reverse(),
-  marker: { color: colors.reverse() },
-  hovertemplate: '%{y}: %{x:+.1f}%<extra></extra>',
-}], {
-  paper_bgcolor: '#1C2127', plot_bgcolor: '#1C2127',
-  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
-  margin: { t: 4, r: 20, b: 30, l: 280 },
-  xaxis: { gridcolor: '#252A31', fixedrange: true, ticksuffix: '%', zeroline: true, zerolinecolor: '#5F6B7C' },
-  yaxis: { fixedrange: true, tickfont: { size: 10 } },
-  bargap: 0.2,
-}, { responsive: true, displayModeBar: false });
+/* ── Top movers bar chart (ECharts) ── */
+var moversLabels = topMovers.map(d => d.name + ' (' + d.indicator_label + ')').reverse();
+var moversValues = topMovers.map(d => d.pct_change).reverse();
+var moversColors = topMovers.map(d => d.pct_change >= 0 ? '#29A634' : '#CD4246').reverse();
+initChart('movers-chart').setOption({
+  grid: { left: 280, right: 20, top: 4, bottom: 30 },
+  xAxis: { type: 'value', axisLabel: { formatter: '{value}%' },
+    splitLine: { lineStyle: { color: '#252A31' } } },
+  yAxis: { type: 'category', data: moversLabels, axisLabel: { fontSize: 10 } },
+  series: [{ type: 'bar', data: moversValues.map(function(v, i) {
+      return { value: v, itemStyle: { color: moversColors[i] } };
+    }), barWidth: '60%' }],
+  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
+    formatter: function(p) { return '<b>' + p[0].name + '</b><br>' + (p[0].value >= 0 ? '+' : '') + p[0].value.toFixed(1) + '%'; } },
+});
 
 /* ── Client-side filtering ── */
 document.getElementById('filter-indicator').addEventListener('change', applyFilters);

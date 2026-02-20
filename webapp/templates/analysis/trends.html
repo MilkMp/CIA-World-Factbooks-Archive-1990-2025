@@ -3,7 +3,8 @@
 {% block title %}Global Trends — Intelligence Analysis{% endblock %}
 
 {% block head %}
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/js/dg2-echarts.js"></script>
 <style>
   .trends-grid {
     display: grid;
@@ -100,80 +101,53 @@ var MILESTONES = [
   {year: 2020, label: 'COVID-19'},
 ];
 
-var chartLayout = {
-  paper_bgcolor: '#1C2127',
-  plot_bgcolor: '#1C2127',
-  font: {family: "-apple-system, 'Segoe UI', sans-serif", color: '#8F99A8', size: 11},
-  margin: {t: 10, r: 20, b: 40, l: 60},
-  xaxis: {
-    gridcolor: '#2F343C',
-    tickcolor: '#383E47',
-    dtick: 5,
-  },
-  yaxis: {
-    gridcolor: '#2F343C',
-    tickcolor: '#383E47',
-  },
-  hovermode: 'x unified',
-  showlegend: false,
+var hoverFormatters = {
+  population: function(v, n) { return ecFmtNum(v) + '<br>' + n + ' countries'; },
+  gdp_percap: function(v, n) { return '$' + Number(v).toLocaleString(undefined, {maximumFractionDigits:0}) + '<br>' + n + ' countries'; },
+  life_exp: function(v, n) { return Number(v).toFixed(1) + ' yrs<br>' + n + ' countries'; },
+  internet_pct: function(v, n) { return Number(v).toFixed(2) + '%<br>' + n + ' countries'; },
+  mil_pct_gdp: function(v, n) { return Number(v).toFixed(2) + '%<br>' + n + ' countries'; },
+  pop_growth: function(v, n) { return Number(v).toFixed(2) + '%<br>' + n + ' countries'; },
 };
-
-var chartConfig = {displayModeBar: false, responsive: true};
 
 Object.keys(trendsData).forEach(function(key) {
   var series = trendsData[key];
   if (!series || !series.length) return;
 
-  var years = series.map(function(d) { return d.year; });
+  var years = series.map(function(d) { return String(d.year); });
   var vals = series.map(function(d) { return d.value; });
   var ns = series.map(function(d) { return d.n; });
+  var fmtFn = hoverFormatters[key] || hoverFormatters.pop_growth;
 
-  var hovertemplate;
-  if (key === 'population') {
-    hovertemplate = '%{y:,.0f}<br>%{customdata} countries<extra></extra>';
-  } else if (key === 'gdp_percap') {
-    hovertemplate = '$%{y:,.0f}<br>%{customdata} countries<extra></extra>';
-  } else if (key === 'life_exp') {
-    hovertemplate = '%{y:.1f} yrs<br>%{customdata} countries<extra></extra>';
-  } else {
-    hovertemplate = '%{y:.2f}<br>%{customdata} countries<extra></extra>';
-  }
-
-  var trace = {
-    x: years,
-    y: vals,
-    customdata: ns,
-    type: 'scatter',
-    mode: 'lines+markers',
-    line: {color: COLORS[key], width: 2},
-    marker: {size: 3, color: COLORS[key]},
-    hovertemplate: hovertemplate,
-  };
-
-  var layout = JSON.parse(JSON.stringify(chartLayout));
-
-  // Add milestone annotations
-  var shapes = [];
-  var annotations = [];
-  MILESTONES.forEach(function(m) {
-    if (m.year >= years[0] && m.year <= years[years.length - 1]) {
-      shapes.push({
-        type: 'line', x0: m.year, x1: m.year,
-        y0: 0, y1: 1, yref: 'paper',
-        line: {color: '#383E47', width: 1, dash: 'dot'},
-      });
-      annotations.push({
-        x: m.year, y: 1, yref: 'paper',
-        text: m.label, showarrow: false,
-        font: {size: 9, color: '#5F6B7C'},
-        yanchor: 'bottom',
-      });
-    }
+  var milestoneData = MILESTONES.filter(function(m) {
+    return m.year >= series[0].year && m.year <= series[series.length - 1].year;
+  }).map(function(m) {
+    return { xAxis: String(m.year), label: { formatter: m.label } };
   });
-  layout.shapes = shapes;
-  layout.annotations = annotations;
 
-  Plotly.newPlot('chart-' + key, [trace], layout, chartConfig);
+  initChart('chart-' + key).setOption({
+    grid: { top: 10, right: 20, bottom: 40, left: 60 },
+    xAxis: { type: 'category', data: years, axisLabel: { interval: 4 } },
+    yAxis: { type: 'value' },
+    series: [{
+      type: 'line', data: vals, symbol: 'circle', symbolSize: 4,
+      lineStyle: { width: 2, color: COLORS[key] },
+      itemStyle: { color: COLORS[key] },
+      markLine: milestoneData.length ? {
+        silent: true, symbol: 'none',
+        lineStyle: { type: 'dashed', color: '#383E47', width: 1 },
+        label: { color: '#5F6B7C', fontSize: 9, position: 'insideEndTop' },
+        data: milestoneData,
+      } : undefined,
+    }],
+    tooltip: { trigger: 'axis',
+      formatter: function(params) {
+        var p = params[0];
+        var idx = p.dataIndex;
+        return '<b>' + p.name + '</b><br>' + fmtFn(p.value, ns[idx]);
+      },
+    },
+  });
 });
 </script>
 {% endblock %}

@@ -3,7 +3,8 @@
 {% block title %}{{ field_name }} — {{ master.CanonicalName if master else code }} — Archive{% endblock %}
 
 {% block head %}
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/js/dg2-echarts.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -120,23 +121,18 @@
     return;
   }
 
-  Plotly.newPlot('chart', [{
-    x: years,
-    y: values,
-    type: 'scatter',
-    mode: 'lines+markers',
-    line: { color: '#2D72D2', width: 2 },
-    marker: { size: 6, color: '#2D72D2' },
-    connectgaps: true,
-  }], {
-    paper_bgcolor: '#1C2127',
-    plot_bgcolor: '#1C2127',
-    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
-    xaxis: { title: 'Year', gridcolor: '#252A31', dtick: 5 },
-    yaxis: { title: '{{ field_name }}', gridcolor: '#252A31' },
-    margin: { t: 20, r: 20, b: 50, l: 80 },
-    height: 320,
-  }, { responsive: true, displayModeBar: false });
+  initChart('chart').setOption({
+    grid: { top: 20, right: 20, bottom: 50, left: 80 },
+    xAxis: { type: 'category', data: years.map(String), name: 'Year',
+      nameTextStyle: { color: '#5F6B7C', fontSize: 10 }, axisLabel: { interval: 4 } },
+    yAxis: { type: 'value', name: '{{ field_name }}',
+      nameTextStyle: { color: '#5F6B7C', fontSize: 10 } },
+    series: [{ type: 'line', data: values, symbol: 'circle', symbolSize: 6,
+      connectNulls: true,
+      lineStyle: { color: '#2D72D2', width: 2 },
+      itemStyle: { color: '#2D72D2' } }],
+    tooltip: { trigger: 'axis' },
+  });
 })();
 </script>
 {% endif %}

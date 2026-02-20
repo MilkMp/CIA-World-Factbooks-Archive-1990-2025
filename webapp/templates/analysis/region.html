@@ -5,7 +5,8 @@
 {% block head %}
 <link href="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.js"></script>
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/js/dg2-echarts.js"></script>
 <style>
 #region-map {
   width: 100%;
@@ -518,41 +519,43 @@ function hideCountryCard() {
   document.getElementById('country-card').style.display = 'none';
 }
 
-/* ── Bar Charts (Plotly) ── */
-const chartLayout = {
-  paper_bgcolor: '#1C2127',
-  plot_bgcolor: '#1C2127',
-  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
-  margin: { t: 20, r: 20, b: 100, l: 60 },
-  xaxis: { tickangle: -45, gridcolor: '#252A31', fixedrange: true },
-  yaxis: { gridcolor: '#252A31', fixedrange: true },
-};
+/* ── Bar Charts (ECharts) ── */
+const barGrid = { top: 20, right: 20, bottom: 100, left: 60 };
 
 const gdpData = data.filter(d => d.gdp_billions).sort((a,b) => b.gdp_billions - a.gdp_billions);
 if (gdpData.length) {
-  Plotly.newPlot('gdp-chart', [{
-    x: gdpData.map(d => d.name), y: gdpData.map(d => d.gdp_billions),
-    type: 'bar', marker: { color: '#D1980B' },
-  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: 'GDP ($B PPP)'}},
-  {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
+  initChart('gdp-chart').setOption({
+    grid: barGrid,
+    xAxis: { type: 'category', data: gdpData.map(d => d.name), axisLabel: { rotate: -45, fontSize: 10 } },
+    yAxis: { type: 'value', name: 'GDP ($B PPP)' },
+    series: [{ type: 'bar', data: gdpData.map(d => d.gdp_billions), itemStyle: { color: '#D1980B' } }],
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
+      formatter: function(p) { return '<b>' + p[0].name + '</b><br>$' + Number(p[0].value).toFixed(0) + 'B'; } },
+  });
 }
 
 const milData = data.filter(d => d.mil_pct_gdp).sort((a,b) => b.mil_pct_gdp - a.mil_pct_gdp);
 if (milData.length) {
-  Plotly.newPlot('mil-chart', [{
-    x: milData.map(d => d.name), y: milData.map(d => d.mil_pct_gdp),
-    type: 'bar', marker: { color: '#D33D17' },
-  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: '% of GDP'}},
-  {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
+  initChart('mil-chart').setOption({
+    grid: barGrid,
+    xAxis: { type: 'category', data: milData.map(d => d.name), axisLabel: { rotate: -45, fontSize: 10 } },
+    yAxis: { type: 'value', name: '% of GDP' },
+    series: [{ type: 'bar', data: milData.map(d => d.mil_pct_gdp), itemStyle: { color: '#D33D17' } }],
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
+      formatter: function(p) { return '<b>' + p[0].name + '</b><br>' + Number(p[0].value).toFixed(2) + '%'; } },
+  });
 }
 
 const lifeData = data.filter(d => d.life_exp).sort((a,b) => a.life_exp - b.life_exp);
 if (lifeData.length) {
-  Plotly.newPlot('life-chart', [{
-    x: lifeData.map(d => d.name), y: lifeData.map(d => d.life_exp),
-    type: 'bar', marker: { color: '#29A634' },
-  }], {...chartLayout, yaxis: {...chartLayout.yaxis, title: 'Years'}},
-  {responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset'});
+  initChart('life-chart').setOption({
+    grid: barGrid,
+    xAxis: { type: 'category', data: lifeData.map(d => d.name), axisLabel: { rotate: -45, fontSize: 10 } },
+    yAxis: { type: 'value', name: 'Years' },
+    series: [{ type: 'bar', data: lifeData.map(d => d.life_exp), itemStyle: { color: '#29A634' } }],
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
+      formatter: function(p) { return '<b>' + p[0].name + '</b><br>' + Number(p[0].value).toFixed(1) + ' yrs'; } },
+  });
 }
 </script>
 {% endif %}

@@ -3,7 +3,8 @@
 {% block title %}Dissolved States — Intelligence Analysis{% endblock %}
 
 {% block head %}
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/js/dg2-echarts.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -118,34 +119,43 @@ const CHART_COLORS = [
   '#00B3A4', '#DB2C6F', '#43BF4D', '#F5498B', '#FFC940',
   '#634DBF', '#FF6E4A', '#2EE6D6', '#8ABBFF', '#FF7373',
 ];
-const chartLayout = {
-  paper_bgcolor: '#1C2127', plot_bgcolor: '#1C2127',
-  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
-  xaxis: { gridcolor: '#252A31', fixedrange: true, dtick: 5 },
-  yaxis: { gridcolor: '#252A31', fixedrange: true },
-  legend: { orientation: 'h', y: -0.15, x: 0.5, xanchor: 'center', font: { size: 10 } },
-  margin: { t: 8, r: 20, b: 60, l: 80 },
-  hovermode: 'x unified',
-};
 
 {% for group_key, group in groups.items() %}
 (function() {
   const series = {{ group.series | tojson }};
-  const traces = series.map(function(s, i) {
-    return {
-      type: 'scatter', mode: 'lines+markers',
-      name: s.name,
-      x: s.data.map(function(d) { return d.year; }),
-      y: s.data.map(function(d) { return d.value; }),
-      line: { color: CHART_COLORS[i % CHART_COLORS.length], width: 2 },
-      marker: { size: 3 },
-      hovertemplate: s.name + ': %{y:,.2f}<extra></extra>',
-    };
+  if (!series.length) return;
+  /* Collect all years across all series in this group */
+  const allYears = [];
+  const seenYears = {};
+  series.forEach(function(s) {
+    s.data.forEach(function(d) {
+      if (!seenYears[d.year]) { allYears.push(d.year); seenYears[d.year] = true; }
+    });
   });
-  Plotly.newPlot('chart-{{ group_key }}', traces,
-    Object.assign({}, chartLayout),
-    { responsive: true, displayModeBar: false }
-  );
+  allYears.sort();
+  const yearStrs = allYears.map(String);
+
+  const chart = initChart('chart-{{ group_key }}');
+  chart.setOption({
+    grid: { top: 8, right: 20, bottom: 60, left: 80 },
+    xAxis: { type: 'category', data: yearStrs, axisLabel: { interval: 4 } },
+    yAxis: { type: 'value' },
+    legend: { bottom: 0, type: 'scroll', textStyle: { fontSize: 10 } },
+    tooltip: { trigger: 'axis' },
+    series: series.map(function(s, i) {
+      /* Build sparse data array aligned to allYears */
+      var valByYear = {};
+      s.data.forEach(function(d) { valByYear[d.year] = d.value; });
+      var vals = allYears.map(function(y) { return valByYear[y] != null ? valByYear[y] : null; });
+      var clr = CHART_COLORS[i % CHART_COLORS.length];
+      return {
+        name: s.name, type: 'line', symbol: 'circle', symbolSize: 4,
+        data: vals, connectNulls: true,
+        lineStyle: { width: 2, color: clr },
+        itemStyle: { color: clr },
+      };
+    }),
+  });
 })();
 {% endfor %}
 </script>

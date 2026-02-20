@@ -5,7 +5,8 @@
 {% block head %}
 <link href="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/mapbox-gl@3.9.4/dist/mapbox-gl.min.js"></script>
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/js/dg2-echarts.js"></script>
 <style>
   .timeline-controls {
     display: flex;
@@ -398,7 +399,7 @@
     </div>
   </div>
 
-  <!-- Right Panel: Country Time Series (Plotly) -->
+  <!-- Right Panel: Country Time Series -->
   <div class="panel">
     <div class="panel-header">
       Country Time Series
@@ -735,7 +736,7 @@ playBtn.addEventListener('click', function() {
 
 
 // ════════════════════════════════════════════════════════
-// Country Time Series — Interactive Line Chart (Plotly)
+// Country Time Series — Interactive Line Chart (ECharts)
 // ════════════════════════════════════════════════════════
 
 const tsColors = [
@@ -749,6 +750,7 @@ const tsChips = document.getElementById('ts-chips');
 let tsSelected = [];
 let tsColorIdx = 0;
 let tsFetching = false;
+let tsChart = null;
 
 function tsGetColor() {
   const c = tsColors[tsColorIdx % tsColors.length];
@@ -776,19 +778,22 @@ function tsRenderChips() {
 }
 
 async function tsFetchAndRender() {
+  if (!tsChart) tsChart = initChart('ts-chart');
+
   if (!tsSelected.length) {
-    Plotly.react('ts-chart', [], {
-      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-      font: { color: '#5F6B7C', family: '-apple-system, Segoe UI, sans-serif', size: 12 },
-      xaxis: { visible: false }, yaxis: { visible: false },
-      annotations: [{
-        text: 'Click a country on the map or add one above',
-        xref: 'paper', yref: 'paper', x: 0.5, y: 0.5,
-        showarrow: false,
-        font: { size: 13, color: '#5F6B7C' },
+    tsChart.setOption({
+      xAxis: { show: false },
+      yAxis: { show: false },
+      series: [],
+      graphic: [{
+        type: 'text', left: 'center', top: 'center',
+        style: {
+          text: 'Click a country on the map or add one above',
+          fill: '#5F6B7C', fontSize: 13,
+          fontFamily: "-apple-system, 'Segoe UI', sans-serif",
+        },
       }],
-      margin: { t: 20, b: 20, l: 20, r: 20 },
-    }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+    }, { replaceMerge: ['series', 'graphic'] });
     return;
   }
 
@@ -808,48 +813,39 @@ async function tsFetchAndRender() {
     byCountry[d.iso2].values.push(d.value);
   });
 
-  const traces = tsSelected.map(c => {
-    const series = byCountry[c.iso2];
-    if (!series) return null;
+  /* Collect union of all years for the x-axis */
+  const yearSet = {};
+  data.forEach(d => { yearSet[d.year] = true; });
+  const allYears = Object.keys(yearSet).sort();
+
+  const ecSeries = tsSelected.map(c => {
+    const s = byCountry[c.iso2];
+    if (!s) return null;
+    /* Align values to allYears axis */
+    const valMap = {};
+    s.years.forEach((y, i) => { valMap[y] = s.values[i]; });
+    const vals = allYears.map(y => valMap[y] != null ? valMap[y] : null);
     return {
-      x: series.years,
-      y: series.values,
-      name: series.name,
-      type: 'scatter',
-      mode: 'lines+markers',
-      line: { color: c.color, width: 2.5 },
-      marker: { size: 4, color: c.color },
-      hovertemplate: '%{x}: %{y:,.2f}<extra>' + series.name + '</extra>',
+      name: s.name, type: 'line', symbol: 'circle', symbolSize: 5,
+      data: vals, connectNulls: true,
+      lineStyle: { width: 2.5, color: c.color },
+      itemStyle: { color: c.color },
     };
   }).filter(Boolean);
 
-  Plotly.react('ts-chart', traces, {
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, Roboto, sans-serif', size: 11 },
-    xaxis: {
-      title: { text: 'Year', font: { size: 10, color: '#5F6B7C' } },
-      gridcolor: '#252A31',
-      dtick: 5,
-      tickfont: { color: '#8F99A8', size: 9 },
-      fixedrange: true,
-    },
-    yaxis: {
-      title: { text: indicatorLabels[indicator], font: { size: 10, color: '#5F6B7C' } },
-      gridcolor: '#252A31',
-      tickfont: { color: '#8F99A8', size: 9 },
-      fixedrange: true,
-    },
-    legend: { visible: false },
-    margin: { t: 8, b: 40, l: 60, r: 12 },
-    dragmode: false,
-    hovermode: 'x unified',
-    hoverlabel: {
-      bgcolor: '#252A31',
-      bordercolor: '#383E47',
-      font: { color: '#C5CBD3', size: 11 },
-    },
-  }, { responsive: true, scrollZoom: false, displayModeBar: false, doubleClick: 'reset' });
+  tsChart.setOption({
+    graphic: [],
+    grid: { top: 8, right: 12, bottom: 40, left: 60 },
+    xAxis: { show: true, type: 'category', data: allYears,
+      name: 'Year', nameTextStyle: { color: '#5F6B7C', fontSize: 10 },
+      axisLabel: { interval: 4 } },
+    yAxis: { show: true, type: 'value',
+      name: indicatorLabels[indicator],
+      nameTextStyle: { color: '#5F6B7C', fontSize: 10 } },
+    legend: { show: false },
+    tooltip: { trigger: 'axis' },
+    series: ecSeries,
+  }, { replaceMerge: ['series', 'graphic'] });
 }
 
 function tsAddCountry(iso2) {

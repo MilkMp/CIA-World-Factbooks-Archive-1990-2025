@@ -3,7 +3,8 @@
 {% block title %}Global Rankings — Intelligence Analysis{% endblock %}
 
 {% block head %}
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/js/dg2-echarts.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -113,36 +114,26 @@
 const top10 = {{ top10 | tojson }};
 const bottom10 = {{ bottom10 | tojson }};
 
-/* ── Bar charts ── */
-Plotly.newPlot('top10-chart', [{
-  type: 'bar', orientation: 'h',
-  y: top10.map(d => d.name).reverse(),
-  x: top10.map(d => d.value).reverse(),
-  marker: { color: '#2D72D2' },
-  hovertemplate: '%{y}: %{x:,.2f}<extra></extra>',
-}], {
-  paper_bgcolor: '#1C2127', plot_bgcolor: '#1C2127',
-  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
-  margin: { t: 4, r: 20, b: 30, l: 180 },
-  xaxis: { gridcolor: '#252A31', fixedrange: true },
-  yaxis: { fixedrange: true, tickfont: { size: 11 } },
-  bargap: 0.25,
-}, { responsive: true, displayModeBar: false });
+/* ── Bar charts (ECharts) ── */
+initChart('top10-chart').setOption({
+  grid: { left: 180, right: 20, top: 4, bottom: 30 },
+  xAxis: { type: 'value' },
+  yAxis: { type: 'category', data: top10.map(d => d.name).reverse(), axisLabel: { fontSize: 11 } },
+  series: [{ type: 'bar', data: top10.map(d => d.value).reverse(),
+    itemStyle: { color: '#2D72D2' }, barWidth: '60%' }],
+  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
+    formatter: function(p) { return '<b>' + p[0].name + '</b><br>' + Number(p[0].value).toLocaleString(undefined, {maximumFractionDigits:2}); } },
+});
 
-Plotly.newPlot('bottom10-chart', [{
-  type: 'bar', orientation: 'h',
-  y: bottom10.map(d => d.name).reverse(),
-  x: bottom10.map(d => d.value).reverse(),
-  marker: { color: '#5F6B7C' },
-  hovertemplate: '%{y}: %{x:,.2f}<extra></extra>',
-}], {
-  paper_bgcolor: '#1C2127', plot_bgcolor: '#1C2127',
-  font: { color: '#ABB3BF', family: '-apple-system, Segoe UI, sans-serif', size: 10 },
-  margin: { t: 4, r: 20, b: 30, l: 180 },
-  xaxis: { gridcolor: '#252A31', fixedrange: true },
-  yaxis: { fixedrange: true, tickfont: { size: 11 } },
-  bargap: 0.25,
-}, { responsive: true, displayModeBar: false });
+initChart('bottom10-chart').setOption({
+  grid: { left: 180, right: 20, top: 4, bottom: 30 },
+  xAxis: { type: 'value' },
+  yAxis: { type: 'category', data: bottom10.map(d => d.name).reverse(), axisLabel: { fontSize: 11 } },
+  series: [{ type: 'bar', data: bottom10.map(d => d.value).reverse(),
+    itemStyle: { color: '#5F6B7C' }, barWidth: '60%' }],
+  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
+    formatter: function(p) { return '<b>' + p[0].name + '</b><br>' + Number(p[0].value).toLocaleString(undefined, {maximumFractionDigits:2}); } },
+});
 
 /* ── Update button ── */
 document.getElementById('update-btn').addEventListener('click', function(e) {

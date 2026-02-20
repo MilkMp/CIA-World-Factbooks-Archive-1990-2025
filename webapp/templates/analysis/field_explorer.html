@@ -3,7 +3,8 @@
 {% block title %}Field Explorer — Intelligence Analysis{% endblock %}
 
 {% block head %}
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/js/dg2-echarts.js"></script>
 <style>
   .fe-search {
     display: flex; align-items: center; gap: 10px;
@@ -147,16 +148,7 @@
 {% block scripts %}
 <script>
 var activeField = null;
-var chartLayout = {
-  paper_bgcolor: '#1C2127', plot_bgcolor: '#1C2127',
-  font: {family: "-apple-system, 'Segoe UI', sans-serif", color: '#8F99A8', size: 10},
-  margin: {t: 5, r: 10, b: 30, l: 40},
-  xaxis: {gridcolor: '#2F343C', tickcolor: '#383E47', dtick: 5},
-  yaxis: {gridcolor: '#2F343C', tickcolor: '#383E47', title: {text: 'Countries', font: {size: 10}}},
-  bargap: 0.15,
-  showlegend: false,
-};
-var chartConfig = {displayModeBar: false, responsive: true};
+var coverageChart = null;
 
 function filterFields() {
   var q = document.getElementById('field-filter').value.toLowerCase();
@@ -193,11 +185,15 @@ function showDetail(name) {
       // Coverage chart
       var years = data.coverage.map(function(d) { return d.Year; });
       var counts = data.coverage.map(function(d) { return d.Countries; });
-      Plotly.newPlot('coverage-chart', [{
-        x: years, y: counts, type: 'bar',
-        marker: {color: '#4C90F0'},
-        hovertemplate: '%{x}: %{y} countries<extra></extra>',
-      }], chartLayout, chartConfig);
+      if (!coverageChart) coverageChart = initChart('coverage-chart');
+      coverageChart.setOption({
+        grid: { left: 40, right: 10, top: 5, bottom: 30 },
+        xAxis: { type: 'category', data: years, axisLabel: { interval: 4 } },
+        yAxis: { type: 'value', name: 'Countries', nameTextStyle: { fontSize: 10 } },
+        series: [{ type: 'bar', data: counts, itemStyle: { color: '#4C90F0' }, barGap: '15%' }],
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
+          formatter: function(p) { return p[0].name + ': ' + p[0].value + ' countries'; } },
+      }, { replaceMerge: ['series'] });
 
       // Variants
       var vl = document.getElementById('variant-list');
