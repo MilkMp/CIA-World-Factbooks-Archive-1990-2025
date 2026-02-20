@@ -617,7 +617,7 @@ mapData.forEach(d => { dataByIso3[d.iso3] = d; });
 
 map.on('load', function() {
   /* Fetch GeoJSON and join with our data */
-  fetch('/static/data/countries-110m.geojson')
+  fetch('/static/data/countries-110m.geojson?v=50m')
     .then(r => r.json())
     .then(geo => {
       geojsonData = geo;

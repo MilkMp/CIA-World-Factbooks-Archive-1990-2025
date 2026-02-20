@@ -349,7 +349,7 @@ function updateLegend(indicator) {
 }
 
 map.on('load', function() {
-  fetch('/static/data/countries-110m.geojson')
+  fetch('/static/data/countries-110m.geojson?v=50m')
     .then(r => r.json())
     .then(geo => {
       geojsonData = geo;

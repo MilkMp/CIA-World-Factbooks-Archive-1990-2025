@@ -602,7 +602,7 @@ function onMapLoaded() {
   mapsLoaded++;
   if (mapsLoaded < 2) return;
 
-  fetch('/static/data/countries-110m.geojson')
+  fetch('/static/data/countries-110m.geojson?v=50m')
     .then(r => r.json())
     .then(geo => {
       baseGeoJSON = geo;
