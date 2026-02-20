@@ -15,7 +15,7 @@ COCOM = {
         'QA','SA','SY','TJ','TM','AE','UZ','YE',
     ],
     'INDOPACOM': [
-        'AU','BD','BN','KH','CN','FJ','IN','ID','JP','KI','KP','KR',
+        'AU','BD','BT','BN','KH','CN','FJ','IN','ID','JP','KI','KP','KR',
         'LA','MY','MV','MH','FM','MN','MM','NR','NP','NZ','PW','PG',
         'PH','WS','SG','SB','LK','TW','TH','TL','TO','TV','VU','VN',
         # Territories
