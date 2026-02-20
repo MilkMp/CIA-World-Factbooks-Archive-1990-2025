@@ -55,7 +55,7 @@ MIN_COUNTRIES_PER_YEAR = 20
 
 
 def _compute_trends():
-    """Aggregate indicator values across all sovereign countries per year."""
+    """Aggregate indicator values across all countries per year."""
     results = {}
 
     for key, (field_name, parser, agg, label, fmt) in TRENDS_INDICATORS.items():
@@ -66,7 +66,12 @@ def _compute_trends():
             JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
             JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
             WHERE fm.CanonicalName = ? AND fm.IsNoise = 0
-              AND mc.EntityType = 'sovereign'
+              AND (mc.EntityType = 'sovereign'
+                   OR NOT EXISTS (
+                       SELECT 1 FROM MasterCountries mc2
+                       WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                         AND mc2.EntityType = 'sovereign'
+                         AND mc2.MasterCountryID != mc.MasterCountryID))
             ORDER BY c.Year
         """, [field_name])
 
@@ -200,7 +205,12 @@ async def api_field_detail(name: str):
         JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
         JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
         WHERE fm.CanonicalName = ? AND c.Year = ? AND fm.IsNoise = 0
-          AND mc.EntityType = 'sovereign'
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
         ORDER BY mc.CanonicalName LIMIT 10
     """, [name, latest_year])
 
@@ -271,7 +281,13 @@ def _pick_random_country(year, exclude_ids):
             SELECT mc.MasterCountryID, mc.CanonicalName, mc.ISOAlpha2
             FROM Countries c
             JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
-            WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+            WHERE c.Year = ?
+              AND (mc.EntityType = 'sovereign'
+                   OR NOT EXISTS (
+                       SELECT 1 FROM MasterCountries mc2
+                       WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                         AND mc2.EntityType = 'sovereign'
+                         AND mc2.MasterCountryID != mc.MasterCountryID))
               AND mc.MasterCountryID NOT IN ({ex_ph})
             ORDER BY RANDOM() LIMIT 1
         """, [year] + exclude_ids)
@@ -279,7 +295,13 @@ def _pick_random_country(year, exclude_ids):
         SELECT mc.MasterCountryID, mc.CanonicalName, mc.ISOAlpha2
         FROM Countries c
         JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
-        WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+        WHERE c.Year = ?
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
         ORDER BY RANDOM() LIMIT 1
     """, [year])
 
@@ -289,7 +311,13 @@ def _pick_wrong_countries(year, exclude_id, n=3):
         SELECT DISTINCT mc.CanonicalName
         FROM Countries c
         JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
-        WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+        WHERE c.Year = ?
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
           AND mc.MasterCountryID != ?
         ORDER BY RANDOM() LIMIT ?
     """, [year, exclude_id, n])
@@ -387,7 +415,13 @@ def _quiz_capital(year, exclude_ids):
         JOIN Countries c ON cf.CountryID = c.CountryID
         JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
         JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
-        WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+        WHERE c.Year = ?
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
           AND mc.MasterCountryID != ?
           AND fm.CanonicalName = 'Capital' AND fm.IsNoise = 0
         ORDER BY RANDOM() LIMIT 15
@@ -425,7 +459,13 @@ def _quiz_higher_lower(year, exclude_ids):
         JOIN Countries c ON cf.CountryID = c.CountryID
         JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
         JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
-        WHERE c.Year = ? AND mc.EntityType = 'sovereign'
+        WHERE c.Year = ?
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
           AND fm.CanonicalName = ? AND fm.IsNoise = 0
     """, [year, stat['field']])
 
