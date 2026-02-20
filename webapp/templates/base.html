@@ -14,7 +14,7 @@
   <meta name="twitter:title" content="CIA World Factbook Archive">
   <meta name="twitter:description" content="36 years of structured intelligence data (1990-2025). 281 entities, 1,071,213 fields.">
   <meta name="twitter:image" content="https://cia-factbook-archive.fly.dev/static/og-image.png">
-  <link rel="stylesheet" href="/static/css/intel-theme.css?v=14">
+  <link rel="stylesheet" href="/static/css/intel-theme.css?v=15">
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   {% block head %}{% endblock %}
 </head>
@@ -57,6 +57,7 @@
       <a href="/analysis/communications" class="{{ 'active' if active_page == 'communications' else '' }}" @click="navOpen = false">Communications</a>
       <a href="/analysis/changes" class="{{ 'active' if active_page == 'changes' else '' }}" @click="navOpen = false">Change Detection</a>
       <a href="/analysis/dissolved" class="{{ 'active' if active_page == 'dissolved' else '' }}" @click="navOpen = false">Dissolved States</a>
+      <a href="/analysis/explorer" class="{{ 'active' if active_page == 'explorer' else '' }}" @click="navOpen = false">Advanced Analytics</a>
       <div class="nav-sub-label">Data Catalog</div>
       <a href="/analysis/fields" class="{{ 'active' if active_page == 'field-explorer' else '' }}" @click="navOpen = false">Field Explorer</a>
 

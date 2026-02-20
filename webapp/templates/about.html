@@ -22,7 +22,7 @@
     <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Entities</div>
   </div>
   <div style="background:#1C2127;padding:16px 18px;text-align:center;">
-    <div style="font-size:1.6rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">1.07M</div>
+    <div style="font-size:1.6rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">1.06M</div>
     <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Fields</div>
   </div>
   <div style="background:#1C2127;padding:16px 18px;text-align:center;">
@@ -62,6 +62,15 @@
   The CIA discontinued the online World Factbook, making this archive one of the last comprehensive preserved copies of the full publication history.
 </div>
 
+<div class="caveat" style="border-left:3px solid #2D72D2;margin-top:12px;">
+  <strong>v2 Data Drop &mdash; February 19, 2026</strong><br>
+  Comprehensive validation identified and repaired three data quality issues:
+  (1) 1996 data for 7 countries (Venezuela, Armenia, Greece, Luxembourg, Malta, Monaco, Tuvalu) was truncated in the Project Gutenberg source&mdash;replaced with complete data from the CIA's own original text file recovered from the Wayback Machine.
+  (2) Zimbabwe 1998 had 176 duplicate/noise fields from HTML parser artifacts&mdash;cleaned.
+  (3) Germany GDP 1994&ndash;1996 was stored under a self-named field instead of "National product"&mdash;corrected.
+  See <a href="/sources">Sources &amp; Methodology</a> for full details.
+</div>
+
 {# ── Section 02: Capabilities ── #}
 <div class="sec">
   <span class="sec-num">02</span>
@@ -72,7 +81,7 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:16px 0;">
   <a href="/search" style="text-decoration:none;display:block;background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;transition:border-color 200ms;">
     <div style="font-size:0.92rem;color:#C5CBD3;font-weight:600;margin-bottom:6px;">Boolean Search</div>
-    <p style="font-size:0.78rem;color:#8F99A8;line-height:1.5;margin:0;">Full-text search across 1,071,213 fields with AND/OR/NOT operators, phrase matching, field and year filtering.</p>
+    <p style="font-size:0.78rem;color:#8F99A8;line-height:1.5;margin:0;">Full-text search across 1,061,522 fields with AND/OR/NOT operators, phrase matching, field and year filtering.</p>
   </a>
   <a href="/archive" style="text-decoration:none;display:block;background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:16px;transition:border-color 200ms;">
     <div style="font-size:0.92rem;color:#C5CBD3;font-weight:600;margin-bottom:6px;">Browse &amp; Compare</div>
@@ -134,7 +143,7 @@
     <table class="data-table">
       <thead><tr><th>ETL Pipeline</th><th>Coverage</th></tr></thead>
       <tbody>
-        <tr><td>Plain-text parser</td><td>1990&ndash;2001 (Gutenberg)</td></tr>
+        <tr><td>Plain-text parser</td><td>1990&ndash;2001 (Gutenberg + CIA original)</td></tr>
         <tr><td>HTML parser (5 variants)</td><td>2000&ndash;2020</td></tr>
         <tr><td>JSON parser</td><td>2021&ndash;2025</td></tr>
         <tr><td>Field canonicalization</td><td>1,090 &rarr; 414 names</td></tr>

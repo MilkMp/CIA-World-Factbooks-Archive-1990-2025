@@ -1,4 +1,5 @@
 import re
+from functools import lru_cache
 
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
@@ -505,6 +506,14 @@ async def timeline_page(request: Request):
     })
 
 
+@router.get("/analysis/explorer")
+async def explorer_page(request: Request):
+    return templates.TemplateResponse("analysis/explorer.html", {
+        "request": request,
+        "year": ANALYSIS_YEAR,
+    })
+
+
 @router.get("/analysis/threats/{cocom}")
 async def threats_page(request: Request, cocom: str):
     cocom = cocom.upper()
@@ -695,6 +704,47 @@ async def api_timeseries(indicator: str = "life_exp", countries: str = ""):
                 'value': val,
             })
     return result
+
+
+@lru_cache(maxsize=16)
+def _all_years_indicator(indicator: str):
+    """Return all countries' values for every year for one indicator."""
+    if indicator not in INDICATOR_FIELD_MAP:
+        return []
+    field_name, parser = INDICATOR_FIELD_MAP[indicator]
+    rows = sql("""
+        SELECT mc.CanonicalName, mc.ISOAlpha2, c.Year, cf.Content
+        FROM CountryFields cf
+        JOIN Countries c ON cf.CountryID = c.CountryID
+        JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
+        JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+        WHERE fm.CanonicalName = ?
+          AND fm.IsNoise = 0
+          AND mc.ISOAlpha2 IS NOT NULL
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
+        ORDER BY mc.CanonicalName, c.Year
+    """, [field_name])
+    result = []
+    for r in rows:
+        val = parser(r['Content'])
+        if val is not None:
+            result.append({
+                'name': r['CanonicalName'],
+                'iso2': r['ISOAlpha2'],
+                'year': r['Year'],
+                'value': val,
+            })
+    return result
+
+
+@router.get("/api/analysis/all-years-data")
+async def api_all_years_data(indicator: str = "life_exp"):
+    return _all_years_indicator(indicator)
 
 
 @router.get("/api/analysis/dossier/{code}")

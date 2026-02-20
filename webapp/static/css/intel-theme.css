@@ -28,6 +28,17 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Dark scrollbars ── */
+* {
+  scrollbar-color: #383E47 #1C2127;
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #1C2127; }
+::-webkit-scrollbar-thumb { background: #383E47; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #404854; }
+::-webkit-scrollbar-corner { background: #1C2127; }
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -39,6 +50,17 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+select {
+  color-scheme: dark;
+  background: #1C2127;
+  border: 1px solid #383E47;
+  color: #C5CBD3;
+}
+select option {
+  background: #1C2127;
+  color: #C5CBD3;
 }
 
 a {

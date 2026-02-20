@@ -1,0 +1,1184 @@
+{% extends "base.html" %}
+{% set active_page = "explorer" %}
+{% block title %}Advanced Analytics — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/js/dg2-echarts.js"></script>
+<style>
+  /* ── Tabs ── */
+  .ex-tabs {
+    display: flex; gap: 0; margin: 16px 0 0; border-bottom: 1px solid #2F343C;
+  }
+  .ex-tab {
+    padding: 8px 20px; cursor: pointer;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: #5F6B7C; border: 1px solid transparent;
+    border-bottom: none; border-radius: 4px 4px 0 0; background: transparent;
+    transition: color 0.15s, background 0.15s;
+  }
+  .ex-tab:hover { color: #ABB3BF; }
+  .ex-tab.active {
+    color: #C5CBD3; background: #1C2127;
+    border-color: #2F343C; position: relative;
+  }
+  .ex-tab.active::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
+    height: 1px; background: #1C2127;
+  }
+
+  /* ── Tab panels ── */
+  .ex-panel { display: none; background: #1C2127; border: 1px solid #2F343C; border-top: none; border-radius: 0 0 4px 4px; padding: 16px; }
+  .ex-panel.active { display: block; }
+
+  /* ── Controls row ── */
+  .ex-controls {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .ex-controls label {
+    font-size: 0.68rem; color: #8F99A8; letter-spacing: 0.8px;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .ex-controls input[type="range"] {
+    background: #111418; border: 1px solid #383E47; border-radius: 3px;
+    color: #C5CBD3; padding: 5px 10px; font-size: 0.8rem;
+  }
+  .ex-controls input[type="range"] { width: 100px; padding: 0; }
+  .ex-controls .range-val {
+    font-size: 0.75rem; color: #ABB3BF; min-width: 28px; text-align: center;
+  }
+  .ex-controls .ex-toggle {
+    display: flex; align-items: center; gap: 4px; cursor: pointer;
+    font-size: 0.68rem; color: #8F99A8; letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .ex-controls .ex-toggle input { accent-color: #2D72D2; }
+  .ex-controls .ex-btn {
+    padding: 4px 12px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; color: #C5CBD3; background: #252A31;
+    border: 1px solid #383E47; border-radius: 3px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .ex-controls .ex-btn:hover { background: #2F343C; }
+
+  /* ── Region filters ── */
+  .region-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .region-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 3px; cursor: pointer;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; border: 1px solid #383E47;
+    background: #252A31; color: #ABB3BF;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  .region-btn .rdot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+  }
+  .region-btn.off { opacity: 0.35; }
+  .region-btn:hover { background: #2F343C; }
+
+  /* ── Searchable select ── */
+  .ss-wrap { position: relative; display: inline-block; min-width: 170px; }
+  .ss-input {
+    width: 100%; box-sizing: border-box;
+    background: #111418; border: 1px solid #383E47; border-radius: 3px;
+    color: #C5CBD3; padding: 5px 10px; font-size: 0.8rem; cursor: pointer;
+  }
+  .ss-input::placeholder { color: #5F6B7C; }
+  .ss-drop {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    max-height: 240px; overflow-y: auto; z-index: 60;
+    background: #1C2127; border: 1px solid #383E47; border-top: none;
+    border-radius: 0 0 3px 3px;
+  }
+  .ss-drop.open { display: block; }
+  .ss-item {
+    padding: 6px 10px; cursor: pointer; font-size: 0.78rem; color: #ABB3BF;
+  }
+  .ss-item:hover { background: #252A31; color: #C5CBD3; }
+  .ss-item.active { color: #2D72D2; font-weight: 600; }
+
+  /* ── Country picker ── */
+  .cpick { position: relative; flex: 1; min-width: 200px; max-width: 360px; }
+  .cpick-input {
+    width: 100%; box-sizing: border-box;
+    background: #111418; border: 1px solid #383E47; border-radius: 3px;
+    color: #C5CBD3; padding: 5px 10px; font-size: 0.8rem;
+  }
+  .cpick-input::placeholder { color: #5F6B7C; }
+  .cpick-drop {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    max-height: 200px; overflow-y: auto; z-index: 50;
+    background: #1C2127; border: 1px solid #383E47; border-top: none;
+    border-radius: 0 0 3px 3px;
+  }
+  .cpick-drop.open { display: block; }
+  .cpick-item {
+    padding: 5px 10px; cursor: pointer; font-size: 0.78rem; color: #ABB3BF;
+  }
+  .cpick-item:hover { background: #252A31; color: #C5CBD3; }
+  .cpick-item.in-list { color: #5F6B7C; font-style: italic; pointer-events: none; }
+
+  /* ── Country tags ── */
+  .ctags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .ctag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #252A31; border: 1px solid #383E47; border-radius: 3px;
+    padding: 2px 8px; font-size: 0.7rem; color: #ABB3BF;
+  }
+  .ctag-x {
+    cursor: pointer; color: #5F6B7C; font-size: 0.8rem; line-height: 1;
+  }
+  .ctag-x:hover { color: #CD4246; }
+
+  /* ── View toggle ── */
+  .vt-group { display: flex; gap: 0; }
+  .vt-btn {
+    padding: 5px 14px; font-size: 0.7rem; font-weight: 600; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    background: #1C2127; border: 1px solid #383E47; color: #8F99A8;
+    transition: background 0.15s, color 0.15s;
+  }
+  .vt-btn:first-child { border-radius: 3px 0 0 3px; }
+  .vt-btn:last-child { border-radius: 0 3px 3px 0; border-left: none; }
+  .vt-btn.active { background: #2D72D2; border-color: #2D72D2; color: #FFF; }
+  .vt-btn:hover:not(.active) { background: #252A31; }
+  .bump-view { display: none; }
+  .bump-view.active { display: block; }
+
+  /* ── Bar race controls ── */
+  .race-controls {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .race-year {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 1.2rem; font-weight: 700; color: #C5CBD3;
+    min-width: 44px; text-align: center;
+  }
+  .race-speed { padding: 3px 7px; font-size: 0.68rem; }
+  .race-speed.active { background: #2D72D2; border-color: #2D72D2; color: #FFF; }
+
+  /* ── Sparkline rows ── */
+  .spark-header {
+    display: grid;
+    grid-template-columns: 150px 80px 1fr 80px 70px;
+    padding: 6px 8px;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.65rem; color: #5F6B7C;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    border-bottom: 1px solid #2F343C;
+  }
+  .spark-row {
+    display: grid;
+    grid-template-columns: 150px 80px 1fr 80px 70px;
+    align-items: center;
+    padding: 5px 8px;
+    border-bottom: 1px solid #1C2127;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.78rem;
+  }
+  .spark-row:hover { background: #1C2127; }
+  .spark-name { color: #C5CBD3; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .spark-val { color: #8F99A8; text-align: right; font-family: 'Consolas', monospace; font-size: 0.72rem; }
+  .spark-delta { text-align: right; font-family: 'Consolas', monospace; font-size: 0.72rem; }
+  .spark-delta.up { color: #29A634; }
+  .spark-delta.down { color: #CD4246; }
+
+  /* ── Chart container ── */
+  .ex-chart { width: 100%; }
+  #chart-scatter { height: 560px; }
+  #chart-barrace { height: 560px; }
+  #chart-treemap { height: 560px; }
+
+  @media (max-width: 800px) {
+    .ex-tabs { overflow-x: auto; }
+    .ex-tab { padding: 8px 12px; font-size: 0.65rem; white-space: nowrap; }
+    .ex-controls { gap: 8px; }
+    .cpick { min-width: 140px; max-width: 100%; }
+    #chart-scatter, #chart-treemap { height: 380px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE DIRECTORATE // ADVANCED ANALYTICS</div>
+  <h1>Advanced Analytics</h1>
+  <p class="subtitle">Multi-dimensional exploration of 36 years of global indicator data</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:8px;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/trends" class="btn">Global Trends</a>
+  <a href="/analysis/rankings" class="btn">Global Rankings</a>
+</div>
+
+<!-- ── Tab bar ── -->
+<div class="ex-tabs">
+  <div class="ex-tab active" data-tab="scatter">Correlation</div>
+  <div class="ex-tab" data-tab="heatmap">Heatmap</div>
+  <div class="ex-tab" data-tab="bump">Ranking Race</div>
+  <div class="ex-tab" data-tab="treemap">Treemap</div>
+</div>
+
+<!-- ════════════ TAB 1: Correlation Scatter ════════════ -->
+<div class="ex-panel active" id="panel-scatter">
+  <div class="ex-controls">
+    <label>X Axis</label>
+    <div id="scatter-x" class="ss-wrap"></div>
+    <label>Y Axis</label>
+    <div id="scatter-y" class="ss-wrap"></div>
+    <label class="ex-toggle"><input type="checkbox" id="scatter-log"> Log scale</label>
+  </div>
+  <div class="region-filters" id="scatter-regions"></div>
+  <div class="ex-chart" id="chart-scatter"></div>
+</div>
+
+<!-- ════════════ TAB 2: Heatmap ════════════ -->
+<div class="ex-panel" id="panel-heatmap">
+  <div class="ex-controls">
+    <label>Indicator</label>
+    <div id="heatmap-ind" class="ss-wrap"></div>
+    <button class="ex-btn" id="heatmap-top" data-n="40">Top 40</button>
+    <button class="ex-btn" id="heatmap-clear">Clear</button>
+    <div class="cpick" id="cpick-heatmap">
+      <input type="text" class="cpick-input" placeholder="Search countries to add...">
+      <div class="cpick-drop"></div>
+    </div>
+  </div>
+  <div class="ctags" id="ctags-heatmap"></div>
+  <div class="ex-chart" id="chart-heatmap"></div>
+</div>
+
+<!-- ════════════ TAB 3: Ranking Race ════════════ -->
+<div class="ex-panel" id="panel-bump">
+  <div class="ex-controls">
+    <label>Indicator</label>
+    <div id="bump-ind" class="ss-wrap"></div>
+    <div style="flex:1;"></div>
+    <div class="vt-group">
+      <button class="vt-btn active" data-view="barrace">Bar Race</button>
+      <button class="vt-btn" data-view="sparklines">Sparklines</button>
+    </div>
+  </div>
+
+  <!-- Bar Race sub-view -->
+  <div class="bump-view active" id="view-barrace">
+    <div class="race-controls">
+      <button id="race-play" class="ex-btn" style="min-width:56px;">Play</button>
+      <div class="speed-group">
+        <span class="speed-label" style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:0.8px;margin-right:2px;">Speed</span>
+        <button class="race-speed speed-btn" data-ms="1200">0.5x</button>
+        <button class="race-speed speed-btn active" data-ms="600">1x</button>
+        <button class="race-speed speed-btn" data-ms="300">2x</button>
+        <button class="race-speed speed-btn" data-ms="150">4x</button>
+      </div>
+      <span class="race-year" id="race-year">2025</span>
+      <input type="range" id="race-slider" style="flex:1;min-width:80px;" min="0" max="35" value="35">
+      <label>Top</label>
+      <input type="range" id="race-topn" style="width:70px;" min="5" max="25" value="10">
+      <span class="range-val" id="race-topn-val">10</span>
+    </div>
+    <div class="ex-chart" id="chart-barrace"></div>
+  </div>
+
+  <!-- Sparklines sub-view -->
+  <div class="bump-view" id="view-sparklines">
+    <div class="ex-controls">
+      <button class="ex-btn" id="spark-top">Top 15</button>
+      <button class="ex-btn" id="spark-clear">Clear</button>
+      <div class="cpick" id="cpick-bump">
+        <input type="text" class="cpick-input" placeholder="Search countries to add...">
+        <div class="cpick-drop"></div>
+      </div>
+    </div>
+    <div class="ctags" id="ctags-bump"></div>
+    <div id="sparklines-container"></div>
+  </div>
+</div>
+
+<!-- ════════════ TAB 4: Treemap ════════════ -->
+<div class="ex-panel" id="panel-treemap">
+  <div class="ex-controls">
+    <label>Size by</label>
+    <div id="treemap-ind" class="ss-wrap"></div>
+  </div>
+  <div class="ex-chart" id="chart-treemap"></div>
+</div>
+
+<div class="methodology-note" style="margin:24px 0;padding:12px 16px;background:#1C2127;border:1px solid #2F343C;border-radius:4px;font-size:0.78rem;color:#5F6B7C;">
+  <strong style="color:#8F99A8;">Data source:</strong>
+  {{ year }} CIA World Factbook (latest year). Heatmap and Ranking Race pull all years 1990&ndash;2025.
+  Bubble size on the scatter plot represents population. Countries without data for a given indicator are excluded.
+  <br><br>
+  <strong style="color:#8F99A8;">Military Data Note:</strong>
+  Russia&rsquo;s military expenditure is reported as NA in the CIA Factbook for 1990&ndash;2007.
+  Values shown for 2008&ndash;2013 repeat a stale 2005 estimate (3.9% of GDP). Fresh data begins in 2014.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  'use strict';
+
+  /* ── Indicator labels ── */
+  var LABELS = {
+    life_exp: 'Life Expectancy (years)',
+    gdp_billions: 'GDP PPP ($B)',
+    gdp_percap: 'GDP per Capita ($)',
+    population: 'Population',
+    mil_pct_gdp: 'Military (% GDP)',
+    internet_pct: 'Internet Users (%)',
+    mobile_per100: 'Mobile per 100',
+    broadband_per100: 'Broadband per 100',
+    fixed_per100: 'Fixed Lines per 100',
+    pop_growth: 'Pop Growth (%)',
+  };
+
+  /* ── COCOM colors ── */
+  var COCOM_COLORS = {
+    EUCOM:     '#2D72D2',
+    CENTCOM:   '#D1980B',
+    INDOPACOM: '#29A634',
+    AFRICOM:   '#D33D17',
+    SOUTHCOM:  '#9D3F9D',
+    NORTHCOM:  '#00A396',
+  };
+  var COCOM_NAMES = {
+    EUCOM: 'Europe & Eurasia', CENTCOM: 'Middle East & Central Asia',
+    INDOPACOM: 'Indo-Pacific', AFRICOM: 'Africa',
+    SOUTHCOM: 'Central & South America', NORTHCOM: 'North America',
+  };
+
+  /* ── 15-color palette for bump chart ── */
+  var BUMP_COLORS = [
+    '#2D72D2','#29A634','#D1980B','#D33D17','#9D3F9D',
+    '#00A396','#DB2C6F','#7961DB','#8EB125','#147EB3',
+    '#43BF4D','#FFC940','#634DBF','#FF6E4A','#2EE6D6',
+  ];
+
+  /* ── Caches ── */
+  var mapDataCache = null;
+  var allYearsCache = {};
+
+  /* ── Chart instances ── */
+  var charts = {};
+
+  /* ── Formatters ── */
+  function fmt(key, v) {
+    if (v == null) return '\u2014';
+    if (key === 'gdp_billions') return '$' + ecFmtNum(v * 1e9);
+    if (key === 'gdp_percap') return '$' + Number(v).toLocaleString();
+    if (key === 'population') return ecFmtNum(v);
+    if (key === 'life_exp') return v.toFixed(1) + ' yrs';
+    if (key === 'mil_pct_gdp') return v.toFixed(2) + '%';
+    if (key === 'internet_pct' || key === 'pop_growth') return v.toFixed(1) + '%';
+    if (key.indexOf('per100') !== -1) return v.toFixed(1) + '/100';
+    return String(v);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     Country Picker — reusable for heatmap & bump
+     ═══════════════════════════════════════════════════════════ */
+  function CountryPicker(pickerId, tagsId, onChangeCallback) {
+    var self = this;
+    this.selected = [];
+    this.allNames = [];
+    this.onChange = onChangeCallback;
+    this.container = document.getElementById(pickerId);
+    this.input = this.container.querySelector('.cpick-input');
+    this.drop = this.container.querySelector('.cpick-drop');
+    this.tagsEl = document.getElementById(tagsId);
+
+    this.input.addEventListener('input', function() { self.showDropdown(); });
+    this.input.addEventListener('focus', function() { self.showDropdown(); });
+    document.addEventListener('click', function(e) {
+      if (!self.container.contains(e.target)) self.drop.classList.remove('open');
+    });
+  }
+
+  CountryPicker.prototype.setAvailable = function(names) {
+    this.allNames = names.slice().sort();
+  };
+
+  CountryPicker.prototype.setSelected = function(names) {
+    this.selected = names.slice();
+    this.renderTags();
+    this.onChange(this.selected);
+  };
+
+  CountryPicker.prototype.showDropdown = function() {
+    var q = this.input.value.toLowerCase().trim();
+    if (!q) { this.drop.classList.remove('open'); return; }
+    var self = this;
+    var matches = this.allNames.filter(function(n) {
+      return n.toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 20);
+    if (!matches.length) { this.drop.classList.remove('open'); return; }
+    this.drop.innerHTML = '';
+    matches.forEach(function(name) {
+      var div = document.createElement('div');
+      div.className = 'cpick-item';
+      div.textContent = name;
+      if (self.selected.indexOf(name) !== -1) {
+        div.classList.add('in-list');
+        div.textContent = name + ' (added)';
+      } else {
+        div.addEventListener('click', function() {
+          self.selected.push(name);
+          self.input.value = '';
+          self.drop.classList.remove('open');
+          self.renderTags();
+          self.onChange(self.selected);
+        });
+      }
+      self.drop.appendChild(div);
+    });
+    this.drop.classList.add('open');
+  };
+
+  CountryPicker.prototype.renderTags = function() {
+    var self = this;
+    this.tagsEl.innerHTML = '';
+    this.selected.forEach(function(name) {
+      var tag = document.createElement('span');
+      tag.className = 'ctag';
+      tag.innerHTML = name + ' <span class="ctag-x">&times;</span>';
+      tag.querySelector('.ctag-x').addEventListener('click', function() {
+        self.selected = self.selected.filter(function(n) { return n !== name; });
+        self.renderTags();
+        self.onChange(self.selected);
+      });
+      self.tagsEl.appendChild(tag);
+    });
+  };
+
+  /* ═══════════════════════════════════════════════════════════
+     Searchable Select — dark-themed single-select dropdown
+     ═══════════════════════════════════════════════════════════ */
+  function SearchSelect(containerId, options, defaultValue, onChangeCallback) {
+    var self = this;
+    this.options = options;
+    this.value = defaultValue;
+    this.onChange = onChangeCallback;
+    this.container = document.getElementById(containerId);
+    this.input = document.createElement('input');
+    this.input.type = 'text';
+    this.input.className = 'ss-input';
+    this.input.value = this.getLabel(defaultValue);
+    this.drop = document.createElement('div');
+    this.drop.className = 'ss-drop';
+    this.container.appendChild(this.input);
+    this.container.appendChild(this.drop);
+
+    this.input.addEventListener('focus', function() {
+      self.input.select();
+      self.showDropdown('');
+    });
+    this.input.addEventListener('input', function() {
+      self.showDropdown(self.input.value);
+    });
+    document.addEventListener('click', function(e) {
+      if (!self.container.contains(e.target)) {
+        self.drop.classList.remove('open');
+        self.input.value = self.getLabel(self.value);
+      }
+    });
+  }
+  SearchSelect.prototype.getLabel = function(value) {
+    for (var i = 0; i < this.options.length; i++) {
+      if (this.options[i].value === value) return this.options[i].label;
+    }
+    return '';
+  };
+  SearchSelect.prototype.showDropdown = function(query) {
+    var self = this;
+    var q = (query || '').toLowerCase().trim();
+    var filtered = this.options.filter(function(opt) {
+      return !q || opt.label.toLowerCase().indexOf(q) !== -1;
+    });
+    this.drop.innerHTML = '';
+    filtered.forEach(function(opt) {
+      var div = document.createElement('div');
+      div.className = 'ss-item' + (opt.value === self.value ? ' active' : '');
+      div.textContent = opt.label;
+      div.addEventListener('click', function() {
+        self.value = opt.value;
+        self.input.value = opt.label;
+        self.drop.classList.remove('open');
+        self.onChange(opt.value);
+      });
+      self.drop.appendChild(div);
+    });
+    this.drop.classList.add('open');
+  };
+
+  /* ── Indicator option lists ── */
+  var SCATTER_OPTS = [
+    {value:'gdp_percap', label:'GDP per Capita'}, {value:'life_exp', label:'Life Expectancy'},
+    {value:'gdp_billions', label:'GDP (PPP)'}, {value:'population', label:'Population'},
+    {value:'mil_pct_gdp', label:'Military % GDP'}, {value:'internet_pct', label:'Internet Users %'},
+    {value:'mobile_per100', label:'Mobile per 100'}, {value:'pop_growth', label:'Pop Growth %'},
+  ];
+  var ALL_IND_OPTS = [
+    {value:'life_exp', label:'Life Expectancy'}, {value:'gdp_percap', label:'GDP per Capita'},
+    {value:'gdp_billions', label:'GDP (PPP)'}, {value:'population', label:'Population'},
+    {value:'mil_pct_gdp', label:'Military % GDP'}, {value:'internet_pct', label:'Internet Users %'},
+    {value:'mobile_per100', label:'Mobile per 100'}, {value:'broadband_per100', label:'Broadband per 100'},
+    {value:'fixed_per100', label:'Fixed Lines per 100'},
+  ];
+  var BUMP_OPTS = [
+    {value:'gdp_billions', label:'GDP (PPP)'}, {value:'population', label:'Population'},
+    {value:'life_exp', label:'Life Expectancy'}, {value:'gdp_percap', label:'GDP per Capita'},
+    {value:'mil_pct_gdp', label:'Military % GDP'}, {value:'internet_pct', label:'Internet Users %'},
+  ];
+  var TREEMAP_OPTS = [
+    {value:'population', label:'Population'}, {value:'gdp_billions', label:'GDP (PPP)'},
+    {value:'mil_pct_gdp', label:'Military % GDP'}, {value:'gdp_percap', label:'GDP per Capita'},
+    {value:'life_exp', label:'Life Expectancy'},
+  ];
+
+  /* ── Create searchable selects (callbacks wired after render functions) ── */
+  var ssScatterX, ssScatterY, ssHeatmapInd, ssBumpInd, ssTreemapInd;
+
+  /* ── Tab switching ── */
+  var tabs = document.querySelectorAll('.ex-tab');
+  var panels = document.querySelectorAll('.ex-panel');
+  var initialized = {};
+
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var target = tab.getAttribute('data-tab');
+      tabs.forEach(function(t) { t.classList.remove('active'); });
+      panels.forEach(function(p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      document.getElementById('panel-' + target).classList.add('active');
+      if (charts[target]) charts[target].resize();
+      if (!initialized[target]) {
+        initialized[target] = true;
+        if (target === 'scatter') loadScatter();
+        else if (target === 'heatmap') loadHeatmap();
+        else if (target === 'bump') loadBump();
+        else if (target === 'treemap') loadTreemap();
+      }
+    });
+  });
+
+  /* ── Data fetchers ── */
+  function fetchMapData() {
+    if (mapDataCache) return Promise.resolve(mapDataCache);
+    return fetch('/api/analysis/map-data').then(function(r) { return r.json(); })
+      .then(function(data) { mapDataCache = data; return data; });
+  }
+
+  function fetchAllYears(indicator) {
+    if (allYearsCache[indicator]) return Promise.resolve(allYearsCache[indicator]);
+    return fetch('/api/analysis/all-years-data?indicator=' + indicator)
+      .then(function(r) { return r.json(); })
+      .then(function(data) { allYearsCache[indicator] = data; return data; });
+  }
+
+  /* Helper: extract unique sorted country names from allYears data */
+  function uniqueNames(data) {
+    var seen = {};
+    data.forEach(function(d) { seen[d.name] = true; });
+    return Object.keys(seen).sort();
+  }
+
+  /* Helper: get top N country names by latest value from allYears data */
+  function topNNames(data, years, n) {
+    var byCountry = {};
+    data.forEach(function(d) {
+      if (!byCountry[d.name]) byCountry[d.name] = {};
+      byCountry[d.name][d.year] = d.value;
+    });
+    /* Find latest value for each country */
+    var entries = [];
+    Object.keys(byCountry).forEach(function(name) {
+      for (var i = years.length - 1; i >= 0; i--) {
+        if (byCountry[name][years[i]] != null) {
+          entries.push({ name: name, value: byCountry[name][years[i]] });
+          break;
+        }
+      }
+    });
+    entries.sort(function(a, b) { return b.value - a.value; });
+    return entries.slice(0, n).map(function(e) { return e.name; });
+  }
+
+  /* Helper: get year list from data */
+  function getYears(data) {
+    var s = {};
+    data.forEach(function(d) { s[d.year] = true; });
+    return Object.keys(s).map(Number).sort();
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     TAB 1 — Correlation Scatter
+     ════════════════════════════════════════════════════════════ */
+  var scatterRegionState = {};
+  Object.keys(COCOM_NAMES).forEach(function(k) { scatterRegionState[k] = true; });
+
+  /* Build region filter buttons */
+  (function() {
+    var container = document.getElementById('scatter-regions');
+    Object.keys(COCOM_NAMES).forEach(function(region) {
+      var btn = document.createElement('div');
+      btn.className = 'region-btn';
+      btn.setAttribute('data-region', region);
+      btn.innerHTML = '<span class="rdot" style="background:' + COCOM_COLORS[region] + '"></span>' + COCOM_NAMES[region];
+      btn.addEventListener('click', function() {
+        scatterRegionState[region] = !scatterRegionState[region];
+        btn.classList.toggle('off', !scatterRegionState[region]);
+        if (mapDataCache) renderScatter(mapDataCache);
+      });
+      container.appendChild(btn);
+    });
+  })();
+
+  function loadScatter() {
+    fetchMapData().then(function(data) { renderScatter(data); });
+  }
+
+  function renderScatter(data) {
+    var xKey = ssScatterX.value;
+    var yKey = ssScatterY.value;
+    var useLog = document.getElementById('scatter-log').checked;
+
+    /* Group by COCOM, filter by active regions */
+    var groups = {};
+    Object.keys(COCOM_NAMES).forEach(function(k) { groups[k] = []; });
+    data.forEach(function(c) {
+      var xv = c[xKey], yv = c[yKey];
+      if (xv == null || yv == null) return;
+      var region = c.cocom || 'OTHER';
+      if (!groups[region]) groups[region] = [];
+      groups[region].push(c);
+    });
+
+    /* Compute population scale factor */
+    var maxPop = 0;
+    data.forEach(function(c) { if (c.population > maxPop) maxPop = c.population; });
+    var scaleFactor = Math.sqrt(maxPop) / 50;
+
+    var series = [];
+    Object.keys(COCOM_NAMES).forEach(function(region) {
+      var countries = groups[region] || [];
+      if (!countries.length) return;
+      var visible = scatterRegionState[region];
+      series.push({
+        name: COCOM_NAMES[region],
+        type: 'scatter',
+        data: visible ? countries.map(function(c) {
+          return { value: [c[xKey], c[yKey]], name: c.name, pop: c.population };
+        }) : [],
+        symbolSize: function(val, params) {
+          var p = params.data.pop || 1;
+          var s = Math.sqrt(p) / scaleFactor;
+          return Math.max(s, 4);
+        },
+        itemStyle: { color: COCOM_COLORS[region], opacity: 0.75 },
+        emphasis: { itemStyle: { opacity: 1, borderColor: '#C5CBD3', borderWidth: 1.5 } },
+      });
+    });
+
+    if (!charts.scatter) charts.scatter = initChart('chart-scatter');
+    charts.scatter.setOption({
+      grid: { top: 20, right: 20, bottom: 50, left: 70 },
+      xAxis: {
+        type: useLog ? 'log' : 'value',
+        name: LABELS[xKey], nameLocation: 'center', nameGap: 26,
+        nameTextStyle: { color: '#8F99A8', fontSize: 11 },
+      },
+      yAxis: {
+        type: useLog ? 'log' : 'value',
+        name: LABELS[yKey], nameLocation: 'center', nameGap: 50,
+        nameTextStyle: { color: '#8F99A8', fontSize: 11 },
+      },
+      series: series,
+      legend: { show: false },
+      tooltip: {
+        formatter: function(p) {
+          return '<b>' + p.data.name + '</b><br>'
+            + LABELS[xKey] + ': ' + fmt(xKey, p.value[0]) + '<br>'
+            + LABELS[yKey] + ': ' + fmt(yKey, p.value[1]) + '<br>'
+            + 'Pop: ' + ecFmtNum(p.data.pop);
+        },
+      },
+    }, { replaceMerge: ['series'] });
+  }
+
+  ssScatterX = new SearchSelect('scatter-x', SCATTER_OPTS, 'gdp_percap', function() { if (mapDataCache) renderScatter(mapDataCache); });
+  ssScatterY = new SearchSelect('scatter-y', SCATTER_OPTS, 'life_exp', function() { if (mapDataCache) renderScatter(mapDataCache); });
+  document.getElementById('scatter-log').addEventListener('change', function() { renderScatter(mapDataCache); });
+
+  /* ════════════════════════════════════════════════════════════
+     TAB 2 — Heatmap
+     ════════════════════════════════════════════════════════════ */
+  var heatmapPicker = new CountryPicker('cpick-heatmap', 'ctags-heatmap', function(selected) {
+    var indicator = ssHeatmapInd.value;
+    if (allYearsCache[indicator]) renderHeatmap(allYearsCache[indicator], indicator, selected);
+  });
+
+  function loadHeatmap() {
+    var indicator = ssHeatmapInd.value;
+    fetchAllYears(indicator).then(function(data) {
+      var years = getYears(data);
+      heatmapPicker.setAvailable(uniqueNames(data));
+      /* Auto-select top 40 on first load */
+      if (!heatmapPicker.selected.length) {
+        heatmapPicker.setSelected(topNNames(data, years, 40));
+      }
+      renderHeatmap(data, indicator, heatmapPicker.selected);
+    });
+  }
+
+  function renderHeatmap(data, indicator, selectedCountries) {
+    if (!selectedCountries || !selectedCountries.length) {
+      if (charts.heatmap) charts.heatmap.clear();
+      return;
+    }
+
+    /* Build country -> {year: value} map */
+    var byCountry = {};
+    var yearSet = {};
+    data.forEach(function(d) {
+      if (!byCountry[d.name]) byCountry[d.name] = {};
+      byCountry[d.name][d.year] = d.value;
+      yearSet[d.year] = true;
+    });
+    var years = Object.keys(yearSet).map(Number).sort();
+
+    /* Filter to selected countries, sort by latest value desc */
+    var filtered = selectedCountries.filter(function(n) { return byCountry[n]; });
+    filtered.sort(function(a, b) {
+      var va = null, vb = null;
+      for (var i = years.length - 1; i >= 0; i--) {
+        if (va == null && byCountry[a] && byCountry[a][years[i]] != null) va = byCountry[a][years[i]];
+        if (vb == null && byCountry[b] && byCountry[b][years[i]] != null) vb = byCountry[b][years[i]];
+      }
+      return (vb || 0) - (va || 0);
+    });
+    var countryNames = filtered.slice().reverse();
+
+    /* Dynamic chart height: 18px per row + margins */
+    var chartHeight = Math.max(300, countryNames.length * 18 + 100);
+    document.getElementById('chart-heatmap').style.height = chartHeight + 'px';
+
+    /* Build heatmap data */
+    var heatData = [];
+    var minVal = Infinity, maxVal = -Infinity;
+    countryNames.forEach(function(name, yi) {
+      years.forEach(function(yr, xi) {
+        var v = byCountry[name] ? byCountry[name][yr] : null;
+        if (v != null) {
+          heatData.push([xi, yi, v]);
+          if (v < minVal) minVal = v;
+          if (v > maxVal) maxVal = v;
+        }
+      });
+    });
+
+    if (!charts.heatmap) charts.heatmap = initChart('chart-heatmap');
+    else charts.heatmap.resize();
+
+    charts.heatmap.setOption({
+      grid: { top: 10, right: 80, bottom: 60, left: 180 },
+      xAxis: {
+        type: 'category', data: years.map(String),
+        axisLabel: { rotate: -45, fontSize: 9 },
+        splitArea: { show: false },
+      },
+      yAxis: {
+        type: 'category', data: countryNames,
+        axisLabel: { fontSize: 9, width: 160, overflow: 'truncate' },
+        splitArea: { show: false },
+      },
+      visualMap: {
+        min: minVal, max: maxVal, calculable: true,
+        orient: 'vertical', right: 4, top: 'center',
+        inRange: { color: ['#1C2127', '#215DB0', '#2D72D2', '#D1980B', '#FFC940'] },
+        textStyle: { color: '#ABB3BF', fontSize: 9 },
+        formatter: function(v) { return fmt(indicator, v); },
+      },
+      series: [{
+        type: 'heatmap', data: heatData,
+        emphasis: {
+          itemStyle: { borderColor: '#C5CBD3', borderWidth: 1.5 },
+        },
+      }],
+      tooltip: {
+        formatter: function(p) {
+          return '<b>' + countryNames[p.value[1]] + '</b><br>'
+            + years[p.value[0]] + ': ' + fmt(indicator, p.value[2]);
+        },
+      },
+    }, { replaceMerge: ['series'] });
+  }
+
+  ssHeatmapInd = new SearchSelect('heatmap-ind', ALL_IND_OPTS, 'life_exp', function() {
+    heatmapPicker.selected = [];
+    loadHeatmap();
+  });
+  document.getElementById('heatmap-top').addEventListener('click', function() {
+    var indicator = ssHeatmapInd.value;
+    if (!allYearsCache[indicator]) return;
+    var years = getYears(allYearsCache[indicator]);
+    heatmapPicker.setSelected(topNNames(allYearsCache[indicator], years, 40));
+  });
+  document.getElementById('heatmap-clear').addEventListener('click', function() {
+    heatmapPicker.setSelected([]);
+  });
+
+  /* ════════════════════════════════════════════════════════════
+     TAB 3 — Ranking Race (Bar Race + Sparklines)
+     ════════════════════════════════════════════════════════════ */
+  var raceByCountry = {};
+  var raceCountries = [];
+  var raceYears = [];
+  var raceInterval = 600;
+  var racePlaying = false;
+  var raceTimer = null;
+  var activeRaceView = 'barrace';
+
+  /* ── View toggle ── */
+  document.querySelectorAll('.vt-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var view = btn.getAttribute('data-view');
+      document.querySelectorAll('.vt-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('view-barrace').classList.toggle('active', view === 'barrace');
+      document.getElementById('view-sparklines').classList.toggle('active', view === 'sparklines');
+      activeRaceView = view;
+      if (view === 'barrace' && charts.barrace) charts.barrace.resize();
+    });
+  });
+
+  /* ── Speed buttons for bar race ── */
+  document.querySelectorAll('.race-speed').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.race-speed').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      raceInterval = parseInt(btn.getAttribute('data-ms'));
+    });
+  });
+
+  /* ── Top N slider ── */
+  var raceTopNSlider = document.getElementById('race-topn');
+  var raceTopNVal = document.getElementById('race-topn-val');
+  raceTopNSlider.addEventListener('input', function() {
+    raceTopNVal.textContent = this.value;
+    var idx = parseInt(document.getElementById('race-slider').value);
+    renderBarRace(idx);
+  });
+
+  /* ── Year slider ── */
+  document.getElementById('race-slider').addEventListener('input', function() {
+    var idx = parseInt(this.value);
+    if (racePlaying) { clearTimeout(raceTimer); racePlaying = false; document.getElementById('race-play').textContent = 'Play'; }
+    renderBarRace(idx);
+  });
+
+  /* ── Play / Pause ── */
+  document.getElementById('race-play').addEventListener('click', function() {
+    if (racePlaying) {
+      clearTimeout(raceTimer);
+      racePlaying = false;
+      this.textContent = 'Play';
+    } else {
+      racePlaying = true;
+      this.textContent = 'Pause';
+      var idx = parseInt(document.getElementById('race-slider').value);
+      function tick() {
+        if (!racePlaying) return;
+        idx++;
+        if (idx >= raceYears.length) idx = 0;
+        document.getElementById('race-slider').value = idx;
+        renderBarRace(idx);
+        raceTimer = setTimeout(tick, raceInterval);
+      }
+      raceTimer = setTimeout(tick, 200);
+    }
+  });
+
+  function loadBump() {
+    var indicator = ssBumpInd.value;
+    fetchAllYears(indicator).then(function(data) {
+      /* Parse shared data structures */
+      raceByCountry = {};
+      var yearSet = {};
+      data.forEach(function(d) {
+        if (!raceByCountry[d.name]) raceByCountry[d.name] = {};
+        raceByCountry[d.name][d.year] = d.value;
+        yearSet[d.year] = true;
+      });
+      raceYears = Object.keys(yearSet).map(Number).sort();
+      raceCountries = Object.keys(raceByCountry).sort();
+
+      /* Set slider range */
+      var sliderEl = document.getElementById('race-slider');
+      sliderEl.max = raceYears.length - 1;
+      sliderEl.value = raceYears.length - 1;
+
+      /* Render bar race at latest year */
+      renderBarRace(raceYears.length - 1);
+
+      /* Prep sparklines picker */
+      sparkPicker.setAvailable(raceCountries.slice());
+      if (!sparkPicker.selected.length) {
+        sparkPicker.setSelected(topNNames(data, raceYears, 15));
+      }
+      renderSparklines(indicator, sparkPicker.selected);
+    });
+  }
+
+  /* ════════ Bar Race ════════ */
+  function renderBarRace(yearIdx) {
+    if (!raceYears.length) return;
+    var year = raceYears[yearIdx];
+    var indicator = ssBumpInd.value;
+    var topN = parseInt(raceTopNSlider.value);
+
+    document.getElementById('race-year').textContent = year;
+
+    /* Get values for this year, sort desc, take top N */
+    var entries = [];
+    raceCountries.forEach(function(name) {
+      var v = raceByCountry[name][year];
+      if (v != null) entries.push({ name: name, value: v });
+    });
+    entries.sort(function(a, b) { return b.value - a.value; });
+    var top = entries.slice(0, topN).reverse();
+
+    var names = top.map(function(d) { return d.name; });
+    var values = top.map(function(d) {
+      return { value: d.value, itemStyle: { color: '#2D72D2' } };
+    });
+
+    /* Dynamic chart height: 32px per bar + 60px margins */
+    var chartH = Math.max(300, topN * 32 + 60);
+    document.getElementById('chart-barrace').style.height = chartH + 'px';
+
+    if (!charts.barrace) charts.barrace = initChart('chart-barrace');
+    else charts.barrace.resize();
+
+    charts.barrace.setOption({
+      grid: { top: 10, right: 100, bottom: 30, left: 140 },
+      xAxis: {
+        type: 'value', max: 'dataMax',
+        axisLabel: { show: false },
+        splitLine: { show: false },
+      },
+      yAxis: {
+        type: 'category',
+        data: names,
+        inverse: false,
+        axisLabel: { fontSize: 11, color: '#C5CBD3' },
+        animationDuration: raceInterval * 0.6,
+        animationDurationUpdate: raceInterval * 0.6,
+      },
+      series: [{
+        type: 'bar',
+        data: values,
+        realtimeSort: true,
+        barMaxWidth: 26,
+        label: {
+          show: true, position: 'right',
+          formatter: function(p) { return fmt(indicator, p.value); },
+          fontSize: 10, color: '#ABB3BF',
+        },
+      }],
+      animationDuration: 0,
+      animationDurationUpdate: raceInterval * 0.85,
+      animationEasing: 'linear',
+      animationEasingUpdate: 'linear',
+      tooltip: {
+        formatter: function(p) {
+          return '<b>' + p.name + '</b><br>' + LABELS[indicator] + ': ' + fmt(indicator, p.value);
+        },
+      },
+    }, { replaceMerge: ['series'] });
+  }
+
+  /* ════════ Sparklines ════════ */
+  var sparkPicker = new CountryPicker('cpick-bump', 'ctags-bump', function(selected) {
+    var indicator = ssBumpInd.value;
+    renderSparklines(indicator, selected);
+  });
+
+  function renderSparklines(indicator, selectedCountries) {
+    var container = document.getElementById('sparklines-container');
+    container.innerHTML = '';
+    if (!selectedCountries || !selectedCountries.length || !raceYears.length) return;
+
+    var years = raceYears;
+
+    /* Sort selected by latest value desc */
+    var filtered = selectedCountries.filter(function(n) { return raceByCountry[n]; });
+    filtered.sort(function(a, b) {
+      var va = null, vb = null;
+      for (var i = years.length - 1; i >= 0; i--) {
+        if (va == null && raceByCountry[a] && raceByCountry[a][years[i]] != null) va = raceByCountry[a][years[i]];
+        if (vb == null && raceByCountry[b] && raceByCountry[b][years[i]] != null) vb = raceByCountry[b][years[i]];
+      }
+      return (vb || 0) - (va || 0);
+    });
+
+    /* Header */
+    var header = document.createElement('div');
+    header.className = 'spark-header';
+    header.innerHTML = '<span>Country</span><span style="text-align:right">Start</span><span></span><span style="text-align:right">Latest</span><span style="text-align:right">Change</span>';
+    container.appendChild(header);
+
+    filtered.forEach(function(name) {
+      var vals = years.map(function(yr) { return raceByCountry[name] ? raceByCountry[name][yr] : null; });
+
+      /* Find first and last non-null */
+      var firstVal = null, lastVal = null;
+      for (var i = 0; i < vals.length; i++) { if (vals[i] != null) { firstVal = vals[i]; break; } }
+      for (var i = vals.length - 1; i >= 0; i--) { if (vals[i] != null) { lastVal = vals[i]; break; } }
+
+      /* Build SVG sparkline path */
+      var svgW = 200, svgH = 26;
+      var pts = [];
+      vals.forEach(function(v, i) { if (v != null) pts.push({ x: i, v: v }); });
+      var minV = Infinity, maxV = -Infinity;
+      pts.forEach(function(p) { if (p.v < minV) minV = p.v; if (p.v > maxV) maxV = p.v; });
+      var range = maxV - minV || 1;
+
+      var pathD = '';
+      pts.forEach(function(p, idx) {
+        var x = (p.x / (years.length - 1)) * (svgW - 4) + 2;
+        var y = svgH - 2 - ((p.v - minV) / range) * (svgH - 4);
+        pathD += (idx === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+      });
+
+      var delta = (firstVal && lastVal && firstVal !== 0) ? ((lastVal - firstVal) / Math.abs(firstVal) * 100) : null;
+      var deltaClass = delta != null ? (delta >= 0 ? 'up' : 'down') : '';
+      var deltaText = delta != null ? (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%' : '\u2014';
+
+      var row = document.createElement('div');
+      row.className = 'spark-row';
+      row.innerHTML = '<span class="spark-name">' + name + '</span>'
+        + '<span class="spark-val">' + (firstVal != null ? fmt(indicator, firstVal) : '\u2014') + '</span>'
+        + '<span><svg width="100%" height="' + svgH + '" viewBox="0 0 ' + svgW + ' ' + svgH + '" preserveAspectRatio="none">'
+        + '<path d="' + pathD + '" fill="none" stroke="#2D72D2" stroke-width="1.5"/></svg></span>'
+        + '<span class="spark-val">' + (lastVal != null ? fmt(indicator, lastVal) : '\u2014') + '</span>'
+        + '<span class="spark-delta ' + deltaClass + '">' + deltaText + '</span>';
+      container.appendChild(row);
+    });
+  }
+
+  ssBumpInd = new SearchSelect('bump-ind', BUMP_OPTS, 'gdp_billions', function() {
+    /* Reset on indicator change */
+    if (racePlaying) { clearTimeout(raceTimer); racePlaying = false; document.getElementById('race-play').textContent = 'Play'; }
+    if (charts.barrace) { charts.barrace.dispose(); charts.barrace = null; }
+    sparkPicker.selected = [];
+    loadBump();
+  });
+  document.getElementById('spark-top').addEventListener('click', function() {
+    if (!raceYears.length) return;
+    sparkPicker.setSelected(topNNames(allYearsCache[ssBumpInd.value], raceYears, 15));
+  });
+  document.getElementById('spark-clear').addEventListener('click', function() {
+    sparkPicker.setSelected([]);
+  });
+
+  /* ════════════════════════════════════════════════════════════
+     TAB 4 — Treemap
+     ════════════════════════════════════════════════════════════ */
+  function loadTreemap() {
+    fetchMapData().then(function(data) { renderTreemap(data); });
+  }
+
+  function renderTreemap(data) {
+    var indKey = ssTreemapInd.value;
+
+    /* Group by COCOM */
+    var regionData = {};
+    Object.keys(COCOM_NAMES).forEach(function(k) { regionData[k] = []; });
+    data.forEach(function(c) {
+      var v = c[indKey];
+      if (v == null || v <= 0) return;
+      var region = c.cocom || 'OTHER';
+      if (!regionData[region]) regionData[region] = [];
+      regionData[region].push({ name: c.name, value: v });
+    });
+
+    var treeData = [];
+    Object.keys(COCOM_NAMES).forEach(function(region) {
+      var children = regionData[region] || [];
+      if (!children.length) return;
+      var total = 0;
+      children.forEach(function(ch) { total += ch.value; });
+      treeData.push({
+        name: COCOM_NAMES[region],
+        value: total,
+        children: children,
+        itemStyle: { color: COCOM_COLORS[region] },
+      });
+    });
+
+    if (!charts.treemap) charts.treemap = initChart('chart-treemap');
+    charts.treemap.setOption({
+      series: [{
+        type: 'treemap',
+        data: treeData,
+        width: '100%', height: '100%',
+        roam: false,
+        nodeClick: 'zoomToNode',
+        breadcrumb: {
+          top: 4,
+          itemStyle: { color: '#1C2127', borderColor: '#2F343C' },
+          textStyle: { color: '#ABB3BF', fontSize: 11 },
+        },
+        levels: [
+          {
+            itemStyle: { borderColor: '#111418', borderWidth: 3, gapWidth: 3 },
+            upperLabel: {
+              show: true, height: 26,
+              fontSize: 11, fontWeight: 600,
+              color: '#F6F7F9',
+              textBorderColor: '#000', textBorderWidth: 3,
+            },
+            colorSaturation: [0.3, 0.5],
+          },
+          {
+            itemStyle: { borderColor: '#111418', borderWidth: 1, gapWidth: 1 },
+            colorSaturation: [0.25, 0.65],
+            colorMappingBy: 'value',
+          },
+        ],
+        label: {
+          show: true, formatter: '{b}',
+          fontSize: 10,
+          color: '#F6F7F9',
+          textBorderColor: '#000', textBorderWidth: 3,
+        },
+        emphasis: {
+          upperLabel: { show: true, color: '#FFFFFF', fontWeight: 700,
+            textBorderColor: '#000', textBorderWidth: 3 },
+        },
+      }],
+      tooltip: {
+        formatter: function(p) {
+          return '<b>' + p.name + '</b><br>' + LABELS[indKey] + ': ' + fmt(indKey, p.value);
+        },
+      },
+    }, { replaceMerge: ['series'] });
+  }
+
+  ssTreemapInd = new SearchSelect('treemap-ind', TREEMAP_OPTS, 'population', function() {
+    if (mapDataCache) renderTreemap(mapDataCache);
+  });
+
+  /* ── Initialize first tab ── */
+  initialized.scatter = true;
+  loadScatter();
+
+})();
+</script>
+{% endblock %}

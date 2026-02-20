@@ -121,6 +121,25 @@
     border-color: #5F6B7C;
     color: #FFFFFF;
   }
+  .speed-group {
+    display: flex; align-items: center; gap: 4px;
+    margin-left: 4px;
+  }
+  .speed-label {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.65rem; color: #5F6B7C; text-transform: uppercase;
+    letter-spacing: 0.8px; margin-right: 2px;
+  }
+  .speed-btn {
+    background: #252A31; border: 1px solid #383E47; border-radius: 3px;
+    color: #C5CBD3; padding: 5px 12px; font-size: 0.78rem; cursor: pointer;
+    font-family: -apple-system, 'Segoe UI', sans-serif; font-weight: 600;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .speed-btn:hover { background: #383E47; color: #FFFFFF; }
+  .speed-btn.active {
+    background: #2D72D2; border-color: #2D72D2; color: #FFFFFF;
+  }
   .loading-overlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -341,6 +360,8 @@
   }
   @media (max-width: 800px) {
     .play-btn { padding: 10px 20px; font-size: 0.9rem; }
+    .speed-btn { padding: 3px 6px; font-size: 0.65rem; }
+    .speed-label { display: none; }
   }
   @media (max-width: 480px) {
     .timeline-controls {
@@ -394,6 +415,13 @@
     </div>
     <div style="padding:8px 16px 10px; border-top:1px solid #252A31; display:flex; align-items:center; gap:12px;">
       <button id="play-btn" class="play-btn">Play</button>
+      <div class="speed-group">
+        <span class="speed-label">Speed</span>
+        <button class="speed-btn" data-speed="2400">0.5x</button>
+        <button class="speed-btn active" data-speed="1200">1x</button>
+        <button class="speed-btn" data-speed="600">2x</button>
+        <button class="speed-btn" data-speed="300">4x</button>
+      </div>
       <input type="range" id="year-slider" class="year-slider"
              min="0" max="{{ years|length - 1 }}" value="0" step="1">
     </div>
@@ -432,9 +460,15 @@
 
   <!-- Usage hint — spans both columns -->
   <div style="grid-column:1/-1; display:flex; gap:24px; padding:10px 16px; background:#1C2127; border:1px solid #2F343C; border-radius:6px; font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.72rem; color:#5F6B7C; line-height:1.5;">
-    <span><strong style="color:#8F99A8;">Play</strong> or drag slider to animate</span>
+    <span><strong style="color:#8F99A8;">Play</strong> or drag slider to animate &mdash; use speed buttons (0.5x&ndash;4x) to control pace</span>
     <span><strong style="color:#8F99A8;">Click</strong> a country on the map to add it to the time series</span>
     <span><strong style="color:#8F99A8;">Indicator</strong> dropdown controls both panels</span>
+  </div>
+
+  <div style="grid-column:1/-1; padding:10px 16px; background:#1C2127; border:1px solid #2F343C; border-radius:6px; font-family:-apple-system,'Segoe UI',sans-serif; font-size:0.72rem; color:#5F6B7C; line-height:1.5;">
+    <strong style="color:#8F99A8;">Military Data Note:</strong>
+    Russia&rsquo;s military expenditure is reported as NA in the CIA Factbook for 1990&ndash;2007.
+    Values shown for 2008&ndash;2013 repeat a stale 2005 estimate (3.9% of GDP). Fresh data begins in 2014.
   </div>
 
 </div>
@@ -471,7 +505,7 @@ let currentData = [];
 let playing = false;
 let playTimer = null;
 let baseGeoJSON = null;
-const FRAME_INTERVAL = 1200;
+let FRAME_INTERVAL = 1200;
 
 function fmtNum(n) {
   if (!n && n !== 0) return '\u2014';
@@ -734,6 +768,15 @@ playBtn.addEventListener('click', function() {
   }
 });
 
+
+/* Speed buttons */
+document.querySelectorAll('.speed-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.speed-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    FRAME_INTERVAL = parseInt(btn.getAttribute('data-speed'));
+  });
+});
 
 // ════════════════════════════════════════════════════════
 // Country Time Series — Interactive Line Chart (ECharts)

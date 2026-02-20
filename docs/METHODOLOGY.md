@@ -502,7 +502,45 @@ ORDER BY c.Year
 
 ---
 
-## 8. Known Limitations
+## 8. Data Repair Log
+
+### v2 Data Drop (February 19, 2026)
+
+Comprehensive validation identified and repaired two data quality issues:
+
+#### 1996 Truncated Countries (7 sovereign states)
+
+The Project Gutenberg edition (ebook #27675) of the 1996 CIA World Factbook was **truncated** for 7 sovereign countries: Venezuela, Armenia, Greece, Luxembourg, Malta, Monaco, and Tuvalu. Their entries in the Gutenberg text literally end mid-sentence with `======` separators, cutting off after Geography/People sections. This is a source defect in the Gutenberg transcription, not a parser bug.
+
+**Root cause**: The Gutenberg volunteer who uploaded ebook #27675 (released December 2008) worked from incomplete source material. Sections for these 7 countries were never included.
+
+**Fix**: Downloaded the CIA's own original text file (`wfb-96.txt.gz`) from the Wayback Machine, archived at `odci.gov/cia/publications/nsolo/` in May 1997. This file contains complete data for all 266 countries. Wrote a dedicated parser (`etl/repair_1996_truncated.py`) for the CIA original's page-header format (`FACTBOOK COUNTRY REPORT` headers, 5-space indented fields). Replaced truncated entries in the database:
+
+| Country | Before (fields) | After (fields) |
+|---------|-----------------|----------------|
+| Venezuela | 8 | 89 |
+| Armenia | 27 | 87 |
+| Greece | 27 | 83 |
+| Luxembourg | 35 | 88 |
+| Malta | 49 | 86 |
+| Monaco | 48 | 82 |
+| Tuvalu | 47 | 80 |
+
+#### Zimbabwe 1998 Field Duplication
+
+The 1998 HTML parser incorrectly dumped 178 fields into the "Transnational Issues" category for Zimbabwe, including appendix pages (Abbreviations, Appendix A-H), field definition text, and duplicates of fields already correctly categorized elsewhere. Only 2 legitimate Transnational Issues fields existed (Disputes-international, Illicit drugs).
+
+**Fix**: Deleted 176 noise/duplicate fields from the Transnational Issues category. Zimbabwe 1998 went from 272 fields to 96 (matching the 1997 count).
+
+#### Germany GDP 1994-1996
+
+Germany's GDP data for 1994-1996 was stored under the field name "Germany" (a self-named field artifact from the CIA's 1994 database restructuring) instead of "National product" or "GDP". The data existed but was invisible to cross-year GDP queries.
+
+**Fix**: Inserted 3 new CountryFields records with `FieldName='National product'` for Germany 1994-1996, using the GDP values from the self-named "Germany" fields.
+
+---
+
+## 9. Known Limitations
 
 ### Data Quality
 - **1990 has fewer fields per country** (~63 vs ~140+ in later years) due to the simpler text format
