@@ -319,7 +319,7 @@ function buildColorExpr(indicator) {
 }
 
 map.on('load', function() {
-  fetch('/static/data/countries-110m.geojson?v=50m2')
+  fetch('/static/data/countries-110m.geojson?v=50m3')
     .then(r => r.json())
     .then(geo => {
       /* Embed data into GeoJSON properties */
@@ -347,6 +347,7 @@ map.on('load', function() {
         id: 'country-fills',
         type: 'fill',
         source: 'countries',
+        filter: ['==', ['get', 'ft'], 'poly'],
         paint: {
           'fill-color': buildColorExpr(currentIndicator),
           'fill-opacity': 0.85,
@@ -358,7 +359,21 @@ map.on('load', function() {
         id: 'country-borders',
         type: 'line',
         source: 'countries',
+        filter: ['==', ['get', 'ft'], 'poly'],
         paint: { 'line-color': '#2F343C', 'line-width': 0.5 },
+      });
+
+      map.addLayer({
+        id: 'country-circles',
+        type: 'circle',
+        source: 'countries',
+        filter: ['==', ['get', 'ft'], 'pt'],
+        paint: {
+          'circle-radius': 5,
+          'circle-color': buildColorExpr(currentIndicator),
+          'circle-stroke-color': '#2F343C',
+          'circle-stroke-width': 1,
+        },
       });
 
       /* Capital markers */
@@ -462,6 +477,9 @@ document.getElementById('region-map-indicator').addEventListener('change', funct
   currentIndicator = this.value;
   if (map.getLayer('country-fills')) {
     map.setPaintProperty('country-fills', 'fill-color', buildColorExpr(currentIndicator));
+  }
+  if (map.getLayer('country-circles')) {
+    map.setPaintProperty('country-circles', 'circle-color', buildColorExpr(currentIndicator));
   }
 });
 

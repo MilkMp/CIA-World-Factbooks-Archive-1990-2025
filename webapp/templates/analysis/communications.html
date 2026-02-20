@@ -349,7 +349,7 @@ function updateLegend(indicator) {
 }
 
 map.on('load', function() {
-  fetch('/static/data/countries-110m.geojson?v=50m2')
+  fetch('/static/data/countries-110m.geojson?v=50m3')
     .then(r => r.json())
     .then(geo => {
       geojsonData = geo;
@@ -377,6 +377,7 @@ map.on('load', function() {
         id: 'country-fills',
         type: 'fill',
         source: 'countries',
+        filter: ['==', ['get', 'ft'], 'poly'],
         paint: {
           'fill-color': buildColorExpr(currentIndicator),
           'fill-opacity': 0.85,
@@ -388,9 +389,23 @@ map.on('load', function() {
         id: 'country-borders',
         type: 'line',
         source: 'countries',
+        filter: ['==', ['get', 'ft'], 'poly'],
         paint: {
           'line-color': '#2F343C',
           'line-width': 0.5,
+        },
+      });
+
+      map.addLayer({
+        id: 'country-circles',
+        type: 'circle',
+        source: 'countries',
+        filter: ['==', ['get', 'ft'], 'pt'],
+        paint: {
+          'circle-radius': 5,
+          'circle-color': buildColorExpr(currentIndicator),
+          'circle-stroke-color': '#2F343C',
+          'circle-stroke-width': 1,
         },
       });
 
@@ -421,6 +436,24 @@ map.on('load', function() {
         map.getCanvas().style.cursor = '';
         popup.remove();
       });
+
+      /* Circle hover (same popup) */
+      map.on('mousemove', 'country-circles', function(e) {
+        if (!e.features || !e.features.length) return;
+        map.getCanvas().style.cursor = 'pointer';
+        const p = e.features[0].properties;
+        if (!p.cname) { popup.remove(); return; }
+        const html = '<b>' + p.cname + '</b>' + (p.cocom ? ' (' + p.cocom + ')' : '') + '<br>' +
+          'Internet: ' + fmtVal(p.internet_pct, 'internet_pct') + '<br>' +
+          'Mobile: ' + fmtVal(p.mobile_per100, 'mobile_per100') + '/100<br>' +
+          'Fixed: ' + fmtVal(p.fixed_per100, 'fixed_per100') + '/100<br>' +
+          'Broadband: ' + fmtVal(p.broadband_per100, 'broadband_per100') + '/100';
+        popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+      });
+      map.on('mouseleave', 'country-circles', function() {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+      });
     });
 });
 
@@ -429,6 +462,9 @@ document.getElementById('indicator-select').addEventListener('change', function(
   currentIndicator = this.value;
   if (map.getLayer('country-fills')) {
     map.setPaintProperty('country-fills', 'fill-color', buildColorExpr(currentIndicator));
+  }
+  if (map.getLayer('country-circles')) {
+    map.setPaintProperty('country-circles', 'circle-color', buildColorExpr(currentIndicator));
   }
   updateLegend(currentIndicator);
 });

@@ -571,7 +571,7 @@ function mergeDataIntoGeo(mapData) {
 }
 
 map.on('load', function() {
-  fetch('/static/data/countries-110m.geojson?v=50m2')
+  fetch('/static/data/countries-110m.geojson?v=50m3')
     .then(r => r.json())
     .then(geo => {
       baseGeoJSON = JSON.parse(JSON.stringify(geo));
@@ -585,6 +585,7 @@ map.on('load', function() {
         id: 'country-fills',
         type: 'fill',
         source: 'countries',
+        filter: ['==', ['get', 'ft'], 'poly'],
         paint: {
           'fill-color': '#252A31',
           'fill-opacity': 0.85,
@@ -596,7 +597,21 @@ map.on('load', function() {
         id: 'country-borders',
         type: 'line',
         source: 'countries',
+        filter: ['==', ['get', 'ft'], 'poly'],
         paint: { 'line-color': '#2F343C', 'line-width': 0.5 },
+      });
+
+      map.addLayer({
+        id: 'country-circles',
+        type: 'circle',
+        source: 'countries',
+        filter: ['==', ['get', 'ft'], 'pt'],
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#252A31',
+          'circle-stroke-color': '#2F343C',
+          'circle-stroke-width': 1,
+        },
       });
 
       /* Brighten map labels for readability over choropleth */
@@ -663,6 +678,7 @@ async function updateYear(idx, smooth) {
   if (src) {
     src.setData(geo);
     map.setPaintProperty('country-fills', 'fill-color', buildColorExpr(indicatorSelect.value, mapData));
+    if (map.getLayer('country-circles')) map.setPaintProperty('country-circles', 'circle-color', buildColorExpr(indicatorSelect.value, mapData));
   }
 }
 
@@ -685,6 +701,7 @@ indicatorSelect.addEventListener('change', function() {
   const year = years[idx];
   if (cache[year] && map.getLayer('country-fills')) {
     map.setPaintProperty('country-fills', 'fill-color', buildColorExpr(this.value, cache[year]));
+    if (map.getLayer('country-circles')) map.setPaintProperty('country-circles', 'circle-color', buildColorExpr(this.value, cache[year]));
   }
   if (tsSelected.length) tsFetchAndRender();
 });

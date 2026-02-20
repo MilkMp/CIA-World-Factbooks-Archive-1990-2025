@@ -617,7 +617,7 @@ mapData.forEach(d => { dataByIso3[d.iso3] = d; });
 
 map.on('load', function() {
   /* Fetch GeoJSON and join with our data */
-  fetch('/static/data/countries-110m.geojson?v=50m2')
+  fetch('/static/data/countries-110m.geojson?v=50m3')
     .then(r => r.json())
     .then(geo => {
       geojsonData = geo;
@@ -649,6 +649,7 @@ map.on('load', function() {
         id: 'country-fills',
         type: 'fill',
         source: 'countries',
+        filter: ['==', ['get', 'ft'], 'poly'],
         paint: {
           'fill-color': buildColorExpr(currentIndicator),
           'fill-opacity': 0.85,
@@ -660,9 +661,23 @@ map.on('load', function() {
         id: 'country-borders',
         type: 'line',
         source: 'countries',
+        filter: ['==', ['get', 'ft'], 'poly'],
         paint: {
           'line-color': '#2F343C',
           'line-width': 0.5,
+        },
+      });
+
+      map.addLayer({
+        id: 'country-circles',
+        type: 'circle',
+        source: 'countries',
+        filter: ['==', ['get', 'ft'], 'pt'],
+        paint: {
+          'circle-radius': 5,
+          'circle-color': buildColorExpr(currentIndicator),
+          'circle-stroke-color': '#2F343C',
+          'circle-stroke-width': 1,
         },
       });
 
@@ -671,11 +686,11 @@ map.on('load', function() {
         id: 'region-highlight',
         type: 'line',
         source: 'countries',
+        filter: ['==', 'cocom', ''],
         paint: {
           'line-color': '#C5CBD3',
           'line-width': 2.5,
         },
-        filter: ['==', 'cocom', ''],
       });
 
       /* Capital markers */
@@ -831,6 +846,9 @@ document.getElementById('map-indicator').addEventListener('change', function() {
   currentIndicator = this.value;
   if (map.getLayer('country-fills')) {
     map.setPaintProperty('country-fills', 'fill-color', buildColorExpr(currentIndicator));
+  }
+  if (map.getLayer('country-circles')) {
+    map.setPaintProperty('country-circles', 'circle-color', buildColorExpr(currentIndicator));
   }
   updateLegend(currentIndicator);
 });

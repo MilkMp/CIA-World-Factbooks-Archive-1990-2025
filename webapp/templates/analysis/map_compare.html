@@ -570,6 +570,7 @@ function addLayersToMap(map, geoData) {
     id: 'country-fills',
     type: 'fill',
     source: 'countries',
+    filter: ['==', ['get', 'ft'], 'poly'],
     paint: {
       'fill-color': '#252A31',
       'fill-opacity': 0.85,
@@ -581,9 +582,23 @@ function addLayersToMap(map, geoData) {
     id: 'country-borders',
     type: 'line',
     source: 'countries',
+    filter: ['==', ['get', 'ft'], 'poly'],
     paint: {
       'line-color': '#2F343C',
       'line-width': 0.5,
+    },
+  });
+
+  map.addLayer({
+    id: 'country-circles',
+    type: 'circle',
+    source: 'countries',
+    filter: ['==', ['get', 'ft'], 'pt'],
+    paint: {
+      'circle-radius': 5,
+      'circle-color': '#252A31',
+      'circle-stroke-color': '#2F343C',
+      'circle-stroke-width': 1,
     },
   });
 
@@ -602,7 +617,7 @@ function onMapLoaded() {
   mapsLoaded++;
   if (mapsLoaded < 2) return;
 
-  fetch('/static/data/countries-110m.geojson?v=50m2')
+  fetch('/static/data/countries-110m.geojson?v=50m3')
     .then(r => r.json())
     .then(geo => {
       baseGeoJSON = geo;
@@ -649,11 +664,13 @@ async function update() {
   if (mapA.getSource('countries')) {
     mapA.getSource('countries').setData(geoA);
     mapA.setPaintProperty('country-fills', 'fill-color', colorExpr);
+    if (mapA.getLayer('country-circles')) mapA.setPaintProperty('country-circles', 'circle-color', colorExpr);
   }
 
   if (mapB.getSource('countries')) {
     mapB.getSource('countries').setData(geoB);
     mapB.setPaintProperty('country-fills', 'fill-color', colorExpr);
+    if (mapB.getLayer('country-circles')) mapB.setPaintProperty('country-circles', 'circle-color', colorExpr);
   }
 
   /* Update legend and stats */
