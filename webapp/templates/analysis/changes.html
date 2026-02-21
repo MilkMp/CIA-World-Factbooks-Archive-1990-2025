@@ -90,7 +90,7 @@
   </select>
 </div>
 
-<table class="data-table" id="changes-table">
+<table class="data-table" id="changes-table" style="cursor:default;">
   <thead>
     <tr>
       <th style="cursor:pointer;" onclick="sortTbl(0)">Country</th>
@@ -103,7 +103,7 @@
   </thead>
   <tbody>
     {% for c in changes %}
-    <tr data-indicator="{{ c.indicator }}" data-region="{{ c.cocom }}"{% if c.severity == 'critical' %} style="border-left:3px solid #CD4246;"{% endif %}>
+    <tr data-indicator="{{ c.indicator }}" data-region="{{ c.cocom }}" data-name="{{ c.name }}"{% if c.severity == 'critical' %} style="border-left:3px solid #CD4246;"{% endif %}>
       <td><a href="/analysis/dossier/{{ c.iso2 }}">{{ c.name }}</a></td>
       <td style="font-size:0.78rem;color:#8F99A8;">{{ c.indicator_label }}</td>
       <td class="r" style="font-variant-numeric:tabular-nums;">{{ '{:,.2f}'.format(c.prev_value) }}</td>
@@ -133,16 +133,82 @@ const topMovers = {{ top_movers | tojson }};
 var moversLabels = topMovers.map(d => d.name + ' (' + d.indicator_label + ')').reverse();
 var moversValues = topMovers.map(d => d.pct_change).reverse();
 var moversColors = topMovers.map(d => d.pct_change >= 0 ? '#29A634' : '#CD4246').reverse();
-initChart('movers-chart').setOption({
+/* Reversed lookup: chart index → topMovers entry */
+var moversReversed = topMovers.slice().reverse();
+
+var moversChart = initChart('movers-chart');
+moversChart.setOption({
   grid: { left: 280, right: 20, top: 4, bottom: 30 },
   xAxis: { type: 'value', axisLabel: { formatter: '{value}%' },
     splitLine: { lineStyle: { color: '#252A31' } } },
-  yAxis: { type: 'category', data: moversLabels, axisLabel: { fontSize: 10 } },
+  yAxis: { type: 'category', data: moversLabels, axisLabel: { fontSize: 10,
+    color: function(val, idx) { return '#ABB3BF'; } } },
   series: [{ type: 'bar', data: moversValues.map(function(v, i) {
       return { value: v, itemStyle: { color: moversColors[i] } };
-    }), barWidth: '60%' }],
+    }), barWidth: '60%', cursor: 'pointer' }],
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
     formatter: function(p) { return '<b>' + p[0].name + '</b><br>' + (p[0].value >= 0 ? '+' : '') + p[0].value.toFixed(1) + '%'; } },
+});
+
+/* ── Chart ↔ Table linking ── */
+var highlightedRow = null;
+
+function clearRowHighlight() {
+  if (highlightedRow) {
+    highlightedRow.style.outline = '';
+    highlightedRow.style.outlineOffset = '';
+    highlightedRow.style.background = '';
+    highlightedRow = null;
+  }
+}
+
+function highlightRow(row) {
+  clearRowHighlight();
+  highlightedRow = row;
+  row.style.outline = '1px solid #2D72D2';
+  row.style.outlineOffset = '-1px';
+  row.style.background = 'rgba(45, 114, 210, 0.08)';
+}
+
+/* Click bar → scroll to & highlight matching table row */
+moversChart.on('click', function(params) {
+  var entry = moversReversed[params.dataIndex];
+  if (!entry) return;
+  var rows = document.querySelectorAll('#changes-table tbody tr');
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (r.dataset.name === entry.name && r.dataset.indicator === entry.indicator) {
+      r.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      highlightRow(r);
+      break;
+    }
+  }
+});
+
+/* Click table row → highlight matching bar in chart */
+document.querySelector('#changes-table tbody').addEventListener('click', function(e) {
+  var row = e.target.closest('tr');
+  if (!row) return;
+  /* Don't intercept link clicks */
+  if (e.target.tagName === 'A') return;
+  var name = row.dataset.name;
+  var indicator = row.dataset.indicator;
+  var indicatorLabel = row.cells[1].textContent.trim();
+  highlightRow(row);
+
+  /* Find matching bar */
+  var matchLabel = name + ' (' + indicatorLabel + ')';
+  var barIdx = moversLabels.indexOf(matchLabel);
+  if (barIdx >= 0) {
+    moversChart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: barIdx });
+    moversChart.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: barIdx });
+    document.getElementById('movers-chart').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    /* Clear highlight after 3s */
+    setTimeout(function() {
+      moversChart.dispatchAction({ type: 'downplay', seriesIndex: 0, dataIndex: barIdx });
+      moversChart.dispatchAction({ type: 'hideTip' });
+    }, 3000);
+  }
 });
 
 /* ── Client-side filtering ── */
