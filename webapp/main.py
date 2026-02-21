@@ -47,7 +47,7 @@ BAD_BOTS = ("python-requests", "scrapy", "python-urllib", "go-http-client",
 # --- Escalating ban: too many 429s = full block ---
 _ban_strikes: dict = defaultdict(list)   # ip -> list of 429 timestamps
 _banned_until: dict = {}                  # ip -> ban expiry timestamp
-BAN_STRIKE_LIMIT = 10                     # 429 hits before ban
+BAN_STRIKE_LIMIT = 6                      # 429 hits before ban
 BAN_STRIKE_WINDOW = 300.0                 # count strikes in 5-min window
 BAN_DURATION = 3600.0                     # banned for 1 hour
 
