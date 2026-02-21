@@ -49,12 +49,16 @@ async def security_middleware(request: Request, call_next):
     global _last_cleanup
     now = time.time()
 
-    # --- Global rate limit: 30 req/min per IP, skip static assets and good bots ---
+    # --- Global rate limit: 20 req/min per IP, skip static assets and good bots ---
     path = request.url.path
     if not any(path.startswith(p) for p in RATE_EXEMPT_PREFIXES):
         ua = (request.headers.get("user-agent") or "").lower()
         if not any(bot in ua for bot in GOOD_BOTS):
-            ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
+            ip = (
+                request.headers.get("fly-client-ip")
+                or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+                or request.client.host
+            )
             _rate_buckets[ip] = [t for t in _rate_buckets[ip] if now - t < RATE_WINDOW]
             if len(_rate_buckets[ip]) >= RATE_LIMIT:
                 return PlainTextResponse("Too Many Requests — slow down", status_code=429)
@@ -62,7 +66,11 @@ async def security_middleware(request: Request, call_next):
 
     # --- Rate limit /report POST (spam protection) ---
     if request.url.path == "/report" and request.method == "POST":
-        ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
+        ip = (
+            request.headers.get("fly-client-ip")
+            or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+            or request.client.host
+        )
         _report_buckets[ip] = [t for t in _report_buckets[ip] if now - t < REPORT_WINDOW]
         if len(_report_buckets[ip]) >= REPORT_LIMIT:
             return PlainTextResponse("Too Many Requests — try again later", status_code=429)
