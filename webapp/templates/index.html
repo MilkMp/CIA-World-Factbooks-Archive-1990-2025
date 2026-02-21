@@ -478,11 +478,10 @@
 
 </div>
 
-<!-- ── Feature Gallery ── -->
-<div class="section-label">Preview</div>
-<div class="gallery-section fade-in" id="gallery-section">
-  <div class="gallery-track" id="gallery-track">
-    <!-- The Archive -->
+<!-- ── The Archive ── -->
+<div class="section-label">The Archive</div>
+<div class="gallery-section fade-in" data-gallery="archive">
+  <div class="gallery-track">
     <div class="gallery-card" data-idx="0">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
       <div class="gallery-img-wrap"><img src="/static/img/screenshots/library.png" alt="Library" loading="lazy"></div>
@@ -519,81 +518,112 @@
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Factbook Export</strong><span>Print-ready country report with all fields</span></div>
     </div>
-    <!-- Intelligence Analysis -->
-    <div class="gallery-card" data-idx="6">
+  </div>
+  <div class="gallery-progress"></div>
+</div>
+
+<!-- ── Intelligence Analysis ── -->
+<div class="section-label">Intelligence Analysis</div>
+<div class="gallery-section fade-in" data-gallery="intel">
+  <div class="gallery-track">
+    <div class="gallery-card" data-idx="0">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
-      <div class="gallery-img-wrap"><img src="/static/img/screenshots/regional_dashboard.png" alt="Regional Dashboard" loading="lazy"></div>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/regional_dashboard_demo.gif" alt="Regional Dashboard" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Regional Dashboard</strong><span>Globe choropleth with COCOM regions and capital markers</span></div>
     </div>
-    <div class="gallery-card" data-idx="7">
+    <div class="gallery-card" data-idx="1">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
-      <div class="gallery-img-wrap"><img src="/static/img/screenshots/timeline_map.png" alt="Timeline Map" loading="lazy"></div>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/timeline_map_demo.gif" alt="Timeline Map" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Timeline Map</strong><span>Animated choropleth across 36 years with time series</span></div>
     </div>
-    <div class="gallery-card" data-idx="8">
+    <div class="gallery-card" data-idx="2">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
       <div class="gallery-img-wrap"><img src="/static/img/screenshots/communications.png" alt="Communications Analysis" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Communications Analysis</strong><span>Internet, mobile, broadband penetration indicators</span></div>
     </div>
-    <div class="gallery-card" data-idx="9">
+    <div class="gallery-card" data-idx="3">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
-      <div class="gallery-img-wrap"><img src="/static/img/screenshots/map_compare.png" alt="Map Compare" loading="lazy"></div>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/map_compare_demo.gif" alt="Map Compare" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Map Compare</strong><span>Two synced maps for side-by-side year comparison</span></div>
     </div>
-    <div class="gallery-card" data-idx="10">
+    <div class="gallery-card" data-idx="4">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
       <div class="gallery-img-wrap"><img src="/static/img/screenshots/region_eucom.png" alt="EUCOM Region" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>COCOM Region Detail</strong><span>Regional map with country-level KPIs and indicators</span></div>
     </div>
-    <div class="gallery-card" data-idx="11">
+    <div class="gallery-card" data-idx="5">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
       <div class="gallery-img-wrap"><img src="/static/img/screenshots/dossier.png" alt="Intelligence Dossier" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Intelligence Dossier</strong><span>ICD 203 country assessments with all indicators</span></div>
     </div>
-    <div class="gallery-card" data-idx="12">
+    <div class="gallery-card" data-idx="6">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
       <div class="gallery-img-wrap"><img src="/static/img/screenshots/rankings.png" alt="Global Rankings" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Global Rankings</strong><span>Sortable country rankings by any indicator</span></div>
     </div>
-    <div class="gallery-card" data-idx="13">
+    <div class="gallery-card" data-idx="7">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
       <div class="gallery-img-wrap"><img src="/static/img/screenshots/global_trends.png" alt="Global Trends" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Global Trends</strong><span>Worldwide indicator trends across all editions</span></div>
     </div>
-    <div class="gallery-card" data-idx="14">
+    <div class="gallery-card" data-idx="8">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
       <div class="gallery-img-wrap"><img src="/static/img/screenshots/compare_countries.png" alt="Compare Countries" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Compare Countries</strong><span>Side-by-side indicator comparison</span></div>
     </div>
-    <div class="gallery-card" data-idx="15">
+    <div class="gallery-card" data-idx="9">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
       <div class="gallery-img-wrap"><img src="/static/img/screenshots/field_explorer.png" alt="Field Explorer" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Field Explorer</strong><span>Browse all data fields with coverage statistics</span></div>
     </div>
-    <div class="gallery-card" data-idx="16">
+    <div class="gallery-card" data-idx="10">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
       <div class="gallery-img-wrap"><img src="/static/img/screenshots/change_detection.png" alt="Change Detection" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Change Detection</strong><span>Year-over-year field changes for any country</span></div>
     </div>
-    <div class="gallery-card" data-idx="17">
+    <div class="gallery-card" data-idx="11">
       <button class="card-arrow left" aria-label="Previous">&#10094;</button>
       <div class="gallery-img-wrap"><img src="/static/img/screenshots/dissolved_states.png" alt="Dissolved States" loading="lazy"></div>
       <button class="card-arrow right" aria-label="Next">&#10095;</button>
       <div class="gallery-caption"><strong>Dissolved States</strong><span>Historical entities no longer in the Factbook</span></div>
     </div>
+    <div class="gallery-card" data-idx="12">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/trade_networks_demo.gif" alt="Trade Networks" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Trade Networks</strong><span>Force-directed graph of global trade relationships</span></div>
+    </div>
+    <div class="gallery-card" data-idx="13">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/org_networks_demo.gif" alt="Organization Networks" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Organization Networks</strong><span>International organization membership graph</span></div>
+    </div>
+    <div class="gallery-card" data-idx="14">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/query_builder.png" alt="Query Builder" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Query Builder</strong><span>Custom analytical queries across all indicators</span></div>
+    </div>
+    <div class="gallery-card" data-idx="15">
+      <button class="card-arrow left" aria-label="Previous">&#10094;</button>
+      <div class="gallery-img-wrap"><img src="/static/img/screenshots/text_diff.png" alt="Text Diff" loading="lazy"></div>
+      <button class="card-arrow right" aria-label="Next">&#10095;</button>
+      <div class="gallery-caption"><strong>Text Diff</strong><span>Side-by-side year comparison with highlighted changes</span></div>
+    </div>
   </div>
-  <div class="gallery-progress" id="gallery-progress"></div>
+  <div class="gallery-progress"></div>
 </div>
 
 <!-- Lightbox -->
@@ -628,133 +658,139 @@
 
 <script>
 (function() {
-  var track = document.getElementById('gallery-track');
-  var cards = track.querySelectorAll('.gallery-card');
-  var section = document.getElementById('gallery-section');
-  var progC = document.getElementById('gallery-progress');
   var lb = document.getElementById('gallery-lightbox');
   var lbImg = lb.querySelector('img');
   var lbCap = lb.querySelector('.lb-cap');
+
+  lb.addEventListener('click', function() { lb.classList.remove('open'); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') lb.classList.remove('open'); });
 
   /* Scroll-triggered reveal */
   var obs = new IntersectionObserver(function(e) {
     e.forEach(function(en) { if (en.isIntersecting) { en.target.classList.add('visible'); obs.unobserve(en.target); } });
   }, { threshold: 0.1 });
-  obs.observe(section);
 
-  /* 3D tilt + parallax + glow */
-  var wasDragging = false;
-  cards.forEach(function(card) {
-    var img = card.querySelector('.gallery-img-wrap img');
-    card.addEventListener('mousemove', function(e) {
-      var r = card.getBoundingClientRect();
-      var x = e.clientX - r.left, y = e.clientY - r.top;
-      var cx = r.width / 2, cy = r.height / 2;
-      var nx = (x - cx) / cx, ny = (y - cy) / cy;
-      card.style.transform = 'perspective(800px) rotateX(' + (-ny * 6) + 'deg) rotateY(' + (nx * 8) + 'deg) scale(1.03)';
-      card.style.setProperty('--px', nx.toFixed(3));
-      card.style.setProperty('--py', ny.toFixed(3));
-      card.style.setProperty('--mx', x + 'px');
-      card.style.setProperty('--my', y + 'px');
+  /* Initialize each gallery section independently */
+  document.querySelectorAll('.gallery-section').forEach(function(section) {
+    obs.observe(section);
+    var track = section.querySelector('.gallery-track');
+    var cards = track.querySelectorAll('.gallery-card');
+    var progC = section.querySelector('.gallery-progress');
+    var wasDragging = false;
+
+    /* 3D tilt + parallax + glow + lightbox */
+    cards.forEach(function(card) {
+      var img = card.querySelector('.gallery-img-wrap img');
+      card.addEventListener('mousemove', function(e) {
+        var r = card.getBoundingClientRect();
+        var x = e.clientX - r.left, y = e.clientY - r.top;
+        var cx = r.width / 2, cy = r.height / 2;
+        var nx = (x - cx) / cx, ny = (y - cy) / cy;
+        card.style.transform = 'perspective(800px) rotateX(' + (-ny * 6) + 'deg) rotateY(' + (nx * 8) + 'deg) scale(1.03)';
+        card.style.setProperty('--px', nx.toFixed(3));
+        card.style.setProperty('--py', ny.toFixed(3));
+        card.style.setProperty('--mx', x + 'px');
+        card.style.setProperty('--my', y + 'px');
+      });
+      card.addEventListener('mouseleave', function() {
+        card.style.transform = '';
+        card.style.setProperty('--px', '0');
+        card.style.setProperty('--py', '0');
+      });
+      card.addEventListener('click', function(e) {
+        if (wasDragging || e.target.closest('.card-arrow')) return;
+        lbImg.src = img.src; lbImg.alt = img.alt;
+        var cap = card.querySelector('.gallery-caption');
+        lbCap.querySelector('strong').textContent = cap.querySelector('strong').textContent;
+        lbCap.querySelector('span').textContent = cap.querySelector('span').textContent;
+        lb.classList.add('open');
+      });
     });
-    card.addEventListener('mouseleave', function() {
-      card.style.transform = '';
-      card.style.setProperty('--px', '0');
-      card.style.setProperty('--py', '0');
+
+    /* Per-card arrows */
+    cards.forEach(function(card) {
+      var idx = parseInt(card.dataset.idx, 10);
+      var la = card.querySelector('.card-arrow.left');
+      var ra = card.querySelector('.card-arrow.right');
+      if (la) la.addEventListener('click', function(e) { e.stopPropagation(); if (idx > 0) scrollToCard(idx - 1); });
+      if (ra) ra.addEventListener('click', function(e) { e.stopPropagation(); if (idx < cards.length - 1) scrollToCard(idx + 1); });
     });
-    card.addEventListener('click', function(e) {
-      if (wasDragging || e.target.closest('.card-arrow')) return;
-      lbImg.src = img.src; lbImg.alt = img.alt;
-      var cap = card.querySelector('.gallery-caption');
-      lbCap.querySelector('strong').textContent = cap.querySelector('strong').textContent;
-      lbCap.querySelector('span').textContent = cap.querySelector('span').textContent;
-      lb.classList.add('open');
+
+    /* Drag-to-scroll with momentum */
+    var isDragging = false, startX = 0, scrollLeft = 0;
+    var velocity = 0, lastX = 0, lastTime = 0, momentumId = null;
+
+    track.addEventListener('mousedown', function(e) {
+      isDragging = true; wasDragging = false; track.classList.add('dragging');
+      startX = e.pageX - track.offsetLeft; scrollLeft = track.scrollLeft;
+      velocity = 0; lastX = e.pageX; lastTime = Date.now();
+      if (momentumId) cancelAnimationFrame(momentumId);
+      pauseAuto();
     });
-  });
+    track.addEventListener('mousemove', function(e) {
+      if (!isDragging) return; e.preventDefault();
+      var x = e.pageX - track.offsetLeft, walk = (x - startX) * 1.2;
+      track.scrollLeft = scrollLeft - walk;
+      var now = Date.now(), dt = now - lastTime;
+      if (dt > 0) { velocity = (e.pageX - lastX) / dt; lastX = e.pageX; lastTime = now; }
+      if (Math.abs(walk) > 4) wasDragging = true;
+    });
+    track.addEventListener('mouseup', function() {
+      if (!isDragging) return; isDragging = false; track.classList.remove('dragging');
+      if (Math.abs(velocity) > 0.15) {
+        var v = velocity * 300;
+        (function coast() { if (Math.abs(v) < 0.5) return; track.scrollLeft -= v * 0.016; v *= 0.95; momentumId = requestAnimationFrame(coast); })();
+      }
+      setTimeout(function() { wasDragging = false; }, 50);
+      scheduleAuto();
+    });
+    document.addEventListener('mouseup', function() {
+      if (!isDragging) return; isDragging = false; track.classList.remove('dragging');
+    });
 
-  lb.addEventListener('click', function() { lb.classList.remove('open'); });
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') lb.classList.remove('open'); });
+    /* Auto-advance with pips */
+    var currentPip = 0, autoTimer = null;
+    cards.forEach(function(_, i) {
+      var pip = document.createElement('div');
+      pip.className = 'gallery-pip' + (i === 0 ? ' active' : '');
+      pip.innerHTML = '<div class="gallery-pip-fill"></div>';
+      pip.onclick = function() { scrollToCard(i); };
+      progC.appendChild(pip);
+    });
+    var pips = progC.querySelectorAll('.gallery-pip');
 
-  /* Per-card arrows */
-  cards.forEach(function(card) {
-    var idx = parseInt(card.dataset.idx, 10);
-    var la = card.querySelector('.card-arrow.left');
-    var ra = card.querySelector('.card-arrow.right');
-    if (la) la.addEventListener('click', function(e) { e.stopPropagation(); if (idx > 0) scrollToCard(idx - 1); });
-    if (ra) ra.addEventListener('click', function(e) { e.stopPropagation(); if (idx < cards.length - 1) scrollToCard(idx + 1); });
-  });
-
-  /* Drag-to-scroll with momentum */
-  var isDragging = false, startX = 0, scrollLeft = 0;
-  var velocity = 0, lastX = 0, lastTime = 0, momentumId = null;
-
-  track.addEventListener('mousedown', function(e) {
-    isDragging = true; wasDragging = false; track.classList.add('dragging');
-    startX = e.pageX - track.offsetLeft; scrollLeft = track.scrollLeft;
-    velocity = 0; lastX = e.pageX; lastTime = Date.now();
-    if (momentumId) cancelAnimationFrame(momentumId);
-    pauseAuto();
-  });
-  document.addEventListener('mousemove', function(e) {
-    if (!isDragging) return; e.preventDefault();
-    var x = e.pageX - track.offsetLeft, walk = (x - startX) * 1.2;
-    track.scrollLeft = scrollLeft - walk;
-    var now = Date.now(), dt = now - lastTime;
-    if (dt > 0) { velocity = (e.pageX - lastX) / dt; lastX = e.pageX; lastTime = now; }
-    if (Math.abs(walk) > 4) wasDragging = true;
-  });
-  document.addEventListener('mouseup', function() {
-    if (!isDragging) return; isDragging = false; track.classList.remove('dragging');
-    if (Math.abs(velocity) > 0.15) {
-      var v = velocity * 300;
-      (function coast() { if (Math.abs(v) < 0.5) return; track.scrollLeft -= v * 0.016; v *= 0.95; momentumId = requestAnimationFrame(coast); })();
+    function updatePips(idx) {
+      pips.forEach(function(p, i) { p.classList.remove('active', 'past'); if (i < idx) p.classList.add('past'); if (i === idx) p.classList.add('active'); });
+      currentPip = idx;
     }
-    setTimeout(function() { wasDragging = false; }, 50);
+    function scrollToCard(idx) {
+      var c = cards[idx]; if (!c) return;
+      var tr = track.getBoundingClientRect(), cr = c.getBoundingClientRect();
+      var off = cr.left - tr.left + track.scrollLeft - (tr.width / 2 - cr.width / 2);
+      track.scrollTo({ left: off, behavior: 'smooth' });
+      updatePips(idx); restartAuto();
+    }
+    function scheduleAuto() { clearInterval(autoTimer); autoTimer = setInterval(function() { scrollToCard((currentPip + 1) % cards.length); }, 15000); }
+    function pauseAuto() { clearInterval(autoTimer); }
+    function restartAuto() { pauseAuto(); scheduleAuto(); }
+
+    track.addEventListener('mouseenter', pauseAuto);
+    track.addEventListener('mouseleave', scheduleAuto);
+
+    var scrollDb;
+    track.addEventListener('scroll', function() {
+      clearTimeout(scrollDb);
+      scrollDb = setTimeout(function() {
+        var cw = cards[0].offsetWidth + 18;
+        var idx = Math.round(track.scrollLeft / cw);
+        idx = Math.max(0, Math.min(idx, cards.length - 1));
+        if (idx !== currentPip) updatePips(idx);
+      }, 80);
+    });
+
+    updatePips(0);
     scheduleAuto();
   });
-
-  /* Auto-advance with pips */
-  var currentPip = 0, autoTimer = null;
-  cards.forEach(function(_, i) {
-    var pip = document.createElement('div');
-    pip.className = 'gallery-pip' + (i === 0 ? ' active' : '');
-    pip.innerHTML = '<div class="gallery-pip-fill"></div>';
-    pip.onclick = function() { scrollToCard(i); };
-    progC.appendChild(pip);
-  });
-  var pips = progC.querySelectorAll('.gallery-pip');
-
-  function updatePips(idx) {
-    pips.forEach(function(p, i) { p.classList.remove('active', 'past'); if (i < idx) p.classList.add('past'); if (i === idx) p.classList.add('active'); });
-    currentPip = idx;
-  }
-  function scrollToCard(idx) {
-    var c = cards[idx]; if (!c) return;
-    var tr = track.getBoundingClientRect(), cr = c.getBoundingClientRect();
-    var off = cr.left - tr.left + track.scrollLeft - (tr.width / 2 - cr.width / 2);
-    track.scrollTo({ left: off, behavior: 'smooth' });
-    updatePips(idx); restartAuto();
-  }
-  function scheduleAuto() { clearInterval(autoTimer); autoTimer = setInterval(function() { scrollToCard((currentPip + 1) % cards.length); }, 6000); }
-  function pauseAuto() { clearInterval(autoTimer); }
-  function restartAuto() { pauseAuto(); scheduleAuto(); }
-
-  track.addEventListener('mouseenter', pauseAuto);
-  track.addEventListener('mouseleave', scheduleAuto);
-
-  var scrollDb;
-  track.addEventListener('scroll', function() {
-    clearTimeout(scrollDb);
-    scrollDb = setTimeout(function() {
-      var cw = cards[0].offsetWidth + 18;
-      var idx = Math.round(track.scrollLeft / cw);
-      idx = Math.max(0, Math.min(idx, cards.length - 1));
-      if (idx !== currentPip) updatePips(idx);
-    }, 80);
-  });
-
-  updatePips(0);
-  scheduleAuto();
 })();
 </script>
 {% endblock %}

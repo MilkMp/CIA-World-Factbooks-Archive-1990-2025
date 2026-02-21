@@ -21,3 +21,6 @@ scripts/archive/
 Website_Archive/
 *.BIN
 data/analytics.db
+data/gif_frames/
+data/debug.html
+data/dashboard_check.html
