@@ -166,10 +166,17 @@
   }
   .nd-list-item {
     display: flex; align-items: center; gap: 6px;
-    padding: 3px 0; font-size: 0.78rem; color: #ABB3BF;
+    padding: 4px 6px; font-size: 0.78rem; color: #ABB3BF;
+    cursor: pointer; border-radius: 3px; transition: background 0.15s, color 0.15s;
   }
+  .nd-list-item:hover { background: #252A31; color: #E5E8EB; }
   .nd-list-item .ndot {
     width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .nd-cat-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; margin-bottom: 8px;
   }
   .nd-link {
     display: inline-block; font-size: 0.65rem; text-transform: uppercase;
@@ -383,7 +390,7 @@
   Trade partner data is available from 1999 onward. Partner percentages may not sum to 100%
   as the CIA reports only the top trading partners. Node size represents the sum of reported
   partner percentages; edge width represents bilateral trade share. Organization data covers 1990&ndash;{{ year }}.
-  <br><em>Hover over a node to highlight its connections. Click a node to zoom in and lock the connection web. Click the background to reset.</em>
+  <br><em>Hover over a node to highlight its connections. Click a node to zoom into its neighborhood. Right-click to expand to 2-hop neighbors. Click a name in the sidebar to navigate. Click the background to reset.</em>
 </div>
 <div class="caveat" style="margin-top:8px;border-left:3px solid #404854;">
   <strong>Sources:</strong>
@@ -510,15 +517,29 @@
 
     if (nodeData._type === 'org') {
       nameEl.textContent = nodeData.name;
-      subEl.textContent = ORG_CAT_NAMES[nodeData._cat] || 'International Organization';
+      /* Category badge */
+      var catColor = ORG_CAT_COLORS[nodeData._cat] || '#5F6B7C';
+      var catName = ORG_CAT_NAMES[nodeData._cat] || 'Organization';
+      subEl.innerHTML = '<span class="nd-cat-badge" style="background:' + hexRgba(catColor, 0.15) +
+        ';color:' + catColor + ';border:1px solid ' + hexRgba(catColor, 0.3) + '">' + esc(catName) + '</span>';
+      /* Category rank */
+      var catRank = 0, catTotal = 0;
+      if (orgData) {
+        var catOrgs = orgData.nodes.filter(function(n) { return n.type === 'org' && (n.category || 'pol') === nodeData._cat; });
+        catOrgs.sort(function(a, b) { return b.members - a.members; });
+        catTotal = catOrgs.length;
+        for (var ci = 0; ci < catOrgs.length; ci++) { if (catOrgs[ci].id === nodeData.id) { catRank = ci + 1; break; } }
+      }
       statsEl.innerHTML =
         '<div><div class="nd-label">Members</div><div class="nd-val">' + (nodeData._members || 0) + '</div></div>' +
-        '<div><div class="nd-label">Regions</div><div class="nd-val">' + countRegions(neighbors) + '</div></div>';
+        '<div><div class="nd-label">Connections</div><div class="nd-val">' + neighbors.length + '</div></div>' +
+        '<div><div class="nd-label">Regions</div><div class="nd-val">' + countRegions(neighbors) + '</div></div>' +
+        (catRank ? '<div><div class="nd-label">Category Rank</div><div class="nd-val">#' + catRank + ' of ' + catTotal + '</div></div>' : '');
       listTitle.textContent = 'Member Countries (' + neighbors.length + ')';
       neighbors.sort(function(a, b) { return (a.name || a.id).localeCompare(b.name || b.id); });
       listEl.innerHTML = neighbors.map(function(n) {
         var c = COCOM_COLORS[n._cocom || n.cocom] || '#5F6B7C';
-        return '<div class="nd-list-item"><span class="ndot" style="background:' + c + '"></span>' + esc(n.name || n.id) + '</div>';
+        return '<div class="nd-list-item" data-node-id="' + n.id + '"><span class="ndot" style="background:' + c + '"></span>' + esc(n.name || n.id) + '</div>';
       }).join('');
       linkEl.style.display = 'none';
     } else {
@@ -535,7 +556,7 @@
         orgNeighbors.sort(function(a, b) { return (b._members || 0) - (a._members || 0); });
         listEl.innerHTML = orgNeighbors.map(function(n) {
           var oc = ORG_CAT_COLORS[n._cat] || '#D1980B';
-          return '<div class="nd-list-item"><span class="ndot" style="background:' + oc + '"></span>' +
+          return '<div class="nd-list-item" data-node-id="' + n.id + '"><span class="ndot" style="background:' + oc + '"></span>' +
             esc(n.name) + ' <span style="color:#5F6B7C;font-size:0.7rem;margin-left:auto">' + (n._members || '') + '</span></div>';
         }).join('');
       } else {
@@ -545,12 +566,20 @@
         listTitle.textContent = 'Trade Partners (' + countryNeighbors.length + ')';
         listEl.innerHTML = countryNeighbors.map(function(n) {
           var c = COCOM_COLORS[n.cocom || n._cocom] || '#5F6B7C';
-          return '<div class="nd-list-item"><span class="ndot" style="background:' + c + '"></span>' + esc(n.name || n.id) + '</div>';
+          return '<div class="nd-list-item" data-node-id="' + n.id + '"><span class="ndot" style="background:' + c + '"></span>' + esc(n.name || n.id) + '</div>';
         }).join('');
       }
       linkEl.href = '/analysis/dossier/' + nodeData.id;
       linkEl.style.display = '';
     }
+
+    /* Click delegation — navigate graph when clicking sidebar items */
+    listEl.onclick = function(e) {
+      var item = e.target.closest('.nd-list-item');
+      if (!item) return;
+      var nid = item.getAttribute('data-node-id');
+      if (nid) navigateToNode(tab, nid);
+    };
 
     var wasOpen = panel.classList.contains('open');
     panel.classList.add('open');
@@ -595,7 +624,7 @@
   window.resetGraph = function(tab) {
     var g = tab === 'trade' ? tradeGraph : orgGraph;
     if (!g) return;
-    g.zoomToFit(400, 40);
+    g.zoomToFit(800, 60);
   };
 
   function countRegions(nodes) {
@@ -605,6 +634,48 @@
       if (r) seen[r] = true;
     });
     return Object.keys(seen).length;
+  }
+
+  /* ── Adaptive neighborhood zoom ── */
+  function zoomToNeighborhood(graph, node, adjMap, duration) {
+    duration = duration || 600;
+    var ids = {};
+    ids[node.id] = true;
+    if (adjMap[node.id]) {
+      Object.keys(adjMap[node.id]).forEach(function(nid) { ids[nid] = true; });
+    }
+    graph.zoomToFit(duration, 60, function(n) { return !!ids[n.id]; });
+  }
+
+  function zoomToNeighborhood2(graph, node, adjMap, duration) {
+    duration = duration || 800;
+    var ids = {};
+    ids[node.id] = true;
+    if (adjMap[node.id]) {
+      Object.keys(adjMap[node.id]).forEach(function(nid) {
+        ids[nid] = true;
+        if (adjMap[nid]) {
+          Object.keys(adjMap[nid]).forEach(function(nid2) { ids[nid2] = true; });
+        }
+      });
+    }
+    graph.zoomToFit(duration, 60, function(n) { return !!ids[n.id]; });
+  }
+
+  function navigateToNode(tab, nodeId) {
+    var graph = tab === 'trade' ? tradeGraph : orgGraph;
+    var adjMap = tab === 'trade' ? tradeAdj : orgAdj;
+    if (!graph) return;
+    var nodes = graph.graphData().nodes;
+    var target = null;
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].id === nodeId) { target = nodes[i]; break; }
+    }
+    if (!target) return;
+    if (tab === 'trade') tradeSelected = target;
+    else orgSelected = target;
+    zoomToNeighborhood(graph, target, adjMap, 600);
+    showDetail(tab, target, adjMap, nodes);
   }
 
   /* ── Legend ── */
@@ -740,14 +811,17 @@
         var focus = tradeHover || tradeSelected;
         var isH = tradeHover === node || tradeSelected === node;
         var isN = focus && tradeAdj[focus.id] && tradeAdj[focus.id][node.id];
-        var dim = focus && !isH && !isN;
-        var a = dim ? 0.07 : 1.0;
+        var targetA = !focus ? 1.0 : (isH ? 1.0 : (isN ? 0.85 : 0.05));
+        node._alpha = node._alpha != null ? node._alpha : 1.0;
+        node._alpha += (targetA - node._alpha) * 0.15;
+        if (Math.abs(node._alpha - targetA) < 0.01) node._alpha = targetA;
+        var a = node._alpha;
 
         drawGlowNode(ctx, node.x, node.y, node._s, node._c, a, isH, isN);
 
         /* Label — show more aggressively like the desired view */
         var show = isH || isN || globalScale > 1.2 || node._s > 3.5;
-        if (show && !dim) {
+        if (show && a > 0.15) {
           var fs = Math.max(10 / globalScale, 2);
           ctx.font = '600 ' + fs + 'px -apple-system,Segoe UI,sans-serif';
           ctx.textAlign = 'center';
@@ -809,15 +883,22 @@
       .onNodeClick(function(node) {
         if (!node) return;
         tradeSelected = node;
-        tradeGraph.centerAt(node.x, node.y, 500);
-        tradeGraph.zoom(2.5, 500);
+        zoomToNeighborhood(tradeGraph, node, tradeAdj, 600);
+        showDetail('trade', node, tradeAdj, tradeGraph.graphData().nodes);
+      })
+      .onNodeRightClick(function(node, event) {
+        if (event) event.preventDefault();
+        if (!node) return;
+        tradeSelected = node;
+        zoomToNeighborhood2(tradeGraph, node, tradeAdj, 800);
         showDetail('trade', node, tradeAdj, tradeGraph.graphData().nodes);
       })
       .onBackgroundClick(function() {
         tradeSelected = null;
         hideDetail('trade');
-        tradeGraph.zoomToFit(400, 40);
+        tradeGraph.zoomToFit(800, 60);
       })
+      .autoPauseRedraw(false)
       .warmupTicks(200)
       .cooldownTicks(300);
 
@@ -828,13 +909,14 @@
     if (isMobile) {
       tradeGraph.d3Force('link').distance(50);
     }
+    container.oncontextmenu = function(e) { e.preventDefault(); };
 
     /* Now set data — warmup runs with correct forces */
     tradeGraph.graphData({ nodes: nodes, links: links });
 
     /* Auto-fit after simulation settles */
     tradeGraph.onEngineStop(function() {
-      tradeGraph.zoomToFit(400, 40);
+      tradeGraph.zoomToFit(600, 60);
     });
   }
 
@@ -987,15 +1069,18 @@
         var focus = orgHover || orgSelected;
         var isH = orgHover === node || orgSelected === node;
         var isN = focus && orgAdj[focus.id] && orgAdj[focus.id][node.id];
-        var dim = focus && !isH && !isN;
-        var a = dim ? 0.05 : 1.0;
+        var targetA = !focus ? 1.0 : (isH ? 1.0 : (isN ? 0.85 : 0.05));
+        node._alpha = node._alpha != null ? node._alpha : 1.0;
+        node._alpha += (targetA - node._alpha) * 0.15;
+        if (Math.abs(node._alpha - targetA) < 0.01) node._alpha = targetA;
+        var a = node._alpha;
 
         if (node._type === 'org') {
           /* Org node: hexagon with category color */
           drawHexNode(ctx, node.x, node.y, node._s, node._c, a, isH, isN);
 
           /* Zoom-based label: abbreviation at mid zoom, full at high zoom */
-          if (!dim) {
+          if (a > 0.15) {
             var showLabel = globalScale > 0.4 || isH || isN;
             if (showLabel) {
               var fs = Math.max(9 / globalScale, 2);
@@ -1030,7 +1115,7 @@
 
           /* Zoom-based label: ISO code at medium zoom, hover/neighbor always */
           var showCountry = isH || isN || globalScale > 1.2;
-          if (showCountry && !dim) {
+          if (showCountry && a > 0.15) {
             var fs2 = Math.max(9 / globalScale, 2);
             ctx.font = '600 ' + fs2 + 'px -apple-system,Segoe UI,sans-serif';
             ctx.textAlign = 'center';
@@ -1092,15 +1177,22 @@
       .onNodeClick(function(node) {
         if (!node) return;
         orgSelected = node;
-        orgGraph.centerAt(node.x, node.y, 500);
-        orgGraph.zoom(2.5, 500);
+        zoomToNeighborhood(orgGraph, node, orgAdj, 600);
+        showDetail('org', node, orgAdj, orgGraph.graphData().nodes);
+      })
+      .onNodeRightClick(function(node, event) {
+        if (event) event.preventDefault();
+        if (!node) return;
+        orgSelected = node;
+        zoomToNeighborhood2(orgGraph, node, orgAdj, 800);
         showDetail('org', node, orgAdj, orgGraph.graphData().nodes);
       })
       .onBackgroundClick(function() {
         orgSelected = null;
         hideDetail('org');
-        orgGraph.zoomToFit(400, 40);
+        orgGraph.zoomToFit(800, 60);
       })
+      .autoPauseRedraw(false)
       .warmupTicks(150)
       .cooldownTicks(300);
 
@@ -1112,12 +1204,13 @@
       var base = (src && src._type === 'org') ? 30 + (src._s || 5) * 4 : 60;
       return isMobile ? base * 1.5 : base;
     });
+    container.oncontextmenu = function(e) { e.preventDefault(); };
 
     orgGraph.graphData({ nodes: nodes, links: links });
 
     /* Auto-fit after simulation settles */
     orgGraph.onEngineStop(function() {
-      orgGraph.zoomToFit(400, 40);
+      orgGraph.zoomToFit(600, 60);
     });
   }
 

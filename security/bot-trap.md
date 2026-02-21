@@ -7,8 +7,6 @@ systematically scraping the CIA Factbook Archive at 2-second intervals -- crawli
 every country-year page, field page, and CSV/XLSX export endpoint to clone the
 full dataset.
 
-After iterating through several rate-limiting approaches, Milan designed the
-self-reinforcing ban logic described below. Claude (Opus 4.6) implemented it.
 
 ## The Problem
 

@@ -54,6 +54,16 @@
     height: clamp(280px, 45vw, 480px);
   }
 
+  /* ── Region Cards ── */
+  .region-card:hover {
+    border-color: #383E47 !important;
+    box-shadow: 0 2px 8px rgba(17, 20, 24, 0.5);
+  }
+  .region-card.active {
+    border-color: #2D72D2 !important;
+    box-shadow: 0 0 0 1px #2D72D2, 0 2px 10px rgba(45, 114, 210, 0.25);
+  }
+
   /* ── Map Legend ── */
   .comms-legend {
     position: absolute;
@@ -176,9 +186,9 @@
   <hr class="sec-rule">
 </div>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:16px 0;">
+<div id="region-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:16px 0;">
   {% for rs in region_summaries %}
-  <div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:14px 16px;">
+  <div class="region-card" data-region="{{ rs.region }}" style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:14px 16px;cursor:pointer;transition:border-color 200ms,box-shadow 200ms;">
     <div style="font-family:Consolas,monospace;font-size:0.68rem;color:#5F6B7C;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">{{ rs.region }}</div>
     <div style="font-weight:700;font-size:0.92rem;margin-bottom:10px;">{{ rs.region_name }}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:0.75rem;">
@@ -475,6 +485,55 @@ document.getElementById('indicator-select').addEventListener('change', function(
     map.setPaintProperty('country-circles', 'circle-color', buildColorExpr(currentIndicator));
   }
   updateLegend(currentIndicator);
+});
+
+/* ── Region card click → highlight map ── */
+const regionBounds = {
+  EUCOM:     { center: [15, 50],  zoom: 2.8 },
+  AFRICOM:   { center: [20, 5],   zoom: 2.5 },
+  INDOPACOM: { center: [110, 10], zoom: 2.0 },
+  CENTCOM:   { center: [55, 28],  zoom: 3.0 },
+  SOUTHCOM:  { center: [-60, -15], zoom: 2.5 },
+  NORTHCOM:  { center: [-100, 45], zoom: 2.5 },
+};
+
+let activeRegion = null;
+
+document.getElementById('region-cards').addEventListener('click', function(e) {
+  const card = e.target.closest('.region-card');
+  if (!card) return;
+  const region = card.getAttribute('data-region');
+
+  /* Toggle off if already active */
+  if (activeRegion === region) {
+    activeRegion = null;
+    document.querySelectorAll('.region-card').forEach(c => c.classList.remove('active'));
+    /* Reset map */
+    map.flyTo({ center: [15, 20], zoom: 1.5, duration: 800 });
+    if (map.getLayer('country-fills')) {
+      map.setPaintProperty('country-fills', 'fill-opacity', 0.85);
+    }
+    return;
+  }
+
+  activeRegion = region;
+  document.querySelectorAll('.region-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+
+  /* Fly to region */
+  const rb = regionBounds[region];
+  if (rb) {
+    map.flyTo({ center: rb.center, zoom: rb.zoom, duration: 800 });
+  }
+
+  /* Dim non-region countries, brighten region countries */
+  if (map.getLayer('country-fills')) {
+    map.setPaintProperty('country-fills', 'fill-opacity', [
+      'case',
+      ['==', ['get', 'cocom'], region], 0.95,
+      0.15,
+    ]);
+  }
 });
 
 /* ── Digital divide bar charts (ECharts) ── */

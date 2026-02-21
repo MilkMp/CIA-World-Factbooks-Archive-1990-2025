@@ -369,9 +369,12 @@ tr.clickable:hover td { background: rgba(47, 52, 60, 0.4); }
 
 .stat-card .stat-value {
   font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 1.6rem;
+  font-size: clamp(1rem, 3.5vw, 1.6rem);
   color: #C5CBD3;
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stat-card .stat-label {
