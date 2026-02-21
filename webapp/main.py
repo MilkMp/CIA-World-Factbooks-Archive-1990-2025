@@ -1,11 +1,13 @@
 import logging
 import urllib.request
 import json
+import time
+from collections import defaultdict
 from pathlib import Path
 from fastapi import FastAPI, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse, Response, PlainTextResponse
 from webapp.config import settings
 from webapp.database import sql, sql_one
 from webapp.routers import archive, countries, analysis, analysis2, analysis3, analysis4, export
@@ -16,6 +18,31 @@ BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(title=settings.APP_TITLE)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+
+# --- Rate limiter: max 3 req/sec per IP on /archive/field/ ---
+_rate_buckets: dict = defaultdict(list)
+RATE_LIMIT = 3        # max requests
+RATE_WINDOW = 1.0     # per second
+RATE_PREFIX = "/archive/field/"
+
+GOOD_BOTS = ("googlebot", "bingbot", "slurp", "duckduckbot")
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if request.url.path.startswith(RATE_PREFIX):
+        ua = (request.headers.get("user-agent") or "").lower()
+        # Skip rate limiting for known good crawlers
+        if not any(bot in ua for bot in GOOD_BOTS):
+            ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
+            now = time.time()
+            window = _rate_buckets[ip]
+            # Prune old timestamps outside the window
+            _rate_buckets[ip] = [t for t in window if now - t < RATE_WINDOW]
+            if len(_rate_buckets[ip]) >= RATE_LIMIT:
+                return PlainTextResponse("Too Many Requests", status_code=429)
+            _rate_buckets[ip].append(now)
+    return await call_next(request)
 
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
