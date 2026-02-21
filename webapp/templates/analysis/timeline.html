@@ -795,6 +795,16 @@ let tsColorIdx = 0;
 let tsFetching = false;
 let tsChart = null;
 
+/* Pre-embedded P5 timeseries data (avoids API calls on page load) */
+const tsPreloaded = {{ p5_data | tojson }};
+const TS_P5_SET = {US:1,CN:1,RU:1,GB:1,FR:1};
+
+function tsGetPreloaded() {
+  if (tsSelected.length !== 5) return null;
+  if (!tsSelected.every(function(c) { return TS_P5_SET[c.iso2]; })) return null;
+  return tsPreloaded[indicatorSelect.value] || null;
+}
+
 function tsGetColor() {
   const c = tsColors[tsColorIdx % tsColors.length];
   tsColorIdx++;
@@ -840,14 +850,20 @@ async function tsFetchAndRender() {
     return;
   }
 
-  if (tsFetching) return;
-  tsFetching = true;
-
   const indicator = indicatorSelect.value;
-  const codes = tsSelected.map(c => c.iso2).join(',');
-  const res = await fetch('/api/analysis/timeseries?indicator=' + indicator + '&countries=' + codes);
-  const data = await res.json();
-  tsFetching = false;
+  var preloaded = tsGetPreloaded();
+  var data;
+
+  if (preloaded) {
+    data = preloaded;
+  } else {
+    if (tsFetching) return;
+    tsFetching = true;
+    const codes = tsSelected.map(c => c.iso2).join(',');
+    const res = await fetch('/api/analysis/timeseries?indicator=' + indicator + '&countries=' + codes);
+    data = await res.json();
+    tsFetching = false;
+  }
 
   const byCountry = {};
   data.forEach(d => {
@@ -920,7 +936,14 @@ document.querySelectorAll('.ts-preset').forEach(btn => {
   });
 });
 
-// Initialize with P5
-['US','CN','RU','GB','FR'].forEach(code => tsAddCountry(code));
+// Initialize with P5 — add all first, then render once (uses preloaded data)
+['US','CN','RU','GB','FR'].forEach(function(code) {
+  var opt = tsCountrySelect.querySelector('option[value="' + code + '"]');
+  if (opt) {
+    tsSelected.push({ iso2: code, name: opt.textContent.trim(), color: tsGetColor() });
+  }
+});
+tsRenderChips();
+tsFetchAndRender();
 </script>
 {% endblock %}

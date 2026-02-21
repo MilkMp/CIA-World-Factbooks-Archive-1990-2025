@@ -523,11 +523,54 @@ async def timeline_page(request: Request):
                      AND mc2.MasterCountryID != mc.MasterCountryID))
         ORDER BY CanonicalName
     """)
+
+    # Pre-compute P5 timeseries data to avoid API calls on page load
+    p5_codes = ['US', 'CN', 'RU', 'GB', 'FR']
+    p5_indicators = {k: v for k, v in INDICATOR_FIELD_MAP.items()
+                     if k in ('life_exp', 'gdp_billions', 'population',
+                              'mil_pct_gdp', 'gdp_percap')}
+    field_names = [v[0] for v in p5_indicators.values()]
+    field_to_indicator = {v[0]: (k, v[1]) for k, v in p5_indicators.items()}
+
+    ph_codes = ','.join(['?'] * len(p5_codes))
+    ph_fields = ','.join(['?'] * len(field_names))
+    rows = sql(f"""
+        SELECT mc.CanonicalName, mc.ISOAlpha2, c.Year,
+               cf.Content, fm.CanonicalName AS FieldName
+        FROM CountryFields cf
+        JOIN Countries c ON cf.CountryID = c.CountryID
+        JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
+        JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+        WHERE mc.ISOAlpha2 IN ({ph_codes})
+          AND fm.CanonicalName IN ({ph_fields})
+          AND fm.IsNoise = 0
+          AND (mc.EntityType = 'sovereign'
+               OR NOT EXISTS (
+                   SELECT 1 FROM MasterCountries mc2
+                   WHERE mc2.ISOAlpha2 = mc.ISOAlpha2
+                     AND mc2.EntityType = 'sovereign'
+                     AND mc2.MasterCountryID != mc.MasterCountryID))
+        ORDER BY mc.CanonicalName, c.Year
+    """, p5_codes + field_names)
+
+    p5_data = {k: [] for k in p5_indicators}
+    for r in rows:
+        ind_key, parser = field_to_indicator[r['FieldName']]
+        val = parser(r['Content'])
+        if val is not None:
+            p5_data[ind_key].append({
+                'name': r['CanonicalName'],
+                'iso2': r['ISOAlpha2'],
+                'year': r['Year'],
+                'value': val,
+            })
+
     return templates.TemplateResponse("analysis/timeline.html", {
         "request": request,
         "years": years,
         "countries": countries,
         "mapbox_token": settings.MAPBOX_TOKEN,
+        "p5_data": p5_data,
     })
 
 
