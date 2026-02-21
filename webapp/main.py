@@ -31,9 +31,9 @@ BUCKET_MAX_AGE = 300
 # (path_prefix, max_requests, window_seconds)
 RATE_RULES = [
     ("/export/",         5,  60.0),   # bulk CSV/XLSX downloads
-    ("/archive/field/",  15, 60.0),   # individual field pages
-    ("/archive/",        15, 60.0),   # country archive pages
-    ("/countries",       15, 60.0),   # country listing pages
+    ("/archive/field/",  10, 60.0),   # individual field pages
+    ("/archive/",        10, 60.0),   # country archive pages
+    ("/countries",       10, 60.0),   # country listing pages
     ("/api/",            20, 60.0),   # API endpoints
     ("/",                30, 60.0),   # global catch-all (everything else)
 ]
