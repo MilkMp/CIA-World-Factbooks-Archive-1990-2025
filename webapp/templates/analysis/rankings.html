@@ -5,6 +5,11 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <script src="/static/js/dg2-echarts.js"></script>
+<style>
+  @media (max-width: 640px) {
+    #top10-chart, #bottom10-chart { height: 280px !important; }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -115,10 +120,13 @@ const top10 = {{ top10 | tojson }};
 const bottom10 = {{ bottom10 | tojson }};
 
 /* ── Bar charts (ECharts) ── */
+var barLeft = window.innerWidth <= 640 ? 110 : 180;
+var barFontSize = window.innerWidth <= 640 ? 9 : 11;
+
 initChart('top10-chart').setOption({
-  grid: { left: 180, right: 20, top: 4, bottom: 30 },
+  grid: { left: barLeft, right: 20, top: 4, bottom: 30 },
   xAxis: { type: 'value' },
-  yAxis: { type: 'category', data: top10.map(d => d.name).reverse(), axisLabel: { fontSize: 11 } },
+  yAxis: { type: 'category', data: top10.map(d => d.name).reverse(), axisLabel: { fontSize: barFontSize } },
   series: [{ type: 'bar', data: top10.map(d => d.value).reverse(),
     itemStyle: { color: '#2D72D2' }, barWidth: '60%' }],
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
@@ -126,9 +134,9 @@ initChart('top10-chart').setOption({
 });
 
 initChart('bottom10-chart').setOption({
-  grid: { left: 180, right: 20, top: 4, bottom: 30 },
+  grid: { left: barLeft, right: 20, top: 4, bottom: 30 },
   xAxis: { type: 'value' },
-  yAxis: { type: 'category', data: bottom10.map(d => d.name).reverse(), axisLabel: { fontSize: 11 } },
+  yAxis: { type: 'category', data: bottom10.map(d => d.name).reverse(), axisLabel: { fontSize: barFontSize } },
   series: [{ type: 'bar', data: bottom10.map(d => d.value).reverse(),
     itemStyle: { color: '#5F6B7C' }, barWidth: '60%' }],
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },

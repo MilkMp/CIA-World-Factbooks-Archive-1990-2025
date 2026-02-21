@@ -28,6 +28,10 @@
   }
   .trend-close:hover { color: #C5CBD3; background: #252A31; }
   #trend-chart { width: 100%; height: 260px; }
+  @media (max-width: 640px) {
+    .trend-close { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    #trend-chart { height: 220px; }
+  }
 </style>
 {% endblock %}
 

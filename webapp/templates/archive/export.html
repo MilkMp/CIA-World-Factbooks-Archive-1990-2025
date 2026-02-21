@@ -2,6 +2,19 @@
 {% set active_page = "export" %}
 {% block title %}Data Export — CIA World Factbook Archive{% endblock %}
 
+{% block head %}
+<style>
+  @media (max-width: 640px) {
+    #country-select, #print-country, #multi-countries {
+      min-width: 0 !important;
+      width: 100% !important;
+      flex-basis: 100% !important;
+    }
+    #multi-countries { min-height: 180px; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <div class="doc-id">ARCHIVE // DATA EXPORT</div>
@@ -99,7 +112,7 @@
       {% endfor %}
     </select>
     <div>
-      <div style="font-size:0.68rem;color:#5F6B7C;margin-bottom:8px;">Hold Ctrl/Cmd to select multiple</div>
+      <div style="font-size:0.68rem;color:#5F6B7C;margin-bottom:8px;" id="multi-hint">Hold Ctrl/Cmd to select multiple</div>
       <a id="multi-print-btn" href="#" class="btn" target="_blank" style="opacity:0.4;pointer-events:none;">Generate Report</a>
     </div>
   </div>
@@ -233,5 +246,11 @@ function updateMultiBtn() {
 
 multiCountries.addEventListener('change', updateMultiBtn);
 multiYear.addEventListener('input', updateMultiBtn);
+
+/* Touch-aware hint for multi-select */
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+  var hint = document.getElementById('multi-hint');
+  if (hint) hint.textContent = 'Tap to select/deselect multiple';
+}
 </script>
 {% endblock %}

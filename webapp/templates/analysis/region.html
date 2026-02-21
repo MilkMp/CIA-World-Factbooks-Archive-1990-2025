@@ -310,7 +310,7 @@ if (!bounds) {
   map.setZoom(1.5);
 }
 
-map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left');
+map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-left');
 
 const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '280px' });
 

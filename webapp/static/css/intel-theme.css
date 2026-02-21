@@ -927,6 +927,14 @@ mark.search-hit {
 
   /* Action bar: compact buttons on tablets */
   .action-bar .btn { padding: 7px 12px; font-size: 0.75rem; }
+
+  /* Touch targets: 44px minimum (Apple HIG) */
+  .btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  select, input[type="text"], input[type="number"], input[type="search"] {
+    min-height: 44px;
+  }
+  .form-control { min-height: 44px; }
+  .data-table th[onclick] { padding-top: 10px; padding-bottom: 10px; }
 }
 
 /* Phone */

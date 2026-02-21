@@ -517,7 +517,7 @@ const mapConfig = {
 const mapA = new mapboxgl.Map(Object.assign({ container: 'map-a' }, mapConfig));
 const mapB = new mapboxgl.Map(Object.assign({ container: 'map-b' }, mapConfig));
 
-mapA.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left');
+mapA.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-left');
 
 /* ── Synced movement ── */
 let syncing = false;
@@ -542,24 +542,35 @@ syncMaps(mapB, mapA);
 const popupA = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '260px' });
 const popupB = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '260px' });
 
+function buildPopupHtml(p) {
+  return '<b>' + p.cname + '</b>' + (p.cocom ? ' (' + p.cocom + ')' : '') + '<br>' +
+    'Pop: ' + fmtNum(p.population) + '<br>' +
+    'GDP: ' + (p.gdp_billions ? '$' + Number(p.gdp_billions).toFixed(0) + 'B' : '\u2014') + '<br>' +
+    'GDP/Cap: ' + (p.gdp_percap ? '$' + Number(p.gdp_percap).toLocaleString(undefined,{maximumFractionDigits:0}) : '\u2014') + '<br>' +
+    'Military: ' + (p.mil_pct_gdp ? Number(p.mil_pct_gdp).toFixed(2) + '%' : '\u2014') + '<br>' +
+    'Life Exp: ' + (p.life_exp ? Number(p.life_exp).toFixed(1) + ' yrs' : '\u2014');
+}
+
 function addHoverHandlers(map, popup, yearLabel) {
   map.on('mousemove', 'country-fills', function(e) {
     if (!e.features || !e.features.length) return;
     map.getCanvas().style.cursor = 'pointer';
     const p = e.features[0].properties;
     if (!p.cname) { popup.remove(); return; }
-    const html = '<b>' + p.cname + '</b>' + (p.cocom ? ' (' + p.cocom + ')' : '') + '<br>' +
-      'Pop: ' + fmtNum(p.population) + '<br>' +
-      'GDP: ' + (p.gdp_billions ? '$' + Number(p.gdp_billions).toFixed(0) + 'B' : '\u2014') + '<br>' +
-      'GDP/Cap: ' + (p.gdp_percap ? '$' + Number(p.gdp_percap).toLocaleString(undefined,{maximumFractionDigits:0}) : '\u2014') + '<br>' +
-      'Military: ' + (p.mil_pct_gdp ? Number(p.mil_pct_gdp).toFixed(2) + '%' : '\u2014') + '<br>' +
-      'Life Exp: ' + (p.life_exp ? Number(p.life_exp).toFixed(1) + ' yrs' : '\u2014');
-    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+    popup.setLngLat(e.lngLat).setHTML(buildPopupHtml(p)).addTo(map);
   });
 
   map.on('mouseleave', 'country-fills', function() {
     map.getCanvas().style.cursor = '';
     popup.remove();
+  });
+
+  /* Touch fallback: tap to show popup on mobile */
+  map.on('click', 'country-fills', function(e) {
+    if (!e.features || !e.features.length) return;
+    const p = e.features[0].properties;
+    if (!p.cname) return;
+    popup.setLngLat(e.lngLat).setHTML(buildPopupHtml(p)).addTo(map);
   });
 }
 

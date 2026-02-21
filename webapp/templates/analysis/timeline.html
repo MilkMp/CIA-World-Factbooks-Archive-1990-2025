@@ -550,7 +550,7 @@ const map = new mapboxgl.Map({
   maxZoom: 8,
 });
 
-map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left');
+map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-left');
 
 const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '280px' });
 
@@ -679,10 +679,17 @@ map.on('load', function() {
         popup.remove();
       });
 
-      /* Click → add to time series */
+      /* Click → show popup (touch fallback) + add to time series */
       map.on('click', 'country-fills', function(e) {
         if (!e.features || !e.features.length) return;
         const p = e.features[0].properties;
+        if (!p.cname || p.cname === 'null') return;
+        popup.setLngLat(e.lngLat).setHTML(
+          '<b>' + p.cname + '</b>' + (p.cocom && p.cocom !== 'null' ? ' (' + p.cocom + ')' : '') + '<br>' +
+          'Pop: ' + fmtNum(p.population) + '<br>' +
+          'GDP: ' + (p.gdp_billions && p.gdp_billions !== 'null' ? '$' + Number(p.gdp_billions).toFixed(0) + 'B' : '\u2014') + '<br>' +
+          'Life Exp: ' + (p.life_exp && p.life_exp !== 'null' ? Number(p.life_exp).toFixed(1) + ' yrs' : '\u2014')
+        ).addTo(map);
         if (p.iso2 && p.iso2 !== 'null') {
           tsAddCountry(p.iso2);
         }
