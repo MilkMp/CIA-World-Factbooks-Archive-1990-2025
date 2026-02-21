@@ -44,6 +44,13 @@ GOOD_BOTS = ("googlebot", "bingbot", "slurp", "duckduckbot")
 BAD_BOTS = ("python-requests", "scrapy", "python-urllib", "go-http-client",
             "java/", "libwww-perl", "wget", "httpx")
 
+# --- Escalating ban: too many 429s = full block ---
+_ban_strikes: dict = defaultdict(list)   # ip -> list of 429 timestamps
+_banned_until: dict = {}                  # ip -> ban expiry timestamp
+BAN_STRIKE_LIMIT = 10                     # 429 hits before ban
+BAN_STRIKE_WINDOW = 300.0                 # count strikes in 5-min window
+BAN_DURATION = 3600.0                     # banned for 1 hour
+
 # --- Report form: max 5 submissions per IP per hour ---
 _report_buckets: dict = defaultdict(list)
 REPORT_LIMIT = 5
@@ -75,6 +82,13 @@ async def security_middleware(request: Request, call_next):
         or request.client.host
     )
 
+    # --- Check escalating ban first ---
+    ban_expiry = _banned_until.get(ip)
+    if ban_expiry and now < ban_expiry:
+        return PlainTextResponse("Forbidden", status_code=403)
+    elif ban_expiry:
+        del _banned_until[ip]  # ban expired, clean up
+
     # --- Block known bad bots (scraper libraries) ---
     # Don't block empty UA — Fly.io health checks and probes may not send one
     if not path.startswith("/static/") and not is_bot:
@@ -90,6 +104,13 @@ async def security_middleware(request: Request, call_next):
                 bucket_size = len(_rate_buckets[key])
                 logger.info("RATELIMIT ip=%s prefix=%s bucket=%d/%d path=%s", ip, prefix, bucket_size, limit, path)
                 if bucket_size >= limit:
+                    # Record strike for escalating ban
+                    _ban_strikes[ip] = [t for t in _ban_strikes[ip] if now - t < BAN_STRIKE_WINDOW]
+                    _ban_strikes[ip].append(now)
+                    if len(_ban_strikes[ip]) >= BAN_STRIKE_LIMIT:
+                        _banned_until[ip] = now + BAN_DURATION
+                        logger.warning("BANNED ip=%s for %ds after %d strikes", ip, BAN_DURATION, len(_ban_strikes[ip]))
+                        return PlainTextResponse("Forbidden", status_code=403)
                     return PlainTextResponse("Too Many Requests — slow down", status_code=429)
                 _rate_buckets[key].append(now)
                 break
@@ -145,6 +166,12 @@ async def security_middleware(request: Request, call_next):
         stale_r = [k for k, ts in _report_buckets.items() if not ts or max(ts) < cutoff]
         for k in stale_r:
             del _report_buckets[k]
+        stale_s = [k for k, ts in _ban_strikes.items() if not ts or max(ts) < cutoff]
+        for k in stale_s:
+            del _ban_strikes[k]
+        expired_bans = [k for k, exp in _banned_until.items() if now >= exp]
+        for k in expired_bans:
+            del _banned_until[k]
         _last_cleanup = now
 
     return response
