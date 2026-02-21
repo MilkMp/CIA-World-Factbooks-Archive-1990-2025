@@ -19,10 +19,10 @@ BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(title=settings.APP_TITLE)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-# --- Global rate limiter: max 30 req/min per IP across all endpoints ---
+# --- Global rate limiter: max 20 req/min per IP across all endpoints ---
 _rate_buckets: dict = defaultdict(list)
 _last_cleanup: float = time.time()
-RATE_LIMIT = 30
+RATE_LIMIT = 20
 RATE_WINDOW = 60.0
 BUCKET_MAX_AGE = 300  # prune IPs inactive for 5 minutes
 
