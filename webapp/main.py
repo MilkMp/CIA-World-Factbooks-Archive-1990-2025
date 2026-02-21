@@ -23,25 +23,23 @@ app = FastAPI(title=settings.APP_TITLE)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 # --- Targeted rate limiter: only on heavy scrape-prone endpoints ---
-# Keyed by (ip, prefix). Since Fly.io internal proxy masks real IPs,
-# we limit only endpoints no real user hits 10+ times per minute.
 _rate_buckets: dict = defaultdict(list)
 _last_cleanup: float = time.time()
 BUCKET_MAX_AGE = 300
 
 # (path_prefix, max_requests, window_seconds)
+# Generous limits — real users browse fast; only block actual scrapers
 RATE_RULES = [
-    ("/export/",         5,  60.0),   # bulk CSV/XLSX downloads
-    ("/archive/field/",  6,  60.0),   # individual field pages
-    ("/archive/",        6,  60.0),   # country archive pages
-    ("/countries",       6,  60.0),   # country listing pages
-    ("/api/",            15, 60.0),   # API endpoints
-    # No catch-all — Fly.io proxy shares 172.16.8.250 across all users
+    ("/export/",         20, 60.0),   # bulk CSV/XLSX downloads
+    ("/archive/field/",  40, 60.0),   # individual field pages
+    ("/archive/",        40, 60.0),   # country archive pages
+    ("/countries",       40, 60.0),   # country listing pages
+    ("/api/",            80, 60.0),   # API endpoints (pages make multiple calls)
 ]
 
 GOOD_BOTS = ("googlebot", "bingbot", "slurp", "duckduckbot")
 
-# Block requests with no UA or known scraper/bot UAs
+# Block requests with known scraper/bot UAs
 BAD_BOTS = ("python-requests", "scrapy", "python-urllib", "go-http-client",
             "java/", "libwww-perl", "wget", "httpx")
 
@@ -51,16 +49,10 @@ HONEYPOT_PATHS = ("/admin", "/database", "/wp-admin", "/wp-login", "/.env", "/ba
 # --- Escalating ban: too many 429s = full block ---
 _ban_strikes: dict = defaultdict(list)   # ip -> list of 429 timestamps
 _banned_until: dict = {}                  # ip -> ban expiry timestamp
-BAN_STRIKE_LIMIT = 6                      # 429 hits before ban
+BAN_STRIKE_LIMIT = 15                     # 429 hits before ban
 BAN_STRIKE_WINDOW = 300.0                 # count strikes in 5-min window
-BAN_DURATION = 3600.0                     # banned for 1 hour
-TARPIT_DELAY = 15.0                       # seconds to delay banned/honeypot responses
-
-# --- Request fingerprinting: detect bot-like timing patterns ---
-_request_log: dict = defaultdict(list)    # ip -> list of (timestamp, path) tuples
-FINGERPRINT_WINDOW = 120.0               # analyze last 2 minutes
-FINGERPRINT_MIN_REQUESTS = 8             # need at least 8 requests to judge
-FINGERPRINT_MAX_TIMING_VARIANCE = 1.0    # bots have <1s variance in request intervals
+BAN_DURATION = 300.0                      # banned for 5 minutes (not 1 hour)
+TARPIT_DELAY = 5.0                        # seconds to delay banned/honeypot responses
 
 # --- Report form: max 5 submissions per IP per hour ---
 _report_buckets: dict = defaultdict(list)
@@ -100,11 +92,10 @@ async def security_middleware(request: Request, call_next):
         await asyncio.sleep(TARPIT_DELAY)
         return PlainTextResponse("", status_code=404)
 
-    # --- Check escalating ban first (resets on every hit — must stop to get unbanned) ---
+    # --- Check escalating ban (expires naturally — does NOT reset on every hit) ---
     ban_expiry = _banned_until.get(ip)
     if ban_expiry and now < ban_expiry:
-        _banned_until[ip] = now + BAN_DURATION  # reset the clock
-        await asyncio.sleep(TARPIT_DELAY)  # tarpit: waste their time
+        await asyncio.sleep(TARPIT_DELAY)
         return PlainTextResponse("Forbidden", status_code=403)
     elif ban_expiry:
         del _banned_until[ip]  # ban expired, clean up
@@ -137,23 +128,6 @@ async def security_middleware(request: Request, call_next):
                     return PlainTextResponse("Too Many Requests — slow down", status_code=429)
                 _rate_buckets[key].append(now)
                 break
-
-    # --- Request fingerprinting: detect bot-like timing patterns ---
-    if not is_bot and not path.startswith("/static/"):
-        _request_log[ip] = [(t, p) for t, p in _request_log[ip] if now - t < FINGERPRINT_WINDOW]
-        _request_log[ip].append((now, path))
-        if len(_request_log[ip]) >= FINGERPRINT_MIN_REQUESTS:
-            timestamps = [t for t, _ in _request_log[ip]]
-            intervals = [timestamps[i+1] - timestamps[i] for i in range(len(timestamps)-1)]
-            if intervals:
-                avg = sum(intervals) / len(intervals)
-                variance = sum((x - avg) ** 2 for x in intervals) / len(intervals)
-                # Bots have machine-precise timing; humans are erratic
-                if variance < FINGERPRINT_MAX_TIMING_VARIANCE and avg < 10.0:
-                    _banned_until[ip] = now + BAN_DURATION
-                    logger.warning("FINGERPRINT ip=%s avg_interval=%.1fs variance=%.3f — bot detected, banned", ip, avg, variance)
-                    await asyncio.sleep(TARPIT_DELAY)
-                    return PlainTextResponse("Forbidden", status_code=403)
 
     # --- Rate limit /report POST (spam protection) ---
     if path == "/report" and request.method == "POST":
@@ -212,9 +186,6 @@ async def security_middleware(request: Request, call_next):
         expired_bans = [k for k, exp in _banned_until.items() if now >= exp]
         for k in expired_bans:
             del _banned_until[k]
-        stale_f = [k for k, entries in _request_log.items() if not entries or entries[-1][0] < cutoff]
-        for k in stale_f:
-            del _request_log[k]
         _last_cleanup = now
 
     return response
