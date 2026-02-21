@@ -85,7 +85,8 @@ webapp/
     analysis.py              # Intelligence dashboards, maps, dossiers
   templates/                 # Jinja2 HTML templates (DG2 dark theme)
   static/
-    css/intel-theme.css       # Palantir Blueprint-inspired stylesheet
+    css/intel-theme.css       # Dark grey/blue
+Blueprint-inspired stylesheet
     data/countries-110m.geojson  # Natural Earth country boundaries for Mapbox
 schema/
   create_tables.sql          # DDL for all 5 tables
