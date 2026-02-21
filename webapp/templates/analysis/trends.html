@@ -58,7 +58,7 @@
   <div class="stat-card">
     <div class="stat-value">
       {% if kpis[key] is not none %}
-        {% if key == 'population' %}{{ '{:,.0f}'.format(kpis[key]) }}
+        {% if key == 'population' %}{% if kpis[key] >= 1e9 %}{{ '{:.2f}'.format(kpis[key] / 1e9) }}B{% elif kpis[key] >= 1e6 %}{{ '{:.1f}'.format(kpis[key] / 1e6) }}M{% else %}{{ '{:,.0f}'.format(kpis[key]) }}{% endif %}
         {% elif key == 'gdp_percap' %}${{ '{:,}'.format(kpis[key]|int) }}
         {% elif key == 'life_exp' %}{{ '{:.1f}'.format(kpis[key]) }}
         {% elif key == 'internet_pct' %}{{ '{:.1f}'.format(kpis[key]) }}%
@@ -130,9 +130,9 @@ Object.keys(trendsData).forEach(function(key) {
   });
 
   initChart('chart-' + key).setOption({
-    grid: { top: 10, right: 20, bottom: 40, left: 60 },
+    grid: { top: 10, right: 20, bottom: 40, left: 70 },
     xAxis: { type: 'category', data: years, axisLabel: { interval: 4 } },
-    yAxis: { type: 'value' },
+    yAxis: { type: 'value', axisLabel: { formatter: function(v) { return ecFmtNum(v); } } },
     series: [{
       type: 'line', data: vals, symbol: 'circle', symbolSize: 4,
       lineStyle: { width: 2, color: COLORS[key] },
