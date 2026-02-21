@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import urllib.request
 import json
 import time
@@ -56,6 +57,53 @@ BAN_STRIKE_WINDOW = 300.0                 # count strikes in 5-min window
 BAN_DURATIONS = [300, 1800, 7200, 86400]  # escalating: 5min, 30min, 2hr, 24hr
 TARPIT_DELAY = 5.0                        # seconds to delay banned/honeypot responses
 
+# --- Global per-IP rate limit (catches bots that spread across endpoints) ---
+_ip_global: dict = defaultdict(list)      # ip -> list of timestamps for all page loads
+IP_GLOBAL_LIMIT = 100                     # max non-API page loads in window
+IP_GLOBAL_WINDOW = 1800.0                 # 30-minute window
+# Paths excluded from global counter (API calls are triggered by page loads, not direct)
+GLOBAL_SKIP = ("/static/", "/favicon.ico", "/health", "/metrics", "/api/")
+
+# --- Persistent ban data: survives server restarts ---
+BANDATA_PATH = os.environ.get("BANDATA_PATH", "/data/bandata.json")
+
+
+def _load_bandata():
+    """Load persistent ban/escalation data from disk."""
+    try:
+        with open(BANDATA_PATH) as f:
+            data = json.load(f)
+        return (
+            defaultdict(int, {k: int(v) for k, v in data.get("ban_count", {}).items()}),
+            data.get("ban_count_ts", {}),
+            {k: float(v) for k, v in data.get("banned_until", {}).items()},
+        )
+    except (FileNotFoundError, json.JSONDecodeError, ValueError):
+        return defaultdict(int), {}, {}
+
+
+def _save_bandata():
+    """Persist ban data to disk (non-blocking, best-effort)."""
+    try:
+        data = {
+            "ban_count": dict(_ban_count),
+            "ban_count_ts": _ban_count_ts,
+            "banned_until": _banned_until,
+        }
+        with open(BANDATA_PATH, "w") as f:
+            json.dump(data, f)
+    except Exception:
+        pass  # don't break the server if save fails
+
+
+# Load persistent bans on startup
+_bc, _bcts, _bu = _load_bandata()
+if _bc:
+    _ban_count.update(_bc)
+    _ban_count_ts.update(_bcts)
+    _banned_until.update(_bu)
+    logger.info("Loaded %d ban records, %d active bans from disk", len(_bc), len(_bu))
+
 # --- Report form: max 5 submissions per IP per hour ---
 _report_buckets: dict = defaultdict(list)
 REPORT_LIMIT = 5
@@ -93,6 +141,7 @@ async def security_middleware(request: Request, call_next):
         _ban_count_ts.setdefault(ip, now)
         dur = BAN_DURATIONS[min(_ban_count[ip] - 1, len(BAN_DURATIONS) - 1)]
         _banned_until[ip] = now + dur
+        _save_bandata()
         logger.warning("HONEYPOT ip=%s path=%s — ban #%d (%ds)", ip, path, _ban_count[ip], dur)
         await asyncio.sleep(TARPIT_DELAY)
         return PlainTextResponse("", status_code=404)
@@ -113,9 +162,23 @@ async def security_middleware(request: Request, call_next):
             _ban_count_ts.setdefault(ip, now)
             dur = BAN_DURATIONS[min(_ban_count[ip] - 1, len(BAN_DURATIONS) - 1)]
             _banned_until[ip] = now + dur
+            _save_bandata()
             logger.warning("BADBOTBAN ip=%s ua=%s — ban #%d (%ds)", ip, ua, _ban_count[ip], dur)
             await asyncio.sleep(TARPIT_DELAY)
             return PlainTextResponse("Forbidden", status_code=403)
+
+    # --- Global per-IP rate limit (catches bots spreading across endpoints) ---
+    if not is_bot and not any(path.startswith(p) for p in GLOBAL_SKIP):
+        _ip_global[ip] = [t for t in _ip_global[ip] if now - t < IP_GLOBAL_WINDOW]
+        if len(_ip_global[ip]) >= IP_GLOBAL_LIMIT:
+            _ban_count[ip] += 1
+            _ban_count_ts.setdefault(ip, now)
+            dur = BAN_DURATIONS[min(_ban_count[ip] - 1, len(BAN_DURATIONS) - 1)]
+            _banned_until[ip] = now + dur
+            _save_bandata()
+            logger.warning("GLOBAL_BAN ip=%s ban #%d (%ds) — %d page reqs in 30min", ip, _ban_count[ip], dur, len(_ip_global[ip]))
+            return PlainTextResponse("Forbidden", status_code=403)
+        _ip_global[ip].append(now)
 
     # --- Targeted rate limit per endpoint group, skip good bots ---
     if not is_bot:
@@ -134,6 +197,7 @@ async def security_middleware(request: Request, call_next):
                         _ban_count_ts.setdefault(ip, now)
                         dur = BAN_DURATIONS[min(_ban_count[ip] - 1, len(BAN_DURATIONS) - 1)]
                         _banned_until[ip] = now + dur
+                        _save_bandata()
                         logger.warning("BANNED ip=%s ban #%d (%ds) after %d strikes", ip, _ban_count[ip], dur, len(_ban_strikes[ip]))
                         return PlainTextResponse("Forbidden", status_code=403)
                     return PlainTextResponse("Too Many Requests — slow down", status_code=429)
@@ -197,11 +261,16 @@ async def security_middleware(request: Request, call_next):
         expired_bans = [k for k, exp in _banned_until.items() if now >= exp]
         for k in expired_bans:
             del _banned_until[k]
+        # Clean up global per-IP buckets
+        stale_g = [k for k, ts in _ip_global.items() if not ts or max(ts) < cutoff]
+        for k in stale_g:
+            del _ip_global[k]
         # Clean up ban counts older than 24 hours (let persistent bots accumulate)
         stale_bc = [k for k, ts in _ban_count_ts.items() if now - ts > 86400]
         for k in stale_bc:
             del _ban_count[k]
             del _ban_count_ts[k]
+        _save_bandata()  # periodic persist
         _last_cleanup = now
 
     return response
