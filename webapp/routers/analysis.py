@@ -729,6 +729,7 @@ INDICATOR_FIELD_MAP = {
     'population': ('Population', extract_number),
     'mil_pct_gdp': ('Military expenditures', extract_pct_gdp),
     'gdp_percap': ('Real GDP per capita', extract_gdp_percap),
+    'pop_growth': ('Population growth rate', extract_growth_rate),
     'internet_pct': ('Internet users', extract_pct),
     'mobile_per100': ('Telephones - mobile cellular', extract_per_100),
     'fixed_per100': ('Telephones - fixed lines', extract_per_100),

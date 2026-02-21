@@ -5,6 +5,30 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <script src="/static/js/dg2-echarts.js"></script>
+<style>
+  .trend-panel {
+    display: none; background: #1C2127; border: 1px solid #2F343C;
+    border-radius: 4px; padding: 16px; margin: 12px 0;
+  }
+  .trend-panel.visible { display: block; }
+  .trend-header {
+    display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px;
+  }
+  .trend-header h3 {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.2px; color: #8F99A8; margin: 0;
+  }
+  .trend-header .trend-sub {
+    font-size: 0.72rem; color: #5F6B7C; letter-spacing: 0.5px;
+  }
+  .trend-close {
+    margin-left: auto; cursor: pointer; color: #5F6B7C;
+    font-size: 0.8rem; padding: 2px 6px; border-radius: 3px;
+  }
+  .trend-close:hover { color: #C5CBD3; background: #252A31; }
+  #trend-chart { width: 100%; height: 260px; }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -90,7 +114,16 @@
   </select>
 </div>
 
-<table class="data-table" id="changes-table" style="cursor:default;">
+<div class="trend-panel" id="trend-panel">
+  <div class="trend-header">
+    <h3 id="trend-title">Historical Trend</h3>
+    <span class="trend-sub" id="trend-sub"></span>
+    <span class="trend-close" onclick="closeTrend()">&times;</span>
+  </div>
+  <div id="trend-chart"></div>
+</div>
+
+<table class="data-table" id="changes-table" style="cursor:pointer;">
   <thead>
     <tr>
       <th style="cursor:pointer;" onclick="sortTbl(0)">Country</th>
@@ -103,7 +136,7 @@
   </thead>
   <tbody>
     {% for c in changes %}
-    <tr data-indicator="{{ c.indicator }}" data-region="{{ c.cocom }}" data-name="{{ c.name }}"{% if c.severity == 'critical' %} style="border-left:3px solid #CD4246;"{% endif %}>
+    <tr data-indicator="{{ c.indicator }}" data-region="{{ c.cocom }}" data-name="{{ c.name }}" data-iso2="{{ c.iso2 }}"{% if c.severity == 'critical' %} style="border-left:3px solid #CD4246;"{% endif %}>
       <td><a href="/analysis/dossier/{{ c.iso2 }}">{{ c.name }}</a></td>
       <td style="font-size:0.78rem;color:#8F99A8;">{{ c.indicator_label }}</td>
       <td class="r" style="font-variant-numeric:tabular-nums;">{{ '{:,.2f}'.format(c.prev_value) }}</td>
@@ -152,6 +185,10 @@ moversChart.setOption({
 
 /* ── Chart ↔ Table linking ── */
 var highlightedRow = null;
+var trendChart = null;
+var activeKey = null;
+var compYear = {{ year }};
+var compPrev = {{ prev_year }};
 
 function clearRowHighlight() {
   if (highlightedRow) {
@@ -170,7 +207,73 @@ function highlightRow(row) {
   row.style.background = 'rgba(45, 114, 210, 0.08)';
 }
 
-/* Click bar → scroll to & highlight matching table row */
+function closeTrend() {
+  document.getElementById('trend-panel').classList.remove('visible');
+  clearRowHighlight();
+  activeKey = null;
+}
+
+function showTrend(iso2, indicator, name, indicatorLabel) {
+  var key = iso2 + ':' + indicator;
+  if (activeKey === key) { closeTrend(); return; }
+  activeKey = key;
+
+  document.getElementById('trend-title').textContent = name;
+  document.getElementById('trend-sub').textContent = indicatorLabel + ' (1990\u2013' + compYear + ')';
+  var panel = document.getElementById('trend-panel');
+  panel.classList.add('visible');
+
+  fetch('/api/analysis/timeseries?indicator=' + indicator + '&countries=' + iso2)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.length) return;
+      var years = data.map(function(d) { return d.year; });
+      var values = data.map(function(d) { return d.value; });
+
+      /* Mark the comparison pair */
+      var markData = [];
+      data.forEach(function(d) {
+        if (d.year === compPrev || d.year === compYear) {
+          markData.push({
+            coord: [String(d.year), d.value],
+            itemStyle: { color: d.year === compYear ? '#4C90F0' : '#8F99A8' },
+          });
+        }
+      });
+
+      if (!trendChart) trendChart = initChart('trend-chart');
+      trendChart.setOption({
+        grid: { left: 70, right: 20, top: 10, bottom: 30 },
+        xAxis: { type: 'category', data: years.map(String),
+          axisLabel: { interval: function(i) { return years[i] % 5 === 0; } } },
+        yAxis: { type: 'value', splitLine: { lineStyle: { color: '#252A31' } },
+          axisLabel: { fontSize: 10 } },
+        series: [{
+          type: 'line', data: values, smooth: true,
+          lineStyle: { color: '#4C90F0', width: 2 },
+          itemStyle: { color: '#4C90F0' }, symbol: 'none',
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [{ offset: 0, color: 'rgba(76,144,240,0.18)' },
+                         { offset: 1, color: 'rgba(76,144,240,0)' }] } },
+          markPoint: {
+            data: markData, symbol: 'circle', symbolSize: 10,
+            label: { show: true, position: 'top', fontSize: 10, color: '#C5CBD3',
+              formatter: function(p) { return p.data.coord[0]; } },
+          },
+        }],
+        tooltip: { trigger: 'axis',
+          formatter: function(p) {
+            var v = p[0].value;
+            var fmt = typeof v === 'number' ? v.toLocaleString(undefined, { maximumFractionDigits: 2 }) : v;
+            return '<b>' + p[0].name + '</b><br>' + indicatorLabel + ': ' + fmt;
+          } },
+      }, { replaceMerge: ['series'] });
+
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+}
+
+/* Click bar → scroll to & highlight matching table row + show trend */
 moversChart.on('click', function(params) {
   var entry = moversReversed[params.dataIndex];
   if (!entry) return;
@@ -178,35 +281,33 @@ moversChart.on('click', function(params) {
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i];
     if (r.dataset.name === entry.name && r.dataset.indicator === entry.indicator) {
-      r.scrollIntoView({ behavior: 'smooth', block: 'center' });
       highlightRow(r);
+      showTrend(r.dataset.iso2, entry.indicator, entry.name, entry.indicator_label);
+      r.scrollIntoView({ behavior: 'smooth', block: 'center' });
       break;
     }
   }
 });
 
-/* Click table row → highlight matching bar in chart */
+/* Click table row → show trend chart + highlight matching bar */
 document.querySelector('#changes-table tbody').addEventListener('click', function(e) {
   var row = e.target.closest('tr');
   if (!row) return;
-  /* Don't intercept link clicks */
   if (e.target.tagName === 'A') return;
   var name = row.dataset.name;
+  var iso2 = row.dataset.iso2;
   var indicator = row.dataset.indicator;
   var indicatorLabel = row.cells[1].textContent.trim();
   highlightRow(row);
+  showTrend(iso2, indicator, name, indicatorLabel);
 
-  /* Find matching bar */
+  /* Also highlight matching bar if in top movers */
   var matchLabel = name + ' (' + indicatorLabel + ')';
   var barIdx = moversLabels.indexOf(matchLabel);
   if (barIdx >= 0) {
-    moversChart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: barIdx });
     moversChart.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: barIdx });
-    document.getElementById('movers-chart').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    /* Clear highlight after 3s */
     setTimeout(function() {
       moversChart.dispatchAction({ type: 'downplay', seriesIndex: 0, dataIndex: barIdx });
-      moversChart.dispatchAction({ type: 'hideTip' });
     }, 3000);
   }
 });

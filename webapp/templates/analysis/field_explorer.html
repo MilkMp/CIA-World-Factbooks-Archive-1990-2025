@@ -51,9 +51,11 @@
   .fe-detail-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
   }
+  .fe-detail-grid > div { min-width: 0; overflow: hidden; }
   #coverage-chart { width: 100%; height: 200px; }
   .variant-list, .sample-list {
     font-size: 0.78rem; color: #8F99A8; margin: 0; padding: 0; list-style: none;
+    max-height: 300px; overflow-y: auto;
   }
   .variant-list li, .sample-list li {
     padding: 4px 0; border-bottom: 1px solid #252A31;
@@ -63,9 +65,12 @@
   .sample-list .scountry { color: #C5CBD3; min-width: 140px; display: inline-block; }
   .sample-list .svalue {
     color: #8F99A8; font-size: 0.75rem;
-    display: inline-block; max-width: 500px;
+    display: inline-block; max-width: 100%;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  .variant-list::-webkit-scrollbar, .sample-list::-webkit-scrollbar { width: 4px; }
+  .variant-list::-webkit-scrollbar-thumb, .sample-list::-webkit-scrollbar-thumb { background: #383E47; border-radius: 2px; }
+  .variant-list::-webkit-scrollbar-track, .sample-list::-webkit-scrollbar-track { background: transparent; }
   @media (max-width: 800px) {
     .fe-detail-grid { grid-template-columns: 1fr; }
     .fe-search input { width: 100%; }
