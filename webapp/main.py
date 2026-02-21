@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, Response
 from webapp.config import settings
 from webapp.database import sql, sql_one
-from webapp.routers import archive, countries, analysis, analysis2, analysis3, export
+from webapp.routers import archive, countries, analysis, analysis2, analysis3, analysis4, export
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ app.include_router(countries.router)
 app.include_router(analysis.router)
 app.include_router(analysis2.router)
 app.include_router(analysis3.router)
+app.include_router(analysis4.router)
 app.include_router(export.router)
 
 
@@ -141,6 +142,7 @@ STATIC_PAGES = [
     ("/analysis/fields", "0.7", "monthly"),
     ("/analysis/explorer", "0.7", "monthly"),
     ("/analysis/query-builder", "0.7", "monthly"),
+    ("/analysis/networks", "0.7", "monthly"),
     ("/analysis/quiz", "0.6", "monthly"),
     ("/analysis/diff", "0.7", "monthly"),
     ("/export", "0.7", "monthly"),
@@ -201,12 +203,30 @@ async def sitemap():
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
     content = (
+        # Google — crawl freely, no delay
+        "User-agent: Googlebot\n"
+        "Allow: /\n"
+        "Disallow: /api/\n"
+        "Disallow: /report\n"
+        "Disallow: /export/bulk/\n"
+        "Disallow: /export/print\n"
+        "\n"
+        # Bing — crawl freely, no delay
+        "User-agent: Bingbot\n"
+        "Allow: /\n"
+        "Disallow: /api/\n"
+        "Disallow: /report\n"
+        "Disallow: /export/bulk/\n"
+        "Disallow: /export/print\n"
+        "\n"
+        # All other bots — 2 second crawl delay
         "User-agent: *\n"
         "Allow: /\n"
         "Disallow: /api/\n"
         "Disallow: /report\n"
         "Disallow: /export/bulk/\n"
         "Disallow: /export/print\n"
+        "Crawl-delay: 2\n"
         "\n"
         f"Sitemap: {BASE_URL}/sitemap.xml\n"
     )
