@@ -21,28 +21,68 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 # --- Rate limiter: max 3 req/sec per IP on /archive/field/ ---
 _rate_buckets: dict = defaultdict(list)
-RATE_LIMIT = 3        # max requests
-RATE_WINDOW = 1.0     # per second
+_last_cleanup: float = time.time()
+RATE_LIMIT = 3
+RATE_WINDOW = 1.0
 RATE_PREFIX = "/archive/field/"
+BUCKET_MAX_AGE = 300  # prune IPs inactive for 5 minutes
 
 GOOD_BOTS = ("googlebot", "bingbot", "slurp", "duckduckbot")
 
+# --- Report form: max 5 submissions per IP per hour ---
+_report_buckets: dict = defaultdict(list)
+REPORT_LIMIT = 5
+REPORT_WINDOW = 3600.0
+
+SECURITY_HEADERS = {
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+}
+
 
 @app.middleware("http")
-async def rate_limit_middleware(request: Request, call_next):
+async def security_middleware(request: Request, call_next):
+    global _last_cleanup
+    now = time.time()
+
+    # --- Rate limit /archive/field/ ---
     if request.url.path.startswith(RATE_PREFIX):
         ua = (request.headers.get("user-agent") or "").lower()
-        # Skip rate limiting for known good crawlers
         if not any(bot in ua for bot in GOOD_BOTS):
             ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
-            now = time.time()
-            window = _rate_buckets[ip]
-            # Prune old timestamps outside the window
-            _rate_buckets[ip] = [t for t in window if now - t < RATE_WINDOW]
+            _rate_buckets[ip] = [t for t in _rate_buckets[ip] if now - t < RATE_WINDOW]
             if len(_rate_buckets[ip]) >= RATE_LIMIT:
                 return PlainTextResponse("Too Many Requests", status_code=429)
             _rate_buckets[ip].append(now)
-    return await call_next(request)
+
+    # --- Rate limit /report POST (spam protection) ---
+    if request.url.path == "/report" and request.method == "POST":
+        ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
+        _report_buckets[ip] = [t for t in _report_buckets[ip] if now - t < REPORT_WINDOW]
+        if len(_report_buckets[ip]) >= REPORT_LIMIT:
+            return PlainTextResponse("Too Many Requests — try again later", status_code=429)
+        _report_buckets[ip].append(now)
+
+    response = await call_next(request)
+
+    # --- Security headers on all responses ---
+    for header, value in SECURITY_HEADERS.items():
+        response.headers[header] = value
+
+    # --- Periodic cleanup of stale rate bucket entries (every 5 min) ---
+    if now - _last_cleanup > BUCKET_MAX_AGE:
+        cutoff = now - BUCKET_MAX_AGE
+        stale = [ip for ip, ts in _rate_buckets.items() if not ts or max(ts) < cutoff]
+        for ip in stale:
+            del _rate_buckets[ip]
+        stale_r = [ip for ip, ts in _report_buckets.items() if not ts or max(ts) < cutoff]
+        for ip in stale_r:
+            del _report_buckets[ip]
+        _last_cleanup = now
+
+    return response
 
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
