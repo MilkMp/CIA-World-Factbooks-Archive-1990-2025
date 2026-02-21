@@ -22,9 +22,9 @@
 </div>
 
 {# ── Year selector ── #}
-<div style="display:flex;align-items:center;gap:12px;margin:16px 0;flex-wrap:wrap;">
-  <label style="font-size:0.72rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;">Year</label>
-  <select id="year-select" onchange="window.location.href='/analysis/changes?year='+this.value" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+<div class="filter-bar">
+  <label class="form-label" style="margin-bottom:0;">Year</label>
+  <select id="year-select" class="form-control" onchange="window.location.href='/analysis/changes?year='+this.value">
     {% for y in years %}
     <option value="{{ y }}" {{ 'selected' if y == year else '' }}>{{ y }}</option>
     {% endfor %}
@@ -38,22 +38,22 @@
   <hr class="sec-rule">
 </div>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:#2F343C;border:1px solid #2F343C;border-radius:4px;margin:16px 0;">
-  <div style="background:#1C2127;padding:16px 18px;text-align:center;">
-    <div style="font-size:1.6rem;font-weight:700;color:#C5CBD3;font-variant-numeric:tabular-nums;">{{ total_changes }}</div>
-    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Total Changes</div>
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-value">{{ total_changes }}</div>
+    <div class="stat-label">Total Changes</div>
   </div>
-  <div style="background:#1C2127;padding:16px 18px;text-align:center;">
-    <div style="font-size:1.6rem;font-weight:700;color:#CD4246;font-variant-numeric:tabular-nums;">{{ critical_count }}</div>
-    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Critical (&gt;20%)</div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:#CD4246;">{{ critical_count }}</div>
+    <div class="stat-label">Critical (&gt;20%)</div>
   </div>
-  <div style="background:#1C2127;padding:16px 18px;text-align:center;">
-    <div style="font-size:1.6rem;font-weight:700;color:#D1980B;font-variant-numeric:tabular-nums;">{{ high_count }}</div>
-    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">High (&gt;10%)</div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:#D1980B;">{{ high_count }}</div>
+    <div class="stat-label">High (&gt;10%)</div>
   </div>
-  <div style="background:#1C2127;padding:16px 18px;text-align:center;">
-    <div style="font-size:0.92rem;font-weight:700;color:#C5CBD3;">{{ most_changed }}</div>
-    <div style="font-size:0.62rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Most Volatile</div>
+  <div class="stat-card">
+    <div class="stat-value" style="font-size:clamp(0.82rem, 2.5vw, 1.1rem);">{{ most_changed }}</div>
+    <div class="stat-label">Most Volatile</div>
   </div>
 </div>
 
@@ -74,15 +74,15 @@
 </div>
 
 {# ── Filters ── #}
-<div style="display:flex;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap;">
-  <label style="font-size:0.72rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;">Filter</label>
-  <select id="filter-indicator" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+<div class="filter-bar" style="margin:12px 0;">
+  <label class="form-label" style="margin-bottom:0;">Filter</label>
+  <select id="filter-indicator" class="form-control">
     <option value="">All Indicators</option>
     {% for key, label in indicators.items() %}
     <option value="{{ key }}">{{ label }}</option>
     {% endfor %}
   </select>
-  <select id="filter-region" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+  <select id="filter-region" class="form-control">
     <option value="">All Regions</option>
     {% for code, name in cocom_names.items() %}
     <option value="{{ code }}">{{ name }}</option>
@@ -109,7 +109,7 @@
       <td class="r" style="font-variant-numeric:tabular-nums;">{{ '{:,.2f}'.format(c.prev_value) }}</td>
       <td class="r" style="font-variant-numeric:tabular-nums;">{{ '{:,.2f}'.format(c.curr_value) }}</td>
       <td class="r" style="font-weight:600;color:{% if c.pct_change > 0 %}#29A634{% elif c.pct_change < 0 %}#CD4246{% else %}#8F99A8{% endif %};font-variant-numeric:tabular-nums;">{{ '%+.1f'|format(c.pct_change) }}%</td>
-      <td><span class="badge badge-{{ c.severity }}" style="{% if c.severity == 'critical' %}background:#CD4246;color:#fff;{% elif c.severity == 'high' %}background:#D1980B;color:#fff;{% elif c.severity == 'moderate' %}background:#3D5176;color:#C5CBD3;{% else %}background:#383E47;color:#8F99A8;{% endif %}">{{ c.severity|upper }}</span></td>
+      <td><span class="badge {% if c.severity == 'critical' %}badge-critical{% elif c.severity == 'high' %}badge-severity-high{% elif c.severity == 'moderate' %}badge-severity-moderate{% else %}badge-severity-low{% endif %}">{{ c.severity|upper }}</span></td>
     </tr>
     {% endfor %}
   </tbody>

@@ -23,10 +23,10 @@
   <hr class="sec-rule">
 </div>
 
-<form method="get" action="/analysis/diff" style="display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:16px 0;">
+<form method="get" action="/analysis/diff" class="filter-bar" style="align-items:end;">
   <div>
-    <label style="display:block;font-size:0.68rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Country</label>
-    <select name="code" id="country-select" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;min-width:200px;">
+    <label class="form-label">Country</label>
+    <select name="code" id="country-select" class="form-control" style="min-width:200px;">
       <option value="">Select a country</option>
       {% for c in countries %}
       <option value="{{ c.ISOAlpha2 }}" {{ 'selected' if c.ISOAlpha2 == code else '' }}>{{ c.CanonicalName }}</option>
@@ -34,22 +34,22 @@
     </select>
   </div>
   <div>
-    <label style="display:block;font-size:0.68rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Field</label>
-    <select name="field" id="field-select" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;min-width:240px;">
+    <label class="form-label">Field</label>
+    <select name="field" id="field-select" class="form-control" style="min-width:240px;">
       <option value="">Select a field</option>
     </select>
   </div>
   <div>
-    <label style="display:block;font-size:0.68rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Year A</label>
-    <select name="year_a" id="year-a" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+    <label class="form-label">Year A</label>
+    <select name="year_a" id="year-a" class="form-control">
       {% for y in all_years %}
       <option value="{{ y }}" {{ 'selected' if y == year_a else '' }}>{{ y }}</option>
       {% endfor %}
     </select>
   </div>
   <div>
-    <label style="display:block;font-size:0.68rem;color:#8F99A8;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Year B</label>
-    <select name="year_b" id="year-b" style="background:#1C2127;border:1px solid #383E47;border-radius:3px;color:#C5CBD3;padding:6px 12px;font-size:0.82rem;">
+    <label class="form-label">Year B</label>
+    <select name="year_b" id="year-b" class="form-control">
       {% for y in all_years %}
       <option value="{{ y }}" {{ 'selected' if y == year_b else '' }}>{{ y }}</option>
       {% endfor %}
@@ -67,44 +67,44 @@
 </div>
 
 {# Legend #}
-<div style="display:flex;gap:16px;margin:12px 0;font-size:0.72rem;">
-  <span><span style="display:inline-block;width:12px;height:12px;background:#1A3324;border:1px solid #29A634;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Added</span>
-  <span><span style="display:inline-block;width:12px;height:12px;background:#3B1A1A;border:1px solid #CD4246;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Removed</span>
-  <span><span style="display:inline-block;width:12px;height:12px;background:#3D2E0A;border:1px solid #D1980B;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Changed</span>
-  <span style="color:#5F6B7C;"><span style="display:inline-block;width:12px;height:12px;background:#1C2127;border:1px solid #383E47;border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Unchanged</span>
+<div class="diff-legend">
+  <span><span class="diff-legend-dot" style="background:#1A3324;border:1px solid #29A634;"></span> Added</span>
+  <span><span class="diff-legend-dot" style="background:#3B1A1A;border:1px solid #CD4246;"></span> Removed</span>
+  <span><span class="diff-legend-dot" style="background:#3D2E0A;border:1px solid #D1980B;"></span> Changed</span>
+  <span style="color:#5F6B7C;"><span class="diff-legend-dot" style="background:#1C2127;border:1px solid #383E47;"></span> Unchanged</span>
 </div>
 
 {# Side-by-side diff #}
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#2F343C;border:1px solid #2F343C;border-radius:4px;margin:16px 0;">
-  <div style="background:#252A31;padding:10px 14px;font-size:0.72rem;color:#8F99A8;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">{{ year_a }}</div>
-  <div style="background:#252A31;padding:10px 14px;font-size:0.72rem;color:#8F99A8;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">{{ year_b }}</div>
+<div class="diff-grid">
+  <div class="diff-header">{{ year_a }}</div>
+  <div class="diff-header">{{ year_b }}</div>
   {% for d in diff %}
   {% if d.tag == 'equal' %}
-  <div style="background:#1C2127;padding:10px 14px;font-size:0.82rem;color:#8F99A8;line-height:1.6;">{{ d.a }}</div>
-  <div style="background:#1C2127;padding:10px 14px;font-size:0.82rem;color:#8F99A8;line-height:1.6;">{{ d.b }}</div>
+  <div class="diff-cell diff-equal">{{ d.a }}</div>
+  <div class="diff-cell diff-equal">{{ d.b }}</div>
   {% elif d.tag == 'replace' %}
-  <div style="background:#3D2E0A;padding:10px 14px;font-size:0.82rem;color:#D1980B;line-height:1.6;border-left:3px solid #D1980B;">{{ d.a or '&mdash;' }}</div>
-  <div style="background:#3D2E0A;padding:10px 14px;font-size:0.82rem;color:#D1980B;line-height:1.6;border-left:3px solid #D1980B;">{{ d.b or '&mdash;' }}</div>
+  <div class="diff-cell diff-changed">{{ d.a or '&mdash;' }}</div>
+  <div class="diff-cell diff-changed">{{ d.b or '&mdash;' }}</div>
   {% elif d.tag == 'delete' %}
-  <div style="background:#3B1A1A;padding:10px 14px;font-size:0.82rem;color:#CD4246;line-height:1.6;border-left:3px solid #CD4246;">{{ d.a }}</div>
-  <div style="background:#1C2127;padding:10px 14px;font-size:0.82rem;color:#5F6B7C;font-style:italic;">Removed</div>
+  <div class="diff-cell diff-removed">{{ d.a }}</div>
+  <div class="diff-cell diff-placeholder">Removed</div>
   {% elif d.tag == 'insert' %}
-  <div style="background:#1C2127;padding:10px 14px;font-size:0.82rem;color:#5F6B7C;font-style:italic;">Not present</div>
-  <div style="background:#1A3324;padding:10px 14px;font-size:0.82rem;color:#29A634;line-height:1.6;border-left:3px solid #29A634;">{{ d.b }}</div>
+  <div class="diff-cell diff-placeholder">Not present</div>
+  <div class="diff-cell diff-added">{{ d.b }}</div>
   {% endif %}
   {% endfor %}
 </div>
 
 {# Raw text fallback #}
 <details style="margin-top:16px;">
-  <summary style="cursor:pointer;font-size:0.72rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:0.8px;">Show Raw Text</summary>
+  <summary class="form-label" style="cursor:pointer;display:list-item;">Show Raw Text</summary>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
     <div>
-      <div style="font-size:0.68rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">{{ year_a }}</div>
+      <div class="form-label" style="margin-bottom:6px;">{{ year_a }}</div>
       <div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:12px;font-size:0.82rem;color:#ABB3BF;line-height:1.7;white-space:pre-wrap;">{{ text_a or 'No data available for this year.' }}</div>
     </div>
     <div>
-      <div style="font-size:0.68rem;color:#5F6B7C;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">{{ year_b }}</div>
+      <div class="form-label" style="margin-bottom:6px;">{{ year_b }}</div>
       <div style="background:#1C2127;border:1px solid #2F343C;border-radius:4px;padding:12px;font-size:0.82rem;color:#ABB3BF;line-height:1.7;white-space:pre-wrap;">{{ text_b or 'No data available for this year.' }}</div>
     </div>
   </div>
