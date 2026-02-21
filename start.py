@@ -12,6 +12,8 @@ import sys
 
 DB_VOLUME = os.environ.get("DB_PATH", "/data/factbook.db")
 DB_BUNDLED = "/app/data/factbook.db"
+BIN_BUNDLED = "/app/data/IP2LOCATION-LITE-DB11.BIN"
+BIN_VOLUME = "/data/IP2LOCATION-LITE-DB11.BIN"
 
 
 def main():
@@ -28,6 +30,11 @@ def main():
     if not os.path.exists(DB_VOLUME):
         print(f"ERROR: Database not found at {DB_VOLUME}", file=sys.stderr)
         sys.exit(1)
+
+    # Copy IP2Location .BIN to persistent volume if not present
+    if os.path.exists(BIN_BUNDLED) and not os.path.exists(BIN_VOLUME):
+        shutil.copy2(BIN_BUNDLED, BIN_VOLUME)
+        print("IP2Location database copied to volume.")
 
     port = os.environ.get("PORT", "8080")
     subprocess.run([

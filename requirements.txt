@@ -9,3 +9,4 @@ python-multipart>=0.0.6
 pycountry>=22.3
 python-dotenv>=1.0
 playwright>=1.40
+ip2location>=8.10

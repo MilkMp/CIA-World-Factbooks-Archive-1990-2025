@@ -19,3 +19,5 @@ notebooks/
 scripts/archive/
 *.ipynb
 Website_Archive/
+*.BIN
+data/analytics.db
