@@ -75,9 +75,10 @@ async def security_middleware(request: Request, call_next):
         or request.client.host
     )
 
-    # --- Block known bad bots (empty UA or scraper libraries) ---
+    # --- Block known bad bots (scraper libraries) ---
+    # Don't block empty UA — Fly.io health checks and probes may not send one
     if not path.startswith("/static/") and not is_bot:
-        if not ua or any(bot in ua for bot in BAD_BOTS):
+        if ua and any(bot in ua for bot in BAD_BOTS):
             return PlainTextResponse("Forbidden", status_code=403)
 
     # --- Targeted rate limit per endpoint group, skip good bots ---
