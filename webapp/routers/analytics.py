@@ -1,6 +1,7 @@
 import hashlib
-import os
+import json
 import logging
+import urllib.request
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
@@ -10,27 +11,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# IP2Location reader (loaded once at module level)
-_ip2loc = None
-
-
-def _get_ip2loc():
-    global _ip2loc
-    if _ip2loc is None:
-        try:
-            import IP2Location
-            bin_path = os.environ.get(
-                "IP2LOC_PATH",
-                os.path.join(os.path.dirname(os.environ.get("DB_PATH", "data/factbook.db")), "IP2LOCATION-LITE-DB11.BIN"),
-            )
-            if os.path.exists(bin_path):
-                _ip2loc = IP2Location.IP2Location(bin_path)
-                logger.info("IP2Location loaded from %s", bin_path)
-            else:
-                logger.info("IP2Location .BIN not found at %s — geolocation disabled", bin_path)
-        except ImportError:
-            logger.info("ip2location package not installed — geolocation disabled")
-    return _ip2loc
+# In-memory geo cache: ip -> {country, city, lat, lon}
+_geo_cache: dict = {}
+_NULL_GEO = {"country": None, "city": None, "lat": None, "lon": None}
 
 
 def _hash_ip(ip: str) -> str:
@@ -39,20 +22,27 @@ def _hash_ip(ip: str) -> str:
 
 
 def _geolocate(ip: str) -> dict:
-    """Resolve IP to country/city/lat/lon. Returns nulls if unavailable."""
-    reader = _get_ip2loc()
-    if not reader or ip in ("127.0.0.1", "::1", "testclient"):
-        return {"country": None, "city": None, "lat": None, "lon": None}
+    """Resolve IP to country/city/lat/lon via ip-api.com (free, cached)."""
+    if ip in ("127.0.0.1", "::1", "testclient"):
+        return _NULL_GEO
+    if ip in _geo_cache:
+        return _geo_cache[ip]
     try:
-        rec = reader.get_all(ip)
-        return {
-            "country": rec.country_long if rec.country_long != "-" else None,
-            "city": rec.city if rec.city != "-" else None,
-            "lat": rec.latitude if rec.latitude != 0 else None,
-            "lon": rec.longitude if rec.longitude != 0 else None,
+        resp = urllib.request.urlopen(
+            f"http://ip-api.com/json/{ip}?fields=country,city,lat,lon",
+            timeout=2,
+        )
+        data = json.loads(resp.read())
+        result = {
+            "country": data.get("country"),
+            "city": data.get("city"),
+            "lat": data.get("lat"),
+            "lon": data.get("lon"),
         }
     except Exception:
-        return {"country": None, "city": None, "lat": None, "lon": None}
+        result = _NULL_GEO
+    _geo_cache[ip] = result
+    return result
 
 
 def record_page_view(ip, path, method, status_code, referrer, user_agent, session_id, response_ms):
