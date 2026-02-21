@@ -1,0 +1,1264 @@
+{% extends "base.html" %}
+{% set active_page = "networks" %}
+{% block title %}Trade Networks — Intelligence Analysis{% endblock %}
+
+{% block head %}
+<script src="//unpkg.com/force-graph"></script>
+<style>
+  .graph-tooltip {
+    background: #1C2127 !important;
+    border: 1px solid #383E47 !important;
+    border-radius: 4px !important;
+    padding: 8px 12px !important;
+    color: #C5CBD3 !important;
+    font-size: 0.82rem !important;
+    font-family: -apple-system, 'Segoe UI', sans-serif !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6) !important;
+    line-height: 1.5 !important;
+    max-width: 300px !important;
+    pointer-events: none !important;
+  }
+  .graph-tooltip b { color: #E5E8EB; }
+
+  .net-tabs {
+    display: flex; gap: 0; margin: 16px 0 0; border-bottom: 1px solid #2F343C;
+  }
+  .net-tab {
+    padding: 8px 20px; cursor: pointer;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: #5F6B7C; border: 1px solid transparent;
+    border-bottom: none; border-radius: 4px 4px 0 0; background: transparent;
+    transition: color 0.15s, background 0.15s;
+  }
+  .net-tab:hover { color: #ABB3BF; }
+  .net-tab.active {
+    color: #C5CBD3; background: #1C2127;
+    border-color: #2F343C; position: relative;
+  }
+  .net-tab.active::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
+    height: 1px; background: #1C2127;
+  }
+  .net-panel { display: none; background: #1C2127; border: 1px solid #2F343C; border-top: none; border-radius: 0 0 4px 4px; padding: 16px; }
+  .net-panel.active { display: block; }
+
+  .net-controls {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .net-controls label {
+    font-size: 0.68rem; color: #8F99A8; letter-spacing: 0.8px;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .net-controls select, .net-controls input[type="range"] {
+    background: #111418; border: 1px solid #383E47; border-radius: 3px;
+    color: #C5CBD3; padding: 4px 8px; font-size: 0.8rem;
+  }
+  .net-controls input[type="range"] { width: 120px; padding: 0; }
+  .net-controls .range-val {
+    font-size: 0.75rem; color: #ABB3BF; min-width: 28px; text-align: center;
+  }
+
+  .region-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .region-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 3px; cursor: pointer;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; border: 1px solid #383E47;
+    background: #252A31; color: #ABB3BF;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  .region-btn .rdot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+  }
+  .region-btn.active { border-color: #8F99A8; }
+  .region-btn:hover { background: #2F343C; }
+
+  .vt-group { display: flex; gap: 0; margin-left: auto; }
+  .vt-btn {
+    padding: 5px 14px; font-size: 0.7rem; font-weight: 600; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    background: #1C2127; border: 1px solid #383E47; color: #8F99A8;
+    transition: background 0.15s, color 0.15s;
+  }
+  .vt-btn:first-child { border-radius: 3px 0 0 3px; }
+  .vt-btn:last-child { border-radius: 0 3px 3px 0; border-left: none; }
+  .vt-btn.active { background: #2D72D2; border-color: #2D72D2; color: #FFF; }
+  .vt-btn:hover:not(.active) { background: #252A31; }
+
+  #trade-graph, #org-graph {
+    width: 100%; height: 600px;
+    background: #111418; border-radius: 4px; border: 1px solid #252A31;
+    overflow: hidden;
+  }
+
+  .net-table-wrap { display: none; margin-top: 12px; overflow-x: auto; }
+  .net-table-wrap.active { display: block; }
+  .net-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .net-table th {
+    font-family: -apple-system, 'Segoe UI', sans-serif; text-align: left;
+    padding: 8px 12px; border-bottom: 1px solid #383E47; color: #8F99A8;
+    font-weight: 600; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .net-table td { padding: 6px 12px; border-bottom: 1px solid #252A31; color: #ABB3BF; }
+  .net-table td.r { text-align: right; font-family: 'Consolas', monospace; font-size: 0.8rem; color: #C5CBD3; }
+  .net-table tr:hover td { background: rgba(47, 52, 60, 0.3); }
+
+  .net-loading {
+    display: flex; align-items: center; justify-content: center;
+    height: 200px; color: #5F6B7C; font-size: 0.82rem;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    letter-spacing: 0.5px;
+  }
+
+  .export-row { display: flex; gap: 8px; margin-top: 12px; }
+
+  .net-legend {
+    display: flex; flex-wrap: wrap; gap: 10px; padding: 8px 0 4px;
+    font-size: 0.7rem; color: #8F99A8; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .net-legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .net-legend .ldot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+    box-shadow: 0 0 6px currentColor;
+  }
+
+  /* ── Graph + detail sidebar layout ── */
+  .net-graph-layout {
+    display: flex; gap: 0; position: relative;
+  }
+  .net-graph-layout > div:first-child { flex: 1; min-width: 0; }
+  .net-detail-sidebar {
+    width: 0; overflow: hidden; background: #1C2127;
+    border-left: 1px solid transparent;
+    transition: width 0.3s ease, padding 0.3s ease, border-color 0.3s ease;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+  }
+  .net-detail-sidebar.open {
+    width: 280px; padding: 14px 16px; overflow-y: auto;
+    border-left-color: #2F343C;
+  }
+  .net-detail-close {
+    float: right; background: none; border: none; color: #5F6B7C;
+    font-size: 1.1rem; cursor: pointer; padding: 0 4px; line-height: 1;
+  }
+  .net-detail-close:hover { color: #C5CBD3; }
+  .nd-name { font-size: 0.92rem; font-weight: 600; color: #C5CBD3; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nd-sub {
+    font-size: 0.62rem; color: #5F6B7C; text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 10px;
+  }
+  .nd-stats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-bottom: 10px;
+  }
+  .nd-stats .nd-label {
+    font-size: 0.6rem; color: #5F6B7C; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .nd-stats .nd-val { font-size: 0.82rem; color: #ABB3BF; font-weight: 600; }
+  .nd-list {
+    max-height: 260px; overflow-y: auto; margin-bottom: 10px;
+    border-top: 1px solid #2F343C; padding-top: 8px;
+  }
+  .nd-list-title {
+    font-size: 0.6rem; color: #5F6B7C; text-transform: uppercase;
+    letter-spacing: 0.8px; font-weight: 600; margin-bottom: 6px;
+  }
+  .nd-list-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 3px 0; font-size: 0.78rem; color: #ABB3BF;
+  }
+  .nd-list-item .ndot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .nd-link {
+    display: inline-block; font-size: 0.65rem; text-transform: uppercase;
+    letter-spacing: 0.8px; color: #ABB3BF; padding: 5px 12px;
+    border: 1px solid #2F343C; border-radius: 3px; text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .nd-link:hover {
+    background: #252A31; border-color: #404854; color: #C5CBD3; text-decoration: none;
+  }
+  .nd-list::-webkit-scrollbar { width: 4px; }
+  .nd-list::-webkit-scrollbar-thumb { background: #383E47; border-radius: 2px; }
+  .nd-list::-webkit-scrollbar-track { background: transparent; }
+
+  /* ── Zoom controls ── */
+  .net-zoom-controls {
+    position: absolute; bottom: 12px; right: 12px; z-index: 10;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .net-detail-sidebar.open ~ .net-zoom-controls,
+  .net-graph-layout .net-zoom-controls { right: 12px; }
+  .net-zoom-btn {
+    width: 32px; height: 32px; border-radius: 4px;
+    background: rgba(28,33,39,0.85); border: 1px solid #383E47;
+    color: #ABB3BF; font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+    font-family: -apple-system, 'Segoe UI', sans-serif; font-weight: 600;
+  }
+  .net-zoom-btn:hover { background: #2F343C; color: #C5CBD3; }
+  .net-zoom-btn:active { background: #383E47; }
+
+  @media (max-width: 800px) {
+    .net-tabs { overflow-x: auto; }
+    .net-tab { padding: 8px 12px; font-size: 0.65rem; white-space: nowrap; }
+    #trade-graph, #org-graph { height: 400px; }
+    .net-controls { gap: 8px; }
+    /* Detail sidebar becomes collapsible bottom panel on mobile */
+    .net-graph-layout { flex-direction: column; }
+    .net-detail-sidebar {
+      width: 100%; height: 0; padding: 0 16px;
+      border-left: none;
+      transition: height 0.3s ease, padding 0.3s ease;
+    }
+    .net-detail-sidebar.open {
+      width: 100%; height: auto; max-height: 220px;
+      padding: 14px 16px; overflow-y: auto;
+      border-top: 1px solid #2F343C;
+    }
+    .net-zoom-btn { width: 36px; height: 36px; font-size: 1.1rem; }
+  }
+  @media (max-width: 480px) {
+    .net-controls { flex-direction: column; align-items: stretch; }
+    .net-controls label { margin-bottom: -6px; }
+    .vt-group { margin-left: 0; }
+    #trade-graph, #org-graph { height: 320px; }
+    .net-detail-sidebar.open { max-height: 180px; }
+    .net-zoom-btn { width: 40px; height: 40px; font-size: 1.2rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="doc-id">INTELLIGENCE // TRADE NETWORKS</div>
+  <h1>Global Trade &amp; Organization Networks</h1>
+  <p class="subtitle">Visualize trade relationships and international organization memberships across 281 entities</p>
+</div>
+
+<hr class="doc-rule double">
+
+<div style="margin:12px 0;display:flex;flex-wrap:wrap;gap:8px;">
+  <a href="/analysis" class="btn">Overview</a>
+  <a href="/analysis/communications" class="btn">Communications</a>
+  <a href="/analysis/explorer" class="btn">Advanced Analytics</a>
+</div>
+
+<!-- Tab bar -->
+<div class="net-tabs">
+  <div class="net-tab active" data-tab="trade">Trade Network</div>
+  <div class="net-tab" data-tab="orgs">Organization Network</div>
+</div>
+
+<!-- Trade Network Tab -->
+<div class="net-panel active" id="panel-trade">
+  <div class="net-controls">
+    <label>Direction</label>
+    <select id="trade-direction">
+      <option value="exports" selected>Exports</option>
+      <option value="imports">Imports</option>
+    </select>
+    <label>Year</label>
+    <select id="trade-year">
+      {% for y in years %}
+      <option value="{{ y }}" {{ 'selected' if y == year else '' }}>{{ y }}</option>
+      {% endfor %}
+    </select>
+    <div class="vt-group">
+      <button class="vt-btn active" data-view="graph" onclick="toggleTradeView('graph')">Graph</button>
+      <button class="vt-btn" data-view="table" onclick="toggleTradeView('table')">Table</button>
+    </div>
+  </div>
+
+  <div class="region-filters" id="trade-regions"></div>
+
+  <div class="net-legend" id="trade-legend"></div>
+
+  <div class="net-graph-layout" id="trade-graph-layout">
+    <div id="trade-graph-wrap">
+      <div id="trade-graph"></div>
+    </div>
+    <div class="net-detail-sidebar" id="trade-detail">
+      <button class="net-detail-close" onclick="hideDetail('trade')">&times;</button>
+      <div class="nd-name" id="td-name"></div>
+      <div class="nd-sub" id="td-sub"></div>
+      <div class="nd-stats" id="td-stats"></div>
+      <div class="nd-list">
+        <div class="nd-list-title" id="td-list-title"></div>
+        <div id="td-list"></div>
+      </div>
+      <a class="nd-link" id="td-link" href="#" style="display:none;">View Dossier &rarr;</a>
+    </div>
+    <div class="net-zoom-controls">
+      <button class="net-zoom-btn" onclick="zoomGraph('trade',1.5)" title="Zoom in">+</button>
+      <button class="net-zoom-btn" onclick="zoomGraph('trade',0.67)" title="Zoom out">&minus;</button>
+      <button class="net-zoom-btn" onclick="resetGraph('trade')" title="Reset view" style="font-size:0.7rem;">FIT</button>
+    </div>
+  </div>
+
+  <div class="net-table-wrap" id="trade-table-wrap">
+    <table class="net-table" id="trade-table">
+      <thead>
+        <tr>
+          <th>Country</th>
+          <th>Region</th>
+          <th>Top Partner</th>
+          <th style="text-align:right">%</th>
+          <th>#2 Partner</th>
+          <th style="text-align:right">%</th>
+          <th>#3 Partner</th>
+          <th style="text-align:right">%</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="export-row">
+      <button class="btn" onclick="exportTradeCSV()">Export CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- Organization Network Tab -->
+<div class="net-panel" id="panel-orgs">
+  <div class="net-controls">
+    <label>Year</label>
+    <select id="org-year">
+      {% for y in years %}
+      <option value="{{ y }}" {{ 'selected' if y == year else '' }}>{{ y }}</option>
+      {% endfor %}
+    </select>
+    <label>Min Members</label>
+    <input type="range" id="org-min" min="5" max="150" value="50">
+    <span class="range-val" id="org-min-val">50</span>
+    <div class="vt-group">
+      <button class="vt-btn active" data-view="graph" onclick="toggleOrgView('graph')">Graph</button>
+      <button class="vt-btn" data-view="table" onclick="toggleOrgView('table')">Table</button>
+    </div>
+  </div>
+
+  <div class="region-filters" id="org-cat-filters"></div>
+  <div class="net-legend" id="org-legend"></div>
+
+  <div class="net-graph-layout" id="org-graph-layout">
+    <div id="org-graph-wrap">
+      <div id="org-graph"></div>
+    </div>
+    <div class="net-detail-sidebar" id="org-detail">
+      <button class="net-detail-close" onclick="hideDetail('org')">&times;</button>
+      <div class="nd-name" id="od-name"></div>
+      <div class="nd-sub" id="od-sub"></div>
+      <div class="nd-stats" id="od-stats"></div>
+      <div class="nd-list">
+        <div class="nd-list-title" id="od-list-title"></div>
+        <div id="od-list"></div>
+      </div>
+      <a class="nd-link" id="od-link" href="#" style="display:none;">View Dossier &rarr;</a>
+    </div>
+    <div class="net-zoom-controls">
+      <button class="net-zoom-btn" onclick="zoomGraph('org',1.5)" title="Zoom in">+</button>
+      <button class="net-zoom-btn" onclick="zoomGraph('org',0.67)" title="Zoom out">&minus;</button>
+      <button class="net-zoom-btn" onclick="resetGraph('org')" title="Reset view" style="font-size:0.7rem;">FIT</button>
+    </div>
+  </div>
+
+  <div class="net-table-wrap" id="org-table-wrap">
+    <table class="net-table" id="org-table">
+      <thead>
+        <tr>
+          <th>Organization</th>
+          <th>Category</th>
+          <th style="text-align:right">Members</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="caveat" style="margin-top:24px;border-left:3px solid #404854;">
+  <strong>Data Note:</strong>
+  Trade partner data is available from 1999 onward. Partner percentages may not sum to 100%
+  as the CIA reports only the top trading partners. Node size represents the sum of reported
+  partner percentages; edge width represents bilateral trade share. Organization data covers 1990&ndash;{{ year }}.
+  <br><em>Hover over a node to highlight its connections. Click a node to zoom in and lock the connection web. Click the background to reset.</em>
+</div>
+<div class="caveat" style="margin-top:8px;border-left:3px solid #404854;">
+  <strong>Sources:</strong>
+  Organization membership data extracted from the CIA World Factbook
+  <em>International Organization Participation</em> field. Organization categories
+  (Military &amp; Security, Economic &amp; Trade, Political &amp; Regional, Development &amp; Financial)
+  are based on classifications from the CIA World Factbook
+  <a href="https://www.cia.gov/the-world-factbook/references/guide-to-country-comparisons/" style="color:#4A90D9;">appendices</a>
+  and the
+  <a href="https://www.cia.gov/the-world-factbook/references/international-organizations-and-groups/" style="color:#4A90D9;">International Organizations and Groups</a> reference.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  'use strict';
+
+  var COCOM_COLORS = {
+    EUCOM: '#2D72D2', CENTCOM: '#D1980B', INDOPACOM: '#29A634',
+    AFRICOM: '#D33D17', SOUTHCOM: '#9D3F9D', NORTHCOM: '#00A396',
+  };
+  var COCOM_NAMES = {
+    EUCOM: 'Europe & Eurasia', CENTCOM: 'Middle East & Central Asia',
+    INDOPACOM: 'Indo-Pacific', AFRICOM: 'Africa',
+    SOUTHCOM: 'Central & South America', NORTHCOM: 'North America',
+  };
+
+  /* ── Org category colors ── */
+  var ORG_CAT_COLORS = {
+    mil: '#DB2C6F', eco: '#2D72D2', pol: '#29A634', dev: '#D1980B',
+  };
+  var ORG_CAT_NAMES = {
+    mil: 'Military & Security', eco: 'Economic & Trade',
+    pol: 'Political & Regional', dev: 'Development & Financial',
+  };
+
+  var tradeGraph = null, orgGraph = null;
+  var tradeData = null, orgData = null;
+  var activeRegion = '';
+  var tradeHover = null, orgHover = null;
+  var tradeSelected = null, orgSelected = null;
+  var tradeAdj = {}, orgAdj = {};
+  var orgCatFilter = { mil: true, eco: true, pol: true, dev: true };
+
+  /* ── Helpers ── */
+  function hexRgba(hex, a) {
+    var r = parseInt(hex.slice(1,3), 16);
+    var g = parseInt(hex.slice(3,5), 16);
+    var b = parseInt(hex.slice(5,7), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function drawGlowNode(ctx, x, y, size, color, alpha, isHover, isNeighbor) {
+    var glowR = size * (isHover ? 4.5 : (isNeighbor ? 3.5 : 2.5));
+    var grad = ctx.createRadialGradient(x, y, size * 0.2, x, y, glowR);
+    grad.addColorStop(0, hexRgba(color, 0.35 * alpha));
+    grad.addColorStop(0.5, hexRgba(color, 0.08 * alpha));
+    grad.addColorStop(1, hexRgba(color, 0));
+    ctx.beginPath();
+    ctx.arc(x, y, glowR, 0, 2 * Math.PI);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, 2 * Math.PI);
+    ctx.fillStyle = hexRgba(color, 0.9 * alpha);
+    ctx.fill();
+  }
+
+  /* Hexagonal node for organizations */
+  function drawHexNode(ctx, x, y, size, color, alpha, isHover, isNeighbor) {
+    var glowR = size * (isHover ? 4 : (isNeighbor ? 3 : 2.2));
+    var grad = ctx.createRadialGradient(x, y, size * 0.2, x, y, glowR);
+    grad.addColorStop(0, hexRgba(color, 0.35 * alpha));
+    grad.addColorStop(0.5, hexRgba(color, 0.08 * alpha));
+    grad.addColorStop(1, hexRgba(color, 0));
+    ctx.beginPath();
+    ctx.arc(x, y, glowR, 0, 2 * Math.PI);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    /* Draw hexagon */
+    ctx.beginPath();
+    for (var i = 0; i < 6; i++) {
+      var angle = Math.PI / 6 + (Math.PI / 3) * i;
+      var hx = x + size * Math.cos(angle);
+      var hy = y + size * Math.sin(angle);
+      if (i === 0) ctx.moveTo(hx, hy);
+      else ctx.lineTo(hx, hy);
+    }
+    ctx.closePath();
+    ctx.fillStyle = hexRgba(color, 0.85 * alpha);
+    ctx.fill();
+
+    /* Subtle border */
+    if (alpha > 0.3) {
+      ctx.strokeStyle = hexRgba(color, 0.4 * alpha);
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    }
+  }
+
+  /* ── Detail sidebar helpers ── */
+  function showDetail(tab, nodeData, adjMap, allNodes) {
+    var prefix = tab === 'trade' ? 'td' : 'od';
+    var panel = document.getElementById(tab + '-detail');
+    var nameEl = document.getElementById(prefix + '-name');
+    var subEl = document.getElementById(prefix + '-sub');
+    var statsEl = document.getElementById(prefix + '-stats');
+    var listTitle = document.getElementById(prefix + '-list-title');
+    var listEl = document.getElementById(prefix + '-list');
+    var linkEl = document.getElementById(prefix + '-link');
+
+    /* Find connected nodes */
+    var neighbors = [];
+    if (adjMap[nodeData.id]) {
+      Object.keys(adjMap[nodeData.id]).forEach(function(nid) {
+        var found = allNodes.filter(function(n) { return n.id === nid; })[0];
+        if (found) neighbors.push(found);
+      });
+    }
+
+    if (nodeData._type === 'org') {
+      nameEl.textContent = nodeData.name;
+      subEl.textContent = ORG_CAT_NAMES[nodeData._cat] || 'International Organization';
+      statsEl.innerHTML =
+        '<div><div class="nd-label">Members</div><div class="nd-val">' + (nodeData._members || 0) + '</div></div>' +
+        '<div><div class="nd-label">Regions</div><div class="nd-val">' + countRegions(neighbors) + '</div></div>';
+      listTitle.textContent = 'Member Countries (' + neighbors.length + ')';
+      neighbors.sort(function(a, b) { return (a.name || a.id).localeCompare(b.name || b.id); });
+      listEl.innerHTML = neighbors.map(function(n) {
+        var c = COCOM_COLORS[n._cocom || n.cocom] || '#5F6B7C';
+        return '<div class="nd-list-item"><span class="ndot" style="background:' + c + '"></span>' + esc(n.name || n.id) + '</div>';
+      }).join('');
+      linkEl.style.display = 'none';
+    } else {
+      nameEl.textContent = nodeData.name || nodeData.id;
+      subEl.textContent = COCOM_NAMES[nodeData._cocom || nodeData.cocom] || '';
+      var orgNeighbors = neighbors.filter(function(n) { return n._type === 'org'; });
+      var countryNeighbors = neighbors.filter(function(n) { return n._type !== 'org'; });
+
+      if (orgNeighbors.length) {
+        statsEl.innerHTML =
+          '<div><div class="nd-label">Organizations</div><div class="nd-val">' + orgNeighbors.length + '</div></div>' +
+          '<div><div class="nd-label">ISO Code</div><div class="nd-val">' + nodeData.id + '</div></div>';
+        listTitle.textContent = 'Organizations (' + orgNeighbors.length + ')';
+        orgNeighbors.sort(function(a, b) { return (b._members || 0) - (a._members || 0); });
+        listEl.innerHTML = orgNeighbors.map(function(n) {
+          var oc = ORG_CAT_COLORS[n._cat] || '#D1980B';
+          return '<div class="nd-list-item"><span class="ndot" style="background:' + oc + '"></span>' +
+            esc(n.name) + ' <span style="color:#5F6B7C;font-size:0.7rem;margin-left:auto">' + (n._members || '') + '</span></div>';
+        }).join('');
+      } else {
+        statsEl.innerHTML =
+          '<div><div class="nd-label">Partners</div><div class="nd-val">' + countryNeighbors.length + '</div></div>' +
+          '<div><div class="nd-label">Total Share</div><div class="nd-val">' + (nodeData.total_pct || 0).toFixed(1) + '%</div></div>';
+        listTitle.textContent = 'Trade Partners (' + countryNeighbors.length + ')';
+        listEl.innerHTML = countryNeighbors.map(function(n) {
+          var c = COCOM_COLORS[n.cocom || n._cocom] || '#5F6B7C';
+          return '<div class="nd-list-item"><span class="ndot" style="background:' + c + '"></span>' + esc(n.name || n.id) + '</div>';
+        }).join('');
+      }
+      linkEl.href = '/analysis/dossier/' + nodeData.id;
+      linkEl.style.display = '';
+    }
+
+    var wasOpen = panel.classList.contains('open');
+    panel.classList.add('open');
+
+    /* Resize graph after sidebar animates open */
+    if (!wasOpen) {
+      setTimeout(function() { resizeActiveGraph(tab); }, 320);
+    }
+  }
+
+  window.hideDetail = function(tab) {
+    if (tab === 'trade') tradeSelected = null;
+    if (tab === 'org') orgSelected = null;
+    var panel = document.getElementById(tab + '-detail');
+    panel.classList.remove('open');
+    setTimeout(function() { resizeActiveGraph(tab); }, 320);
+  };
+
+  function hideAllDetails() {
+    window.hideDetail('trade');
+    window.hideDetail('org');
+  }
+
+  function resizeActiveGraph(tab) {
+    if (tab === 'trade' && tradeGraph) {
+      var el = document.getElementById('trade-graph');
+      tradeGraph.width(el.offsetWidth).height(el.offsetHeight);
+    }
+    if (tab === 'org' && orgGraph) {
+      var el = document.getElementById('org-graph');
+      orgGraph.width(el.offsetWidth).height(el.offsetHeight);
+    }
+  }
+
+  /* ── Zoom / reset helpers (exposed globally for onclick) ── */
+  window.zoomGraph = function(tab, factor) {
+    var g = tab === 'trade' ? tradeGraph : orgGraph;
+    if (!g) return;
+    var cur = g.zoom();
+    g.zoom(cur * factor, 300);
+  };
+  window.resetGraph = function(tab) {
+    var g = tab === 'trade' ? tradeGraph : orgGraph;
+    if (!g) return;
+    g.zoomToFit(400, 40);
+  };
+
+  function countRegions(nodes) {
+    var seen = {};
+    nodes.forEach(function(n) {
+      var r = n._cocom || n.cocom;
+      if (r) seen[r] = true;
+    });
+    return Object.keys(seen).length;
+  }
+
+  /* ── Legend ── */
+  (function() {
+    var el = document.getElementById('trade-legend');
+    Object.keys(COCOM_NAMES).forEach(function(k) {
+      el.innerHTML += '<span><span class="ldot" style="color:' + COCOM_COLORS[k] + ';background:' + COCOM_COLORS[k] + '"></span>' + COCOM_NAMES[k] + '</span>';
+    });
+  })();
+
+  /* ── Tab switching ── */
+  var tabs = document.querySelectorAll('.net-tab');
+  var panels = document.querySelectorAll('.net-panel');
+  var orgInit = false;
+
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var target = tab.getAttribute('data-tab');
+      tabs.forEach(function(t) { t.classList.remove('active'); });
+      panels.forEach(function(p) { p.classList.remove('active'); });
+      hideAllDetails();
+      tab.classList.add('active');
+      document.getElementById('panel-' + target).classList.add('active');
+      if (target === 'orgs' && !orgInit) { orgInit = true; loadOrgNetwork(); }
+    });
+  });
+
+  /* ── Region filter buttons ── */
+  (function() {
+    var container = document.getElementById('trade-regions');
+    var allBtn = document.createElement('div');
+    allBtn.className = 'region-btn active';
+    allBtn.textContent = 'All';
+    allBtn.addEventListener('click', function() {
+      activeRegion = '';
+      setActiveRegionBtn('');
+      loadTradeNetwork();
+    });
+    container.appendChild(allBtn);
+
+    Object.keys(COCOM_NAMES).forEach(function(region) {
+      var btn = document.createElement('div');
+      btn.className = 'region-btn';
+      btn.setAttribute('data-region', region);
+      btn.innerHTML = '<span class="rdot" style="background:' + COCOM_COLORS[region] + '"></span>' + COCOM_NAMES[region];
+      btn.addEventListener('click', function() {
+        activeRegion = region;
+        setActiveRegionBtn(region);
+        loadTradeNetwork();
+      });
+      container.appendChild(btn);
+    });
+  })();
+
+  function setActiveRegionBtn(region) {
+    document.querySelectorAll('#trade-regions .region-btn').forEach(function(b) {
+      var r = b.getAttribute('data-region') || '';
+      b.classList.toggle('active', r === region);
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     TRADE NETWORK
+     ══════════════════════════════════════════════════════════ */
+
+  function loadTradeNetwork() {
+    var year = document.getElementById('trade-year').value;
+    var direction = document.getElementById('trade-direction').value;
+    var url = '/api/analysis/trade-network?year=' + year + '&direction=' + direction;
+    if (activeRegion) url += '&region=' + activeRegion;
+
+    tradeGraph = null;
+    tradeHover = null;
+    document.getElementById('trade-detail').classList.remove('open');
+    document.getElementById('trade-graph').innerHTML = '<div class="net-loading pulse">Loading trade network...</div>';
+
+    fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+      tradeData = data;
+      renderTradeGraph(data);
+      renderTradeTable(data);
+    });
+  }
+
+  function renderTradeGraph(data) {
+    var container = document.getElementById('trade-graph');
+    container.innerHTML = '';
+
+    if (!data.nodes.length) {
+      container.innerHTML = '<div class="net-loading">No trade partner data available for this year.</div>';
+      return;
+    }
+
+    /* Build adjacency */
+    tradeAdj = {};
+    data.edges.forEach(function(e) {
+      if (!tradeAdj[e.source]) tradeAdj[e.source] = {};
+      if (!tradeAdj[e.target]) tradeAdj[e.target] = {};
+      tradeAdj[e.source][e.target] = true;
+      tradeAdj[e.target][e.source] = true;
+    });
+
+    /* Size scaling */
+    var maxPct = 1;
+    data.nodes.forEach(function(n) { if (n.total_pct > maxPct) maxPct = n.total_pct; });
+    var sf = 9 / Math.sqrt(maxPct);
+
+    var nodes = data.nodes.map(function(n) {
+      return {
+        id: n.id, name: n.name, cocom: n.cocom,
+        total_pct: n.total_pct,
+        _s: Math.max(Math.sqrt(n.total_pct) * sf, 2.5),
+        _c: COCOM_COLORS[n.cocom] || '#5F6B7C',
+      };
+    });
+
+    var links = data.edges.map(function(e) {
+      return { source: e.source, target: e.target, weight: e.weight };
+    });
+
+    tradeGraph = ForceGraph()
+      (container)
+      .width(container.offsetWidth)
+      .height(container.offsetHeight)
+      .backgroundColor('transparent')
+      .nodeId('id')
+      .nodeLabel(function(n) {
+        return '<b>' + esc(n.name) + '</b><br>' +
+          '<span style="color:#8F99A8">' + esc(COCOM_NAMES[n.cocom] || '') + '</span><br>' +
+          'Partner share: ' + (n.total_pct || 0).toFixed(1) + '%';
+      })
+      .nodeCanvasObject(function(node, ctx, globalScale) {
+        if (node.x == null) return;
+        var focus = tradeHover || tradeSelected;
+        var isH = tradeHover === node || tradeSelected === node;
+        var isN = focus && tradeAdj[focus.id] && tradeAdj[focus.id][node.id];
+        var dim = focus && !isH && !isN;
+        var a = dim ? 0.07 : 1.0;
+
+        drawGlowNode(ctx, node.x, node.y, node._s, node._c, a, isH, isN);
+
+        /* Label — show more aggressively like the desired view */
+        var show = isH || isN || globalScale > 1.2 || node._s > 3.5;
+        if (show && !dim) {
+          var fs = Math.max(10 / globalScale, 2);
+          ctx.font = '600 ' + fs + 'px -apple-system,Segoe UI,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillStyle = 'rgba(197,203,211,' + (isH ? 1 : 0.75) + ')';
+          ctx.fillText(node.id, node.x, node.y + node._s + 2 / globalScale);
+        }
+      })
+      .nodeCanvasObjectMode(function() { return 'replace'; })
+      .nodePointerAreaPaint(function(node, color, ctx) {
+        if (node.x == null) return;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, Math.max(node._s + 4, 6), 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+      })
+      .linkColor(function(link) {
+        var focus = tradeHover || tradeSelected;
+        if (!focus) return 'rgba(143,153,168,0.07)';
+        var s = typeof link.source === 'object' ? link.source.id : link.source;
+        var t = typeof link.target === 'object' ? link.target.id : link.target;
+        if (s === focus.id || t === focus.id) {
+          var src = typeof link.source === 'object' ? link.source : null;
+          return hexRgba(src ? src._c : '#2D72D2', 0.55);
+        }
+        return 'rgba(143,153,168,0.012)';
+      })
+      .linkWidth(function(link) {
+        var focus = tradeHover || tradeSelected;
+        var s = typeof link.source === 'object' ? link.source.id : link.source;
+        var t = typeof link.target === 'object' ? link.target.id : link.target;
+        if (focus && (s === focus.id || t === focus.id)) {
+          return Math.max(link.weight / 5, 1.2);
+        }
+        return Math.max(link.weight / 18, 0.12);
+      })
+      .linkCurvature(0.2)
+      .linkDirectionalParticles(function(link) {
+        if (link.weight > 20) return 3;
+        if (link.weight > 8) return 2;
+        return 1;
+      })
+      .linkDirectionalParticleWidth(function(link) {
+        return Math.max(link.weight / 12, 0.8);
+      })
+      .linkDirectionalParticleSpeed(0.004)
+      .linkDirectionalParticleColor(function(link) {
+        var src = typeof link.source === 'object' ? link.source : null;
+        return hexRgba(src ? src._c : '#4A90D9', 0.45);
+      })
+      .onNodeHover(function(node) {
+        tradeHover = node || null;
+        container.style.cursor = node ? 'pointer' : 'default';
+      })
+      .onNodeDragEnd(function(node) {
+        node.fx = node.x;
+        node.fy = node.y;
+      })
+      .onNodeClick(function(node) {
+        if (!node) return;
+        tradeSelected = node;
+        tradeGraph.centerAt(node.x, node.y, 500);
+        tradeGraph.zoom(2.5, 500);
+        showDetail('trade', node, tradeAdj, tradeGraph.graphData().nodes);
+      })
+      .onBackgroundClick(function() {
+        tradeSelected = null;
+        hideDetail('trade');
+        tradeGraph.zoomToFit(400, 40);
+      })
+      .warmupTicks(200)
+      .cooldownTicks(300);
+
+    /* Set forces — stronger repulsion on small screens so nodes spread out */
+    var isMobile = container.offsetWidth < 600;
+    var baseCharge = nodes.length > 150 ? -80 : nodes.length > 60 ? -120 : -160;
+    tradeGraph.d3Force('charge').strength(isMobile ? baseCharge * 1.8 : baseCharge);
+    if (isMobile) {
+      tradeGraph.d3Force('link').distance(50);
+    }
+
+    /* Now set data — warmup runs with correct forces */
+    tradeGraph.graphData({ nodes: nodes, links: links });
+
+    /* Auto-fit after simulation settles */
+    tradeGraph.onEngineStop(function() {
+      tradeGraph.zoomToFit(400, 40);
+    });
+  }
+
+  function renderTradeTable(data) {
+    var tbody = document.querySelector('#trade-table tbody');
+    tbody.innerHTML = '';
+    var adj = {};
+    data.edges.forEach(function(e) {
+      if (!adj[e.source]) adj[e.source] = [];
+      adj[e.source].push({ target: e.target, weight: e.weight });
+    });
+    Object.keys(adj).forEach(function(k) {
+      adj[k].sort(function(a, b) { return b.weight - a.weight; });
+    });
+    var nodeLookup = {};
+    data.nodes.forEach(function(n) { nodeLookup[n.id] = n; });
+    var sourceNodes = data.nodes.filter(function(n) { return adj[n.id]; });
+    sourceNodes.sort(function(a, b) { return a.name.localeCompare(b.name); });
+    sourceNodes.forEach(function(node) {
+      var partners = adj[node.id] || [];
+      var tr = document.createElement('tr');
+      var p1 = partners[0], p2 = partners[1], p3 = partners[2];
+      tr.innerHTML = '<td>' + esc(node.name) + '</td>' +
+        '<td>' + esc(COCOM_NAMES[node.cocom] || '') + '</td>' +
+        '<td>' + (p1 ? esc((nodeLookup[p1.target] || {}).name || p1.target) : '\u2014') + '</td>' +
+        '<td class="r">' + (p1 ? p1.weight.toFixed(1) + '%' : '') + '</td>' +
+        '<td>' + (p2 ? esc((nodeLookup[p2.target] || {}).name || p2.target) : '\u2014') + '</td>' +
+        '<td class="r">' + (p2 ? p2.weight.toFixed(1) + '%' : '') + '</td>' +
+        '<td>' + (p3 ? esc((nodeLookup[p3.target] || {}).name || p3.target) : '\u2014') + '</td>' +
+        '<td class="r">' + (p3 ? p3.weight.toFixed(1) + '%' : '') + '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     ORGANIZATION NETWORK
+     ══════════════════════════════════════════════════════════ */
+
+  function loadOrgNetwork() {
+    var year = document.getElementById('org-year').value;
+    var minMembers = document.getElementById('org-min').value;
+    var url = '/api/analysis/org-network?year=' + year + '&min_members=' + minMembers;
+
+    orgGraph = null;
+    orgHover = null;
+    document.getElementById('org-detail').classList.remove('open');
+    document.getElementById('org-graph').innerHTML = '<div class="net-loading pulse">Loading organization network...</div>';
+
+    fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+      orgData = data;
+      renderOrgGraph(data);
+      renderOrgTable(data);
+    });
+  }
+
+  function renderOrgGraph(data) {
+    var container = document.getElementById('org-graph');
+    container.innerHTML = '';
+
+    if (!data.nodes.length) {
+      container.innerHTML = '<div class="net-loading">No organization data available for this year.</div>';
+      return;
+    }
+
+    /* Build adjacency (from full unfiltered data) */
+    orgAdj = {};
+    data.edges.forEach(function(e) {
+      if (!orgAdj[e.source]) orgAdj[e.source] = {};
+      if (!orgAdj[e.target]) orgAdj[e.target] = {};
+      orgAdj[e.source][e.target] = true;
+      orgAdj[e.target][e.source] = true;
+    });
+
+    /* Filter by active categories */
+    var filteredOrgIds = {};
+    var filteredOrgs = data.nodes.filter(function(n) {
+      if (n.type !== 'org') return false;
+      var cat = n.category || 'pol';
+      if (!orgCatFilter[cat]) return false;
+      filteredOrgIds[n.id] = true;
+      return true;
+    });
+    var filteredCountryIds = {};
+    data.edges.forEach(function(e) {
+      if (filteredOrgIds[e.target]) filteredCountryIds[e.source] = true;
+      if (filteredOrgIds[e.source]) filteredCountryIds[e.target] = true;
+    });
+    var filteredCountries = data.nodes.filter(function(n) {
+      return n.type === 'country' && filteredCountryIds[n.id];
+    });
+    var filteredNodes = filteredCountries.concat(filteredOrgs);
+    var filteredEdges = data.edges.filter(function(e) {
+      return (filteredOrgIds[e.source] || filteredOrgIds[e.target]) &&
+             (filteredCountryIds[e.source] || filteredCountryIds[e.target] ||
+              filteredOrgIds[e.source] || filteredOrgIds[e.target]);
+    });
+
+    /* Rebuild adjacency for filtered set */
+    orgAdj = {};
+    filteredEdges.forEach(function(e) {
+      if (!orgAdj[e.source]) orgAdj[e.source] = {};
+      if (!orgAdj[e.target]) orgAdj[e.target] = {};
+      orgAdj[e.source][e.target] = true;
+      orgAdj[e.target][e.source] = true;
+    });
+
+    var maxMembers = 1;
+    filteredNodes.forEach(function(n) {
+      if (n.type === 'org' && n.members > maxMembers) maxMembers = n.members;
+    });
+
+    var nodes = filteredNodes.map(function(n) {
+      if (n.type === 'org') {
+        var cat = n.category || 'pol';
+        return {
+          id: n.id, name: n.name, _type: 'org', _cat: cat,
+          _members: n.members,
+          _s: Math.max(Math.sqrt(n.members / maxMembers) * 14, 5),
+          _c: ORG_CAT_COLORS[cat] || '#5F6B7C',
+        };
+      }
+      return {
+        id: n.id, name: n.name, _type: 'country',
+        _cocom: n.cocom, _s: 3,
+        _c: COCOM_COLORS[n.cocom] || '#5F6B7C',
+      };
+    });
+
+    var links = filteredEdges.map(function(e) {
+      return { source: e.source, target: e.target };
+    });
+
+    orgGraph = ForceGraph()
+      (container)
+      .width(container.offsetWidth)
+      .height(container.offsetHeight)
+      .backgroundColor('transparent')
+      .nodeId('id')
+      .nodeLabel(function(n) {
+        if (n._type === 'org') {
+          return '<b>' + esc(n.name) + '</b><br>' +
+            '<span style="color:' + (ORG_CAT_COLORS[n._cat] || '#8F99A8') + '">' +
+            esc(ORG_CAT_NAMES[n._cat] || '') + '</span><br>Members: ' + n._members;
+        }
+        return '<b>' + esc(n.name) + '</b><br><span style="color:#8F99A8">' + esc(COCOM_NAMES[n._cocom] || '') + '</span>';
+      })
+      .nodeCanvasObject(function(node, ctx, globalScale) {
+        if (node.x == null) return;
+
+        var focus = orgHover || orgSelected;
+        var isH = orgHover === node || orgSelected === node;
+        var isN = focus && orgAdj[focus.id] && orgAdj[focus.id][node.id];
+        var dim = focus && !isH && !isN;
+        var a = dim ? 0.05 : 1.0;
+
+        if (node._type === 'org') {
+          /* Org node: hexagon with category color */
+          drawHexNode(ctx, node.x, node.y, node._s, node._c, a, isH, isN);
+
+          /* Zoom-based label: abbreviation at mid zoom, full at high zoom */
+          if (!dim) {
+            var showLabel = globalScale > 0.4 || isH || isN;
+            if (showLabel) {
+              var fs = Math.max(9 / globalScale, 2);
+              ctx.font = '700 ' + fs + 'px -apple-system,Segoe UI,sans-serif';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'top';
+              ctx.fillStyle = hexRgba(node._c, isH ? 1 : 0.8);
+              ctx.fillText(node.name, node.x, node.y + node._s + 2 / globalScale);
+            }
+            /* Member count badge at higher zoom */
+            if (globalScale > 1.0 && node._members) {
+              var badgeR = Math.max(6 / globalScale, 2.5);
+              var bx = node.x + node._s * 0.7, by = node.y - node._s * 0.7;
+              ctx.beginPath();
+              ctx.arc(bx, by, badgeR, 0, 2 * Math.PI);
+              ctx.fillStyle = '#1C2127';
+              ctx.fill();
+              ctx.strokeStyle = hexRgba(node._c, 0.6);
+              ctx.lineWidth = 0.5 / globalScale;
+              ctx.stroke();
+              var bfs = Math.max(5 / globalScale, 1.8);
+              ctx.font = '700 ' + bfs + 'px -apple-system,Segoe UI,sans-serif';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillStyle = node._c;
+              ctx.fillText(String(node._members), bx, by);
+            }
+          }
+        } else {
+          /* Country node: circle glow with COCOM color */
+          drawGlowNode(ctx, node.x, node.y, node._s, node._c, a, isH, isN);
+
+          /* Zoom-based label: ISO code at medium zoom, hover/neighbor always */
+          var showCountry = isH || isN || globalScale > 1.2;
+          if (showCountry && !dim) {
+            var fs2 = Math.max(9 / globalScale, 2);
+            ctx.font = '600 ' + fs2 + 'px -apple-system,Segoe UI,sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = 'rgba(197,203,211,' + (isH ? 1 : 0.7) + ')';
+            ctx.fillText(node.id, node.x, node.y + node._s + 2 / globalScale);
+          }
+        }
+      })
+      .nodeCanvasObjectMode(function() { return 'replace'; })
+      .nodePointerAreaPaint(function(node, color, ctx) {
+        if (node.x == null) return;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, Math.max(node._s + 4, 6), 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+      })
+      .linkVisibility(function(link) {
+        var focus = orgHover || orgSelected;
+        if (!focus) return false;
+        var s = typeof link.source === 'object' ? link.source.id : link.source;
+        var t = typeof link.target === 'object' ? link.target.id : link.target;
+        return s === focus.id || t === focus.id;
+      })
+      .linkColor(function(link) {
+        /* Color edges by org category */
+        var src = typeof link.source === 'object' ? link.source : null;
+        var tgt = typeof link.target === 'object' ? link.target : null;
+        var orgNode = (src && src._type === 'org') ? src : tgt;
+        var cat = orgNode ? orgNode._cat : null;
+        return hexRgba(ORG_CAT_COLORS[cat] || '#D1980B', 0.35);
+      })
+      .linkWidth(1)
+      .linkCurvature(0.15)
+      .linkDirectionalParticles(function(link) {
+        var focus = orgHover || orgSelected;
+        if (!focus) return 0;
+        var s = typeof link.source === 'object' ? link.source.id : link.source;
+        var t = typeof link.target === 'object' ? link.target.id : link.target;
+        return (s === focus.id || t === focus.id) ? 2 : 0;
+      })
+      .linkDirectionalParticleWidth(1.5)
+      .linkDirectionalParticleSpeed(0.006)
+      .linkDirectionalParticleColor(function(link) {
+        var src = typeof link.source === 'object' ? link.source : null;
+        var tgt = typeof link.target === 'object' ? link.target : null;
+        var orgNode = (src && src._type === 'org') ? src : tgt;
+        var cat = orgNode ? orgNode._cat : null;
+        return hexRgba(ORG_CAT_COLORS[cat] || '#D1980B', 0.6);
+      })
+      .onNodeHover(function(node) {
+        orgHover = node || null;
+        container.style.cursor = node ? 'pointer' : 'default';
+      })
+      .onNodeDragEnd(function(node) {
+        node.fx = node.x;
+        node.fy = node.y;
+      })
+      .onNodeClick(function(node) {
+        if (!node) return;
+        orgSelected = node;
+        orgGraph.centerAt(node.x, node.y, 500);
+        orgGraph.zoom(2.5, 500);
+        showDetail('org', node, orgAdj, orgGraph.graphData().nodes);
+      })
+      .onBackgroundClick(function() {
+        orgSelected = null;
+        hideDetail('org');
+        orgGraph.zoomToFit(400, 40);
+      })
+      .warmupTicks(150)
+      .cooldownTicks(300);
+
+    /* Set forces — stronger on mobile */
+    var isMobile = container.offsetWidth < 600;
+    orgGraph.d3Force('charge').strength(isMobile ? -350 : -200);
+    orgGraph.d3Force('link').distance(function(link) {
+      var src = typeof link.source === 'object' ? link.source : null;
+      var base = (src && src._type === 'org') ? 30 + (src._s || 5) * 4 : 60;
+      return isMobile ? base * 1.5 : base;
+    });
+
+    orgGraph.graphData({ nodes: nodes, links: links });
+
+    /* Auto-fit after simulation settles */
+    orgGraph.onEngineStop(function() {
+      orgGraph.zoomToFit(400, 40);
+    });
+  }
+
+  function renderOrgTable(data) {
+    var tbody = document.querySelector('#org-table tbody');
+    tbody.innerHTML = '';
+    var orgs = data.nodes.filter(function(n) {
+      if (n.type !== 'org') return false;
+      return orgCatFilter[n.category || 'pol'];
+    });
+    orgs.sort(function(a, b) { return b.members - a.members; });
+    orgs.forEach(function(org) {
+      var cat = org.category || 'pol';
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + esc(org.name) + '</td>' +
+        '<td><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' +
+        (ORG_CAT_COLORS[cat] || '#5F6B7C') + ';margin-right:6px;vertical-align:middle;"></span>' +
+        esc(ORG_CAT_NAMES[cat] || '') + '</td>' +
+        '<td class="r">' + org.members + '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ── View toggles ── */
+  window.toggleTradeView = function(view) {
+    document.querySelectorAll('#panel-trade .vt-btn').forEach(function(b) {
+      b.classList.toggle('active', b.getAttribute('data-view') === view);
+    });
+    var isGraph = view === 'graph';
+    document.getElementById('trade-graph-wrap').style.display = isGraph ? '' : 'none';
+    document.getElementById('trade-table-wrap').classList.toggle('active', !isGraph);
+    /* Hide zoom controls + detail sidebar when in table view */
+    var layout = document.getElementById('trade-graph-layout');
+    layout.querySelector('.net-zoom-controls').style.display = isGraph ? '' : 'none';
+    if (!isGraph) hideDetail('trade');
+  };
+
+  window.toggleOrgView = function(view) {
+    document.querySelectorAll('#panel-orgs .vt-btn').forEach(function(b) {
+      b.classList.toggle('active', b.getAttribute('data-view') === view);
+    });
+    var isGraph = view === 'graph';
+    document.getElementById('org-graph-wrap').style.display = isGraph ? '' : 'none';
+    document.getElementById('org-table-wrap').classList.toggle('active', !isGraph);
+    /* Hide zoom controls + detail sidebar when in table view */
+    var layout = document.getElementById('org-graph-layout');
+    layout.querySelector('.net-zoom-controls').style.display = isGraph ? '' : 'none';
+    if (!isGraph) hideDetail('org');
+  };
+
+  /* ── CSV Export ── */
+  window.exportTradeCSV = function() {
+    if (!tradeData || !tradeData.nodes.length) return;
+    var nodeLookup = {};
+    tradeData.nodes.forEach(function(n) { nodeLookup[n.id] = n; });
+    var adj = {};
+    tradeData.edges.forEach(function(e) {
+      if (!adj[e.source]) adj[e.source] = [];
+      adj[e.source].push({ target: e.target, weight: e.weight });
+    });
+    Object.keys(adj).forEach(function(k) {
+      adj[k].sort(function(a, b) { return b.weight - a.weight; });
+    });
+    var rows = [['Country', 'Region', 'Partner1', 'Pct1', 'Partner2', 'Pct2', 'Partner3', 'Pct3']];
+    tradeData.nodes.filter(function(n) { return adj[n.id]; }).forEach(function(n) {
+      var ps = adj[n.id] || [];
+      rows.push([
+        n.name, COCOM_NAMES[n.cocom] || '',
+        ps[0] ? (nodeLookup[ps[0].target] || {}).name || '' : '', ps[0] ? ps[0].weight : '',
+        ps[1] ? (nodeLookup[ps[1].target] || {}).name || '' : '', ps[1] ? ps[1].weight : '',
+        ps[2] ? (nodeLookup[ps[2].target] || {}).name || '' : '', ps[2] ? ps[2].weight : '',
+      ]);
+    });
+    var csv = rows.map(function(r) { return r.join(','); }).join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'trade_network_' + tradeData.year + '_' + tradeData.direction + '.csv';
+    a.click();
+  };
+
+  /* ── Event listeners ── */
+  document.getElementById('trade-year').addEventListener('change', loadTradeNetwork);
+  document.getElementById('trade-direction').addEventListener('change', loadTradeNetwork);
+  document.getElementById('org-year').addEventListener('change', loadOrgNetwork);
+
+  /* ── Org category legend + filter chips ── */
+  (function() {
+    var legend = document.getElementById('org-legend');
+    var filters = document.getElementById('org-cat-filters');
+
+    /* COCOM region legend for country nodes */
+    Object.keys(COCOM_NAMES).forEach(function(k) {
+      legend.innerHTML += '<span><span class="ldot" style="color:' + COCOM_COLORS[k] + ';background:' + COCOM_COLORS[k] + '"></span>' + COCOM_NAMES[k] + '</span>';
+    });
+    /* Separator */
+    legend.innerHTML += '<span style="color:#383E47;margin:0 4px;">|</span>';
+    /* Org category legend (hexagon indicator) */
+    Object.keys(ORG_CAT_NAMES).forEach(function(k) {
+      legend.innerHTML += '<span><span class="ldot" style="color:' + ORG_CAT_COLORS[k] + ';background:' + ORG_CAT_COLORS[k] + ';border-radius:2px;"></span>' + ORG_CAT_NAMES[k] + '</span>';
+    });
+
+    /* Category filter chips */
+    Object.keys(ORG_CAT_NAMES).forEach(function(cat) {
+      var btn = document.createElement('div');
+      btn.className = 'region-btn active';
+      btn.setAttribute('data-cat', cat);
+      btn.innerHTML = '<span class="rdot" style="background:' + ORG_CAT_COLORS[cat] + '"></span>' + ORG_CAT_NAMES[cat];
+      btn.addEventListener('click', function() {
+        orgCatFilter[cat] = !orgCatFilter[cat];
+        btn.classList.toggle('active', orgCatFilter[cat]);
+        if (orgData) { renderOrgGraph(orgData); renderOrgTable(orgData); }
+      });
+      filters.appendChild(btn);
+    });
+  })();
+
+  var orgMinSlider = document.getElementById('org-min');
+  var orgMinVal = document.getElementById('org-min-val');
+  var orgDebounce = null;
+  orgMinSlider.addEventListener('input', function() {
+    orgMinVal.textContent = this.value;
+    clearTimeout(orgDebounce);
+    orgDebounce = setTimeout(loadOrgNetwork, 400);
+  });
+
+  /* ── Resize handler ── */
+  window.addEventListener('resize', function() {
+    if (tradeGraph) {
+      var el = document.getElementById('trade-graph');
+      tradeGraph.width(el.offsetWidth).height(el.offsetHeight);
+    }
+    if (orgGraph) {
+      var el = document.getElementById('org-graph');
+      orgGraph.width(el.offsetWidth).height(el.offsetHeight);
+    }
+  });
+
+  /* ── Initial load ── */
+  loadTradeNetwork();
+
+})();
+</script>
+{% endblock %}

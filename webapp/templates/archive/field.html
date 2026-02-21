@@ -79,12 +79,14 @@
      embedded numbers are not the primary value. */
   const values = data.map(r => {
     const text = r.Content || '';
-    let m = text.match(/\$([\d,.]+)\s*(trillion|billion|million)?/i);
+    /* Dollar amounts — handle -$1.442 billion AND $-1.424 billion */
+    let m = text.match(/(-?)\$\s*(-?)([\d,.]+)\s*(trillion|billion|million)?/i);
     if (m) {
-      let v = parseFloat(m[1].replace(/,/g, ''));
-      if (m[2] && m[2].toLowerCase() === 'trillion') v *= 1000;
-      else if (m[2] && m[2].toLowerCase() === 'million') v /= 1000;
-      return v;
+      let neg = (m[1] === '-' || m[2] === '-') ? -1 : 1;
+      let v = parseFloat(m[3].replace(/,/g, ''));
+      if (m[4] && m[4].toLowerCase() === 'trillion') v *= 1000;
+      else if (m[4] && m[4].toLowerCase() === 'million') v /= 1000;
+      return neg * v;
     }
     m = text.match(/([\d,.]+)%/);
     if (m) return parseFloat(m[1].replace(/,/g, ''));
@@ -92,9 +94,9 @@
     if (m) return parseFloat(m[1]);
     m = text.match(/total:\s*([\d,.]+)/);
     if (m) return parseFloat(m[1].replace(/,/g, ''));
-    // Generic number — only for short (primarily numeric) content
+    /* Generic number — skip estimate years e.g. "(2012 est.)" */
     if (text.length < 200) {
-      m = text.match(/([\d,]{4,})/);
+      m = text.match(/([\d,]{4,})(?!\s*est)/);
       if (m) return parseFloat(m[1].replace(/,/g, ''));
     }
     return null;

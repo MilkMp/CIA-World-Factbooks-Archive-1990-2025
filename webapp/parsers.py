@@ -119,3 +119,48 @@ def extract_area(t):
     if m:
         return int(m.group(1).replace(',', ''))
     return None
+
+
+def parse_trade_partners(t):
+    """Parse trade partner text into list of {name, pct}.
+
+    Formats handled:
+      "Italy 29%, Spain 12%, US 5% (2023)"
+      "China 27.5%, US 16.9%, Japan 6% (2022 est.)"
+      "Germany 22%, Netherlands 10.1% (2021)"
+    Returns list sorted by pct descending.
+    """
+    if not t:
+        return []
+    t = str(t)
+    # Strip year parenthetical and "partners:" prefix
+    t = re.sub(r'\([\d, est.]+\)\s*$', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'^.*?(?:partners|partner)\s*:\s*', '', t, flags=re.IGNORECASE)
+    results = []
+    for m in re.finditer(r'([A-Z][\w\s,.\'-]+?)\s+([\d.]+)%', t):
+        name = m.group(1).strip().rstrip(',')
+        pct = float(m.group(2))
+        if pct > 0:
+            results.append({'name': name, 'pct': pct})
+    results.sort(key=lambda x: x['pct'], reverse=True)
+    return results
+
+
+def parse_org_memberships(t):
+    """Parse international organization text into list of acronyms.
+
+    Formats: "AU, IAEA, IBRD, UN, WHO" or "ACP, AfDB, AU, ..."
+    Returns sorted list of unique acronyms.
+    """
+    if not t:
+        return []
+    t = str(t)
+    # Strip parenthetical qualifiers like "(observer)" or "(associate)"
+    t = re.sub(r'\([^)]*\)', '', t)
+    parts = re.split(r'[,;\n]+', t)
+    orgs = set()
+    for part in parts:
+        part = part.strip()
+        if part and len(part) <= 30:
+            orgs.add(part)
+    return sorted(orgs)

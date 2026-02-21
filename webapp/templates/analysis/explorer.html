@@ -108,7 +108,7 @@
   .cpick-input::placeholder { color: #5F6B7C; }
   .cpick-drop {
     display: none; position: absolute; top: 100%; left: 0; right: 0;
-    max-height: 200px; overflow-y: auto; z-index: 50;
+    max-height: 280px; overflow-y: auto; z-index: 50;
     background: #1C2127; border: 1px solid #383E47; border-top: none;
     border-radius: 0 0 3px 3px;
   }
@@ -195,7 +195,16 @@
     .ex-tab { padding: 8px 12px; font-size: 0.65rem; white-space: nowrap; }
     .ex-controls { gap: 8px; }
     .cpick { min-width: 140px; max-width: 100%; }
-    #chart-scatter, #chart-treemap { height: 380px; }
+    #chart-scatter, #chart-treemap, #chart-barrace { height: 380px; }
+  }
+  @media (max-width: 480px) {
+    .ex-controls { flex-direction: column; align-items: stretch; }
+    .ex-controls label { margin-bottom: -6px; }
+    .ss-wrap { min-width: 0; width: 100%; }
+    .cpick { min-width: 0; max-width: 100%; }
+    #chart-scatter, #chart-treemap, #chart-barrace { height: 280px; }
+    .race-controls { flex-direction: column; align-items: stretch; gap: 6px; }
+    .spark-header, .spark-row { grid-template-columns: 100px 60px 1fr 60px 50px; font-size: 0.65rem; }
   }
 </style>
 {% endblock %}
@@ -416,11 +425,10 @@
 
   CountryPicker.prototype.showDropdown = function() {
     var q = this.input.value.toLowerCase().trim();
-    if (!q) { this.drop.classList.remove('open'); return; }
     var self = this;
     var matches = this.allNames.filter(function(n) {
-      return n.toLowerCase().indexOf(q) !== -1;
-    }).slice(0, 20);
+      return !q || n.toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 30);
     if (!matches.length) { this.drop.classList.remove('open'); return; }
     this.drop.innerHTML = '';
     matches.forEach(function(name) {

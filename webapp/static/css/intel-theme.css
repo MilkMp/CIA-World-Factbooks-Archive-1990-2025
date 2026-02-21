@@ -847,6 +847,11 @@ mark.search-hit {
   /* Year pills scroll instead of wrap */
   .year-pills { gap: 3px; }
   .year-pill { padding: 4px 6px; font-size: 0.6rem; min-width: 32px; }
+
+  /* Force inline-style grids with large minimums to stack */
+  [style*="minmax(380px"] { grid-template-columns: 1fr !important; }
+  [style*="minmax(300px"] { grid-template-columns: 1fr !important; }
+  [style*="minmax(280px"] { grid-template-columns: 1fr !important; }
 }
 
 /* ── Entity Card Grid (Digital Library) ── */
