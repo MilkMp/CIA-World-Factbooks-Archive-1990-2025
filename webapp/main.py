@@ -35,7 +35,7 @@ RATE_RULES = [
     ("/archive/",        6,  60.0),   # country archive pages
     ("/countries",       6,  60.0),   # country listing pages
     ("/api/",            15, 60.0),   # API endpoints
-    ("/",                30, 60.0),   # global catch-all (everything else)
+    # No catch-all — Fly.io proxy shares 172.16.8.250 across all users
 ]
 
 GOOD_BOTS = ("googlebot", "bingbot", "slurp", "duckduckbot")
