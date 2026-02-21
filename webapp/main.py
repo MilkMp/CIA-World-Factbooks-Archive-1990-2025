@@ -82,9 +82,10 @@ async def security_middleware(request: Request, call_next):
         or request.client.host
     )
 
-    # --- Check escalating ban first ---
+    # --- Check escalating ban first (resets on every hit — must stop to get unbanned) ---
     ban_expiry = _banned_until.get(ip)
     if ban_expiry and now < ban_expiry:
+        _banned_until[ip] = now + BAN_DURATION  # reset the clock
         return PlainTextResponse("Forbidden", status_code=403)
     elif ban_expiry:
         del _banned_until[ip]  # ban expired, clean up
