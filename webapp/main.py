@@ -33,11 +33,16 @@ RATE_RULES = [
     ("/export/",         5,  60.0),   # bulk CSV/XLSX downloads
     ("/archive/field/",  15, 60.0),   # individual field pages
     ("/archive/",        15, 60.0),   # country archive pages
+    ("/countries",       15, 60.0),   # country listing pages
     ("/api/",            20, 60.0),   # API endpoints
     ("/",                30, 60.0),   # global catch-all (everything else)
 ]
 
 GOOD_BOTS = ("googlebot", "bingbot", "slurp", "duckduckbot")
+
+# Block requests with no UA or known scraper/bot UAs
+BAD_BOTS = ("python-requests", "scrapy", "python-urllib", "go-http-client",
+            "java/", "libwww-perl", "wget", "httpx")
 
 # --- Report form: max 5 submissions per IP per hour ---
 _report_buckets: dict = defaultdict(list)
@@ -70,6 +75,11 @@ async def security_middleware(request: Request, call_next):
         or request.client.host
     )
 
+    # --- Block known bad bots (empty UA or scraper libraries) ---
+    if not path.startswith("/static/") and not is_bot:
+        if not ua or any(bot in ua for bot in BAD_BOTS):
+            return PlainTextResponse("Forbidden", status_code=403)
+
     # --- Targeted rate limit per endpoint group, skip good bots ---
     if not is_bot:
         for prefix, limit, window in RATE_RULES:
@@ -95,6 +105,10 @@ async def security_middleware(request: Request, call_next):
     # --- Security headers on all responses ---
     for header, value in SECURITY_HEADERS.items():
         response.headers[header] = value
+
+    # --- Cache-Control: let browsers/CDN cache archive pages (read-only data) ---
+    if path.startswith("/archive/") or path.startswith("/countries"):
+        response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=86400"
 
     # --- Analytics: record page view (skip static, bots, internal endpoints) ---
     if not any(path.startswith(p) for p in ANALYTICS_SKIP) and not is_bot:
