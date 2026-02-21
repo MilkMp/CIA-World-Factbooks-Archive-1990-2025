@@ -15,7 +15,9 @@
   <meta name="twitter:title" content="CIA World Factbook Archive">
   <meta name="twitter:description" content="36 years of structured intelligence data (1990-2025). 281 entities, 1,071,213 fields.">
   <meta name="twitter:image" content="https://cia-factbook-archive.fly.dev/static/og-image.png">
-  <link rel="stylesheet" href="/static/css/intel-theme.css?v=15">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon.png">
+  <link rel="apple-touch-icon" href="/static/images/favicon.png">
+  <link rel="stylesheet" href="/static/css/intel-theme.css?v=16">
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <script type="application/ld+json">
   {
@@ -83,21 +85,26 @@
 
       <div class="nav-section">Intelligence</div>
       <a href="/analysis" class="{{ 'active' if active_page == 'analysis-home' else '' }}" @click="navOpen = false">Overview</a>
-      <div class="nav-sub-label">Maps &amp; Geography</div>
+
+      <div class="nav-sub-label">Maps</div>
       <a href="/analysis/regional" class="{{ 'active' if active_page == 'analysis' else '' }}" @click="navOpen = false">Regional Dashboard</a>
       <a href="/analysis/timeline" class="{{ 'active' if active_page == 'timeline' else '' }}" @click="navOpen = false">Timeline Map</a>
       <a href="/analysis/map-compare" class="{{ 'active' if active_page == 'map-compare' else '' }}" @click="navOpen = false">Map Compare</a>
+
       <div class="nav-sub-label">Rankings &amp; Trends</div>
-      <a href="/analysis/trends" class="{{ 'active' if active_page == 'trends' else '' }}" @click="navOpen = false">Global Trends</a>
       <a href="/analysis/rankings" class="{{ 'active' if active_page == 'rankings' else '' }}" @click="navOpen = false">Global Rankings</a>
+      <a href="/analysis/trends" class="{{ 'active' if active_page == 'trends' else '' }}" @click="navOpen = false">Global Trends</a>
       <a href="/analysis/compare" class="{{ 'active' if active_page == 'compare' else '' }}" @click="navOpen = false">Compare Countries</a>
-      <div class="nav-sub-label">Analysis</div>
+
+      <div class="nav-sub-label">Networks</div>
+      <a href="/analysis/networks" class="{{ 'active' if active_page == 'networks' else '' }}" @click="navOpen = false">Trade Networks</a>
       <a href="/analysis/communications" class="{{ 'active' if active_page == 'communications' else '' }}" @click="navOpen = false">Communications</a>
+
+      <div class="nav-sub-label">Deep Dive</div>
+      <a href="/analysis/explorer" class="{{ 'active' if active_page == 'explorer' else '' }}" @click="navOpen = false">Advanced Analytics</a>
       <a href="/analysis/changes" class="{{ 'active' if active_page == 'changes' else '' }}" @click="navOpen = false">Change Detection</a>
       <a href="/analysis/dissolved" class="{{ 'active' if active_page == 'dissolved' else '' }}" @click="navOpen = false">Dissolved States</a>
-      <a href="/analysis/explorer" class="{{ 'active' if active_page == 'explorer' else '' }}" @click="navOpen = false">Advanced Analytics</a>
       <a href="/analysis/query-builder" class="{{ 'active' if active_page == 'query-builder' else '' }}" @click="navOpen = false">Query Builder</a>
-      <div class="nav-sub-label">Data Catalog</div>
       <a href="/analysis/fields" class="{{ 'active' if active_page == 'field-explorer' else '' }}" @click="navOpen = false">Field Explorer</a>
 
       <div class="nav-section">Reference</div>
