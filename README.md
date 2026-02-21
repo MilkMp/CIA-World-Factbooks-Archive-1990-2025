@@ -295,8 +295,8 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 | **Browse Archive** — Navigate all 281 entities across 36 years | **Country Profile** — Complete factbook data by category |
 | ![Field Time Series](docs/screenshots/field_timeseries.png) | ![Data Export](docs/screenshots/country_export.png) |
 | **Field Time Series** — Track any field across 36 years with Apache ECharts | **Data Export** — CSV, Excel, and print-ready PDF reports |
-| ![Country Dictionary](docs/screenshots/country_dictionary.png) | |
-| **Country Dictionary** — All 281 entities with type, region, and ISO codes | |
+| ![Country Dictionary](docs/screenshots/country_dictionary.png) | ![Text Diff](docs/screenshots/text_diff.png) |
+| **Country Dictionary** — All 281 entities with type, region, and ISO codes | **Text Diff** — Side-by-side year comparison with highlighted changes |
 
 ### Intelligence Analysis
 | | |
@@ -309,8 +309,16 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 | **Timeline Map** — Animated Mapbox choropleth 1990-2025 with multi-country time series | **Map Compare** — Two synced Mapbox maps for side-by-side year comparison |
 | ![Communications](docs/screenshots/communications.png) | ![Intelligence Dossier](docs/screenshots/dossier.png) |
 | **Communications Analysis** — Mapbox choropleth with internet, mobile, broadband indicators | **Intelligence Dossier** — Per-country assessment following ICD 203 standards |
-| ![Threat Brief](docs/screenshots/threats.png) | |
-| **Regional Threat Brief** — COCOM-level instability and security indicators | |
+| ![Trade Networks](docs/screenshots/trade_networks.png) | ![Query Builder](docs/screenshots/query_builder.png) |
+| **Trade Networks** — Force-directed graph of global trade relationships | **Query Builder** — Custom analytical queries across all indicators |
+| ![Global Rankings](docs/screenshots/rankings.png) | ![Global Trends](docs/screenshots/global_trends.png) |
+| **Global Rankings** — Sortable country rankings by any indicator | **Global Trends** — Multi-indicator time series across all editions |
+| ![Change Detection](docs/screenshots/change_detection.png) | ![Field Explorer](docs/screenshots/field_explorer.png) |
+| **Change Detection** — Year-over-year field changes with trend charts | **Field Explorer** — Browse all data fields with coverage statistics |
+| ![Threat Brief](docs/screenshots/threats.png) | ![Dissolved States](docs/screenshots/dissolved_states.png) |
+| **Regional Threat Brief** — COCOM-level instability and security indicators | **Dissolved States** — Historical entities no longer in the Factbook |
+| ![Factbook Quiz](docs/screenshots/quiz.png) | |
+| **Factbook Quiz** — 4 game modes to test your world knowledge | |
 
 
 
