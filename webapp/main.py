@@ -60,7 +60,9 @@ async def security_middleware(request: Request, call_next):
                 or request.client.host
             )
             _rate_buckets[ip] = [t for t in _rate_buckets[ip] if now - t < RATE_WINDOW]
-            if len(_rate_buckets[ip]) >= RATE_LIMIT:
+            bucket_size = len(_rate_buckets[ip])
+            logger.info("RATELIMIT ip=%s bucket=%d/%d path=%s", ip, bucket_size, RATE_LIMIT, path)
+            if bucket_size >= RATE_LIMIT:
                 return PlainTextResponse("Too Many Requests — slow down", status_code=429)
             _rate_buckets[ip].append(now)
 
