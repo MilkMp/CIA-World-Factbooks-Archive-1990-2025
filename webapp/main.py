@@ -19,13 +19,15 @@ BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(title=settings.APP_TITLE)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-# --- Rate limiter: max 3 req/sec per IP on /archive/field/ ---
+# --- Global rate limiter: max 30 req/min per IP across all endpoints ---
 _rate_buckets: dict = defaultdict(list)
 _last_cleanup: float = time.time()
-RATE_LIMIT = 3
-RATE_WINDOW = 1.0
-RATE_PREFIX = "/archive/field/"
+RATE_LIMIT = 30
+RATE_WINDOW = 60.0
 BUCKET_MAX_AGE = 300  # prune IPs inactive for 5 minutes
+
+# Paths exempt from global rate limiting (static assets, health checks)
+RATE_EXEMPT_PREFIXES = ("/static/",)
 
 GOOD_BOTS = ("googlebot", "bingbot", "slurp", "duckduckbot")
 
@@ -47,14 +49,15 @@ async def security_middleware(request: Request, call_next):
     global _last_cleanup
     now = time.time()
 
-    # --- Rate limit /archive/field/ ---
-    if request.url.path.startswith(RATE_PREFIX):
+    # --- Global rate limit: 30 req/min per IP, skip static assets and good bots ---
+    path = request.url.path
+    if not any(path.startswith(p) for p in RATE_EXEMPT_PREFIXES):
         ua = (request.headers.get("user-agent") or "").lower()
         if not any(bot in ua for bot in GOOD_BOTS):
             ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
             _rate_buckets[ip] = [t for t in _rate_buckets[ip] if now - t < RATE_WINDOW]
             if len(_rate_buckets[ip]) >= RATE_LIMIT:
-                return PlainTextResponse("Too Many Requests", status_code=429)
+                return PlainTextResponse("Too Many Requests — slow down", status_code=429)
             _rate_buckets[ip].append(now)
 
     # --- Rate limit /report POST (spam protection) ---
