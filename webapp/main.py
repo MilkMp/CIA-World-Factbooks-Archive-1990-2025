@@ -2,6 +2,7 @@ import logging
 import urllib.request
 import json
 import time
+import uuid
 from collections import defaultdict
 from pathlib import Path
 from fastapi import FastAPI, Request, Form
@@ -11,6 +12,7 @@ from fastapi.responses import RedirectResponse, Response, PlainTextResponse
 from webapp.config import settings
 from webapp.database import sql, sql_one
 from webapp.routers import archive, countries, analysis, analysis2, analysis3, analysis4, export
+from webapp.routers import analytics as analytics_router
 
 logger = logging.getLogger(__name__)
 
@@ -19,15 +21,19 @@ BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(title=settings.APP_TITLE)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-# --- Global rate limiter: max 20 req/min per IP across all endpoints ---
+# --- Targeted rate limiter: only on heavy scrape-prone endpoints ---
+# Keyed by (ip, prefix). Since Fly.io internal proxy masks real IPs,
+# we limit only endpoints no real user hits 10+ times per minute.
 _rate_buckets: dict = defaultdict(list)
 _last_cleanup: float = time.time()
-RATE_LIMIT = 20
-RATE_WINDOW = 60.0
-BUCKET_MAX_AGE = 300  # prune IPs inactive for 5 minutes
+BUCKET_MAX_AGE = 300
 
-# Paths exempt from global rate limiting (static assets, health checks)
-RATE_EXEMPT_PREFIXES = ("/static/",)
+# (path_prefix, max_requests, window_seconds)
+RATE_RULES = [
+    ("/export/",         10, 60.0),   # bulk CSV/XLSX downloads
+    ("/archive/field/",  20, 60.0),   # individual field pages
+    ("/api/",            30, 60.0),   # API endpoints
+]
 
 GOOD_BOTS = ("googlebot", "bingbot", "slurp", "duckduckbot")
 
@@ -44,35 +50,39 @@ SECURITY_HEADERS = {
 }
 
 
+ANALYTICS_SKIP = ("/static/", "/favicon.ico", "/health", "/metrics", "/api/analytics/")
+
+
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
     global _last_cleanup
     now = time.time()
-
-    # --- Global rate limit: 20 req/min per IP, skip static assets and good bots ---
     path = request.url.path
-    if not any(path.startswith(p) for p in RATE_EXEMPT_PREFIXES):
-        ua = (request.headers.get("user-agent") or "").lower()
-        if not any(bot in ua for bot in GOOD_BOTS):
-            ip = (
-                request.headers.get("fly-client-ip")
-                or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-                or request.client.host
-            )
-            _rate_buckets[ip] = [t for t in _rate_buckets[ip] if now - t < RATE_WINDOW]
-            bucket_size = len(_rate_buckets[ip])
-            logger.info("RATELIMIT ip=%s bucket=%d/%d path=%s", ip, bucket_size, RATE_LIMIT, path)
-            if bucket_size >= RATE_LIMIT:
-                return PlainTextResponse("Too Many Requests — slow down", status_code=429)
-            _rate_buckets[ip].append(now)
+    ua = (request.headers.get("user-agent") or "").lower()
+    is_bot = any(bot in ua for bot in GOOD_BOTS)
+
+    # Extract visitor IP once — used by rate limiter + analytics
+    ip = (
+        request.headers.get("fly-client-ip")
+        or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or request.client.host
+    )
+
+    # --- Targeted rate limit per endpoint group, skip good bots ---
+    if not is_bot:
+        for prefix, limit, window in RATE_RULES:
+            if path.startswith(prefix):
+                key = (ip, prefix)
+                _rate_buckets[key] = [t for t in _rate_buckets[key] if now - t < window]
+                bucket_size = len(_rate_buckets[key])
+                logger.info("RATELIMIT ip=%s prefix=%s bucket=%d/%d path=%s", ip, prefix, bucket_size, limit, path)
+                if bucket_size >= limit:
+                    return PlainTextResponse("Too Many Requests — slow down", status_code=429)
+                _rate_buckets[key].append(now)
+                break
 
     # --- Rate limit /report POST (spam protection) ---
-    if request.url.path == "/report" and request.method == "POST":
-        ip = (
-            request.headers.get("fly-client-ip")
-            or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-            or request.client.host
-        )
+    if path == "/report" and request.method == "POST":
         _report_buckets[ip] = [t for t in _report_buckets[ip] if now - t < REPORT_WINDOW]
         if len(_report_buckets[ip]) >= REPORT_LIMIT:
             return PlainTextResponse("Too Many Requests — try again later", status_code=429)
@@ -84,15 +94,40 @@ async def security_middleware(request: Request, call_next):
     for header, value in SECURITY_HEADERS.items():
         response.headers[header] = value
 
+    # --- Analytics: record page view (skip static, bots, internal endpoints) ---
+    if not any(path.startswith(p) for p in ANALYTICS_SKIP) and not is_bot:
+        elapsed_ms = (time.time() - now) * 1000
+        session_id = request.cookies.get("session_id", "")
+        try:
+            analytics_router.record_page_view(
+                ip=ip, path=path, method=request.method,
+                status_code=response.status_code,
+                referrer=request.headers.get("referer", ""),
+                user_agent=request.headers.get("user-agent", "")[:500],
+                session_id=session_id,
+                response_ms=round(elapsed_ms, 1),
+            )
+        except Exception:
+            pass  # never break the response for analytics
+
+        # Set session cookie if missing
+        if not session_id:
+            response.set_cookie(
+                "session_id", str(uuid.uuid4()),
+                max_age=365 * 24 * 3600,
+                httponly=True,
+                samesite="lax",
+            )
+
     # --- Periodic cleanup of stale rate bucket entries (every 5 min) ---
     if now - _last_cleanup > BUCKET_MAX_AGE:
         cutoff = now - BUCKET_MAX_AGE
-        stale = [ip for ip, ts in _rate_buckets.items() if not ts or max(ts) < cutoff]
-        for ip in stale:
-            del _rate_buckets[ip]
-        stale_r = [ip for ip, ts in _report_buckets.items() if not ts or max(ts) < cutoff]
-        for ip in stale_r:
-            del _report_buckets[ip]
+        stale_keys = [k for k, ts in _rate_buckets.items() if not ts or max(ts) < cutoff]
+        for k in stale_keys:
+            del _rate_buckets[k]
+        stale_r = [k for k, ts in _report_buckets.items() if not ts or max(ts) < cutoff]
+        for k in stale_r:
+            del _report_buckets[k]
         _last_cleanup = now
 
     return response
@@ -107,6 +142,7 @@ app.include_router(analysis2.router)
 app.include_router(analysis3.router)
 app.include_router(analysis4.router)
 app.include_router(export.router)
+app.include_router(analytics_router.router)
 
 
 @app.get("/api", include_in_schema=False)
