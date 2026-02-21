@@ -49,9 +49,11 @@ HONEYPOT_PATHS = ("/admin", "/database", "/wp-admin", "/wp-login", "/.env", "/ba
 # --- Escalating ban: too many 429s = full block ---
 _ban_strikes: dict = defaultdict(list)   # ip -> list of 429 timestamps
 _banned_until: dict = {}                  # ip -> ban expiry timestamp
+_ban_count: dict = defaultdict(int)       # ip -> cumulative ban count (for escalation)
+_ban_count_ts: dict = {}                  # ip -> first ban timestamp (reset after 24h)
 BAN_STRIKE_LIMIT = 15                     # 429 hits before ban
 BAN_STRIKE_WINDOW = 300.0                 # count strikes in 5-min window
-BAN_DURATION = 300.0                      # banned for 5 minutes (not 1 hour)
+BAN_DURATIONS = [300, 1800, 7200, 86400]  # escalating: 5min, 30min, 2hr, 24hr
 TARPIT_DELAY = 5.0                        # seconds to delay banned/honeypot responses
 
 # --- Report form: max 5 submissions per IP per hour ---
@@ -87,8 +89,11 @@ async def security_middleware(request: Request, call_next):
 
     # --- Honeypot: instant ban, only scrapers hit these ---
     if any(path.startswith(hp) for hp in HONEYPOT_PATHS):
-        _banned_until[ip] = now + BAN_DURATION
-        logger.warning("HONEYPOT ip=%s path=%s — instant ban", ip, path)
+        _ban_count[ip] += 1
+        _ban_count_ts.setdefault(ip, now)
+        dur = BAN_DURATIONS[min(_ban_count[ip] - 1, len(BAN_DURATIONS) - 1)]
+        _banned_until[ip] = now + dur
+        logger.warning("HONEYPOT ip=%s path=%s — ban #%d (%ds)", ip, path, _ban_count[ip], dur)
         await asyncio.sleep(TARPIT_DELAY)
         return PlainTextResponse("", status_code=404)
 
@@ -104,8 +109,11 @@ async def security_middleware(request: Request, call_next):
     # Don't block empty UA — Fly.io health checks and probes may not send one
     if not path.startswith("/static/") and not is_bot:
         if ua and any(bot in ua for bot in BAD_BOTS):
-            _banned_until[ip] = now + BAN_DURATION
-            logger.warning("BADBOTBAN ip=%s ua=%s — instant ban", ip, ua)
+            _ban_count[ip] += 1
+            _ban_count_ts.setdefault(ip, now)
+            dur = BAN_DURATIONS[min(_ban_count[ip] - 1, len(BAN_DURATIONS) - 1)]
+            _banned_until[ip] = now + dur
+            logger.warning("BADBOTBAN ip=%s ua=%s — ban #%d (%ds)", ip, ua, _ban_count[ip], dur)
             await asyncio.sleep(TARPIT_DELAY)
             return PlainTextResponse("Forbidden", status_code=403)
 
@@ -122,8 +130,11 @@ async def security_middleware(request: Request, call_next):
                     _ban_strikes[ip] = [t for t in _ban_strikes[ip] if now - t < BAN_STRIKE_WINDOW]
                     _ban_strikes[ip].append(now)
                     if len(_ban_strikes[ip]) >= BAN_STRIKE_LIMIT:
-                        _banned_until[ip] = now + BAN_DURATION
-                        logger.warning("BANNED ip=%s for %ds after %d strikes", ip, BAN_DURATION, len(_ban_strikes[ip]))
+                        _ban_count[ip] += 1
+                        _ban_count_ts.setdefault(ip, now)
+                        dur = BAN_DURATIONS[min(_ban_count[ip] - 1, len(BAN_DURATIONS) - 1)]
+                        _banned_until[ip] = now + dur
+                        logger.warning("BANNED ip=%s ban #%d (%ds) after %d strikes", ip, _ban_count[ip], dur, len(_ban_strikes[ip]))
                         return PlainTextResponse("Forbidden", status_code=403)
                     return PlainTextResponse("Too Many Requests — slow down", status_code=429)
                 _rate_buckets[key].append(now)
@@ -186,6 +197,11 @@ async def security_middleware(request: Request, call_next):
         expired_bans = [k for k, exp in _banned_until.items() if now >= exp]
         for k in expired_bans:
             del _banned_until[k]
+        # Clean up ban counts older than 24 hours (let persistent bots accumulate)
+        stale_bc = [k for k, ts in _ban_count_ts.items() if now - ts > 86400]
+        for k in stale_bc:
+            del _ban_count[k]
+            del _ban_count_ts[k]
         _last_cleanup = now
 
     return response
