@@ -205,7 +205,11 @@ See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) and [docs/ETL_PIPELINE.md](docs/E
 
 ### Alternative: SQLite (No SQL Server Required)
 
-A pre-built SQLite database (`factbook.db`, ~324 MB) is available for users who don't need SQL Server. SQLite requires no installation — Python's built-in `sqlite3` module can query it directly.
+A pre-built SQLite database (`factbook.db`, ~325 MB) is available as a release download for users who don't need SQL Server. The file exceeds GitHub's 100 MB file-size limit, so it is not included in the repository itself.
+
+**Download:** [factbook.db from the latest release](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/latest)
+
+Place the downloaded file at `data/factbook.db` in the project root. SQLite requires no installation — Python's built-in `sqlite3` module can query it directly.
 
 | | SQL Server | SQLite |
 |--|-----------|--------|
