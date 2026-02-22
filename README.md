@@ -76,20 +76,6 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 ## Repository Structure
 
 ```
-webapp/
-  main.py                    # FastAPI application entry point
-  config.py                  # Settings (DB path, tokens)
-  database.py                # SQLite connection pool
-  routers/
-    archive.py               # Browse, search, country profiles, export
-    analysis.py              # Intelligence dashboards, maps, dossiers
-  templates/                 # Jinja2 HTML templates (DG2 dark theme)
-  static/
-    css/intel-theme.css       # Dark grey/blue
-Blueprint-inspired stylesheet
-    data/countries-110m.geojson  # Natural Earth country boundaries for Mapbox
-schema/
-  create_tables.sql          # DDL for all 5 tables
 data/
   master_countries.sql       # 281 canonical entities
   countries.sql              # 9,500 country-year records
@@ -99,6 +85,8 @@ data/
     country_fields_1990.sql.gz  # Split by year (36 gzipped files)
     ...
     country_fields_2025.sql.gz
+schema/
+  create_tables.sql          # DDL for all 5 tables
 etl/
   build_archive.py           # HTML parser (2000-2020)
   load_gutenberg_years.py    # Text parser (1990-2001)
@@ -108,6 +96,10 @@ etl/
   repair_1996_truncated.py   # CIA original text parser for 7 truncated 1996 countries
   validate_integrity.py      # Data quality checks
   export_to_sqlite.py        # SQL Server -> SQLite export (with FTS5)
+scripts/
+  factbook_search.py         # Command-line search utility
+  validate_cocom.py          # COCOM region validation
+  validate_integrity.py      # Data integrity checks
 queries/
   sample_queries.sql         # 18 analytical queries for Power BI / analysis
   search_cli.py              # Command-line search tool
@@ -116,6 +108,8 @@ docs/
   ETL_PIPELINE.md            # How the archive was built
   FIELD_EVOLUTION.md         # How CIA field names changed over time
   METHODOLOGY.md             # Complete methodology: parsing, standardization, validation
+  screenshots/               # 28 PNGs + 5 animated GIFs of the web application
+  index.html                 # GitHub Pages static landing page
 ```
 
 ## ETL Pipeline & Python Scripts
@@ -243,6 +237,8 @@ The archive is served as a FastAPI + Jinja2 web application at **[cia-factbook-a
 - **Bug reporting** via GitHub Issues integration
 
 **Stack:** Python 3.12, FastAPI, Jinja2, SQLite (FTS5), Mapbox GL JS v3, Apache ECharts 5, deployed on Fly.io.
+
+The web application source code is maintained in a separate private repository.
 
 ## Entity Types
 

@@ -13,6 +13,12 @@ html_samples/
 .claude/
 data/factbook.db
 data/factbook.db.backup_before_repair
+data/analytics.db
+data/gif_frames/
+data/debug.html
+data/dashboard_check.html
+data/test_dashboard.html
+data/test_js.js
 tmp_comms.html
 samples/
 notebooks/
@@ -20,7 +26,17 @@ scripts/archive/
 *.ipynb
 Website_Archive/
 *.BIN
-data/analytics.db
-data/gif_frames/
-data/debug.html
-data/dashboard_check.html
+
+# Webapp source moved to private repo (cia-factbook-webapp)
+webapp/
+analytics_dashboard.py
+start.py
+Dockerfile
+fly.toml
+.dockerignore
+requirements.txt
+capture_screenshots.py
+capture_gifs.py
+security/
+RESPONSIVE_DASHBOARD_IMPROVEMENT_PLAN.md
+REVERT_NOTE_ANALYTICS.md
