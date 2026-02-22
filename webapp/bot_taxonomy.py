@@ -81,7 +81,7 @@ BOT_TAXONOMY = {
         "action": "block",
         "patterns": [
             "python-requests", "scrapy", "python-urllib", "go-http-client",
-            "java/", "libwww-perl", "wget", "httpx", "curl/",
+            "java/", "libwww-perl", "wget", "httpx",
             "php/", "okhttp", "axios/", "node-fetch", "colly",
         ],
     },
