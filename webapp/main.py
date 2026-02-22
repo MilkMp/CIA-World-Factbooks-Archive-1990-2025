@@ -15,6 +15,7 @@ from webapp.config import settings
 from webapp.database import sql, sql_one
 from webapp.routers import archive, countries, analysis, analysis2, analysis3, analysis4, export
 from webapp.routers import analytics as analytics_router
+from webapp.bot_taxonomy import classify_ua, BOT_TAXONOMY
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +39,14 @@ RATE_RULES = [
     ("/api/",            80, 60.0),   # API endpoints (pages make multiple calls)
 ]
 
-GOOD_BOTS = ("googlebot", "bingbot", "slurp", "duckduckbot")
-
-# Block requests with known scraper/bot UAs
-BAD_BOTS = ("python-requests", "scrapy", "python-urllib", "go-http-client",
-            "java/", "libwww-perl", "wget", "httpx")
+# Bot classification is now in webapp/bot_taxonomy.py
+# Actions: "allow" (exempt from limits), "rate_limit" (tighter limits), "block" (instant ban)
 
 # --- Honeypot: fake paths only scrapers follow (listed as Disallow in robots.txt) ---
 HONEYPOT_PATHS = ("/admin", "/database", "/wp-admin", "/wp-login", "/.env", "/backup")
+
+# --- Admin bypass: scripts with this header skip all rate limiting/bans ---
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 
 # --- Escalating ban: too many 429s = full block ---
 _ban_strikes: dict = defaultdict(list)   # ip -> list of 429 timestamps
@@ -126,7 +127,13 @@ async def security_middleware(request: Request, call_next):
     now = time.time()
     path = request.url.path
     ua = (request.headers.get("user-agent") or "").lower()
-    is_bot = any(bot in ua for bot in GOOD_BOTS)
+    bot_category, bot_action = classify_ua(ua)
+    is_bot = bot_category != "human"
+
+    # --- Admin bypass: skip ALL rate limiting and bans ---
+    if ADMIN_KEY and request.headers.get("x-admin-key") == ADMIN_KEY:
+        response = await call_next(request)
+        return response
 
     # Extract visitor IP once — used by rate limiter + analytics
     ip = (
@@ -154,21 +161,20 @@ async def security_middleware(request: Request, call_next):
     elif ban_expiry:
         del _banned_until[ip]  # ban expired, clean up
 
-    # --- Block known bad bots (scraper libraries) ---
-    # Don't block empty UA — Fly.io health checks and probes may not send one
-    if not path.startswith("/static/") and not is_bot:
-        if ua and any(bot in ua for bot in BAD_BOTS):
-            _ban_count[ip] += 1
-            _ban_count_ts.setdefault(ip, now)
-            dur = BAN_DURATIONS[min(_ban_count[ip] - 1, len(BAN_DURATIONS) - 1)]
-            _banned_until[ip] = now + dur
-            _save_bandata()
-            logger.warning("BADBOTBAN ip=%s ua=%s — ban #%d (%ds)", ip, ua, _ban_count[ip], dur)
-            await asyncio.sleep(TARPIT_DELAY)
-            return PlainTextResponse("Forbidden", status_code=403)
+    # --- Block bad bots: scrapers + security scanners ---
+    if not path.startswith("/static/") and bot_action == "block":
+        _ban_count[ip] += 1
+        _ban_count_ts.setdefault(ip, now)
+        dur = BAN_DURATIONS[min(_ban_count[ip] - 1, len(BAN_DURATIONS) - 1)]
+        _banned_until[ip] = now + dur
+        _save_bandata()
+        logger.warning("BLOCKED %s ip=%s ua=%s — ban #%d (%ds)", bot_category, ip, ua, _ban_count[ip], dur)
+        await asyncio.sleep(TARPIT_DELAY)
+        return PlainTextResponse("Forbidden", status_code=403)
 
     # --- Global per-IP rate limit (catches bots spreading across endpoints) ---
-    if not is_bot and not any(path.startswith(p) for p in GLOBAL_SKIP):
+    # Allow-action bots (search engines, social preview, etc.) skip global limit
+    if bot_action != "allow" and not any(path.startswith(p) for p in GLOBAL_SKIP):
         _ip_global[ip] = [t for t in _ip_global[ip] if now - t < IP_GLOBAL_WINDOW]
         if len(_ip_global[ip]) >= IP_GLOBAL_LIMIT:
             _ban_count[ip] += 1
@@ -461,6 +467,11 @@ async def sitemap():
 
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
+    # Build AI crawler blocks from taxonomy
+    ai_blocks = ""
+    for bot in BOT_TAXONOMY["ai_crawler"]["patterns"]:
+        ai_blocks += f"User-agent: {bot}\nDisallow: /\n\n"
+
     content = (
         # Google — crawl freely, no delay
         "User-agent: Googlebot\n"
@@ -478,6 +489,8 @@ async def robots_txt():
         "Disallow: /export/bulk/\n"
         "Disallow: /export/print\n"
         "\n"
+        # AI crawlers — block entirely (training data scrapers)
+        + ai_blocks +
         # All other bots — 2 second crawl delay
         "User-agent: *\n"
         "Allow: /\n"

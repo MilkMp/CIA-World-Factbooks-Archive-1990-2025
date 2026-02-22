@@ -6,6 +6,7 @@ import shutil
 from playwright.async_api import async_playwright
 
 BASE = "https://cia-factbook-archive.fly.dev"
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 DOCS_DIR = os.path.join(os.path.dirname(__file__), "docs", "screenshots")
 WEB_DIR = os.path.join(os.path.dirname(__file__), "webapp", "static", "img", "screenshots")
 
@@ -53,10 +54,12 @@ async def main():
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
+        headers = {"x-admin-key": ADMIN_KEY} if ADMIN_KEY else {}
         context = await browser.new_context(
             viewport={"width": 1920, "height": 1080},
             device_scale_factor=2,
             color_scheme="dark",
+            extra_http_headers=headers,
         )
         page = await context.new_page()
 

@@ -617,12 +617,23 @@ map = new mapboxgl.Map({
   zoom: 1.5,
   projection: 'globe',
   attributionControl: false,
-  maxZoom: 8,
+  maxZoom: 16,
 });
 
 map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-left');
 
 popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '280px' });
+
+/* Atmospheric fog effect */
+map.on('style.load', function() {
+  map.setFog({
+    color: '#111418',
+    'high-color': '#1C2127',
+    'horizon-blend': 0.04,
+    'space-color': '#0a0e12',
+    'star-intensity': 0.15,
+  });
+});
 
 /* Build a lookup by ISO3 for fast access */
 const dataByIso3 = {};

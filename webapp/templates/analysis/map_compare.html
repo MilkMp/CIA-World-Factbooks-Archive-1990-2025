@@ -511,13 +511,26 @@ const mapConfig = {
   zoom: 1.5,
   projection: 'globe',
   attributionControl: false,
-  maxZoom: 8,
+  maxZoom: 16,
 };
 
 const mapA = new mapboxgl.Map(Object.assign({ container: 'map-a' }, mapConfig));
 const mapB = new mapboxgl.Map(Object.assign({ container: 'map-b' }, mapConfig));
 
 mapA.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-left');
+
+/* Atmospheric fog effect */
+[mapA, mapB].forEach(m => {
+  m.on('style.load', function() {
+    m.setFog({
+      color: '#111418',
+      'high-color': '#1C2127',
+      'horizon-blend': 0.04,
+      'space-color': '#0a0e12',
+      'star-intensity': 0.15,
+    });
+  });
+});
 
 /* ── Synced movement ── */
 let syncing = false;
