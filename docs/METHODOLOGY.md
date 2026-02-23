@@ -2,6 +2,8 @@
 
 Complete documentation of how the CIA World Factbook Archive was built, validated, and standardized — from raw source collection through final verification.
 
+> **Data Integrity:** No Factbook content is added or altered. The parsing process structures the CIA's raw text into queryable fields — removing formatting artifacts, sectioning headers, and deduplicating noise lines — but the actual data values are exactly as the CIA published them. Original field names are preserved in the database; canonical name mappings live in a separate `FieldNameMappings` lookup table. The only additions to the source data are reference lookup tables (FIPS-to-ISO code mappings, entity classifications, COCOM regional assignments) that sit alongside the original data, not inside it.
+
 ## Table of Contents
 
 1. [Source Collection](#1-source-collection)

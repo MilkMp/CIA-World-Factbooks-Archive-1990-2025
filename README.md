@@ -1,10 +1,12 @@
 # CIA World Factbooks Archive 1990-2025
 
-A complete, structured archive of the CIA World Factbook spanning **36 years** (1990-2025), covering **281 entities** with **1,061,341 data fields** in a normalized SQLite database.
+A complete, structured archive of the CIA World Factbook spanning **36 years** (1990-2025), covering **281 entities** with **1,061,522 data fields** in a normalized SQLite database.
 
 The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves every edition published since 1990 and creates a structured, queryable dataset.
 
 **[Search the interactive archive](https://cia-factbook-archive.fly.dev/)** | **[Project documentation](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)**
+
+> **Data Integrity:** No Factbook content is added or altered. The parsing process structures the CIA's raw text into queryable fields — removing formatting artifacts, sectioning headers, and deduplicating noise lines — but the actual data values are exactly as the CIA published them. The only additions to the source data are reference lookup tables (FIPS-to-ISO code mappings, entity classifications, COCOM regional assignments) that sit alongside the original data, not inside it.
 
 
 ## Database Statistics
@@ -15,9 +17,9 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 | **Entities** | 281 (192 sovereign states, 65 territories, 6 disputed, and more) |
 | **Country-year records** | 9,500 |
 | **Category records** | 83,599 |
-| **Data fields** | 1,061,341 |
+| **Data fields** | 1,061,522 |
 | **Content size** | ~324 MB |
-| **Field name variants** | 1,090 mapped to 414 canonical names |
+| **Field name variants** | 1,090 mapped to 416 canonical names |
 
 
 ## Data Sources
@@ -194,7 +196,7 @@ See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) and [docs/ETL_PIPELINE.md](docs/E
 
 5. **Verify:**
    ```sql
-   SELECT COUNT(*) FROM CountryFields;  -- Should return 1,061,341
+   SELECT COUNT(*) FROM CountryFields;  -- Should return 1,061,522
    ```
 
 ### Alternative: SQLite (No SQL Server Required)
@@ -213,7 +215,7 @@ Place the downloaded file at `data/factbook.db` in the project root. SQLite requ
 | **Best for** | Power BI, enterprise analytics, large-scale joins | Quick exploration, scripting, lightweight apps |
 | **Schema** | Identical 5-table structure | Identical 5-table structure |
 
-The SQLite database contains the same 5 tables, same indexes, and same 1,061,341 fields as the SQL Server version, plus an FTS5 full-text search index for fast keyword and boolean search. This is what the [live webapp](https://cia-factbook-archive.fly.dev/) runs on.
+The SQLite database contains the same 5 tables, same indexes, and same 1,061,522 fields as the SQL Server version, plus an FTS5 full-text search index for fast keyword and boolean search. This is what the [live webapp](https://cia-factbook-archive.fly.dev/) runs on.
 
 ## Live Web Application
 
@@ -256,7 +258,7 @@ The web application source code is maintained in a separate private repository.
 
 ## Field Name Standardization
 
-The CIA renamed many fields over the 36-year span. The `FieldNameMappings` table maps 1,090 raw field name variants to 414 canonical names:
+The CIA renamed many fields over the 36-year span. The `FieldNameMappings` table maps 1,090 raw field name variants to 416 canonical names:
 
 | Mapping Type | Count | Description |
 |-------------|-------|-------------|
@@ -286,7 +288,7 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 | ![Homepage](docs/screenshots/homepage.png) | ![About](docs/screenshots/about.png) |
 | **Homepage** — Database statistics, navigation, and live search | **About** — Project mission, architecture, and methodology |
 | ![Full-Text Search](docs/screenshots/search_results.png) | ![Boolean Search](docs/screenshots/search_boolean.png) |
-| **Full-Text Search** — Keyword search across 1,061,341 fields | **Boolean Search** — AND/OR/NOT operators with phrase matching |
+| **Full-Text Search** — Keyword search across 1,061,522 fields | **Boolean Search** — AND/OR/NOT operators with phrase matching |
 
 ### The Archive
 | | |
