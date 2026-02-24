@@ -110,7 +110,7 @@ docs/
   ETL_PIPELINE.md            # How the archive was built
   FIELD_EVOLUTION.md         # How CIA field names changed over time
   METHODOLOGY.md             # Complete methodology: parsing, standardization, validation
-  screenshots/               # 28 PNGs + 5 animated GIFs of the web application
+  screenshots/               # 29 PNGs + 5 animated GIFs of the web application
   index.html                 # GitHub Pages static landing page
 ```
 
@@ -293,12 +293,14 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 ### The Archive
 | | |
 |---|---|
-| ![Browse Years](docs/screenshots/browse_years.png) | ![Country Profile](docs/screenshots/country_profile.png) |
-| **Browse Archive** — Navigate all 281 entities across 36 years | **Country Profile** — Complete factbook data by category |
-| ![Field Time Series](docs/screenshots/field_timeseries.png) | ![Data Export](docs/screenshots/country_export.png) |
-| **Field Time Series** — Track any field across 36 years with Apache ECharts | **Data Export** — CSV, Excel, and print-ready PDF reports |
-| ![Country Dictionary](docs/screenshots/country_dictionary.png) | ![Text Diff](docs/screenshots/text_diff.png) |
-| **Country Dictionary** — All 281 entities with type, region, and ISO codes | **Text Diff** — Side-by-side year comparison with highlighted changes |
+| ![Library](docs/screenshots/library.png) | ![Browse Years](docs/screenshots/browse_years.png) |
+| **Library** — Card-based overview of the entire archive collection | **Browse Archive** — Navigate all 281 entities across 36 years |
+| ![Country Profile](docs/screenshots/country_profile.png) | ![Field Time Series](docs/screenshots/field_timeseries.png) |
+| **Country Profile** — Complete factbook data by category | **Field Time Series** — Track any field across 36 years with Apache ECharts |
+| ![Data Export](docs/screenshots/country_export.png) | ![Country Dictionary](docs/screenshots/country_dictionary.png) |
+| **Data Export** — CSV, Excel, and print-ready PDF reports | **Country Dictionary** — All 281 entities with type, region, and ISO codes |
+| ![Text Diff](docs/screenshots/text_diff.png) | ![Factbook Quiz](docs/screenshots/quiz.png) |
+| **Text Diff** — Side-by-side year comparison with highlighted changes | **Factbook Quiz** — 4 game modes to test your world knowledge |
 
 ### Intelligence Analysis
 | | |
@@ -319,8 +321,8 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 | **Change Detection** — Year-over-year field changes with trend charts | **Field Explorer** — Browse all data fields with coverage statistics |
 | ![Threat Brief](docs/screenshots/threats.png) | ![Dissolved States](docs/screenshots/dissolved_states.png) |
 | **Regional Threat Brief** — COCOM-level instability and security indicators | **Dissolved States** — Historical entities no longer in the Factbook |
-| ![Factbook Quiz](docs/screenshots/quiz.png) | ![Organization Networks](docs/screenshots/org_networks.png) |
-| **Factbook Quiz** — 4 game modes to test your world knowledge | **Organization Networks** — International org memberships and alliances |
+| ![Organization Networks](docs/screenshots/org_networks.png) | |
+| **Organization Networks** — International org memberships and alliances | |
 
 
 
