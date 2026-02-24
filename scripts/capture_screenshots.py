@@ -257,7 +257,11 @@ async def main():
     os.makedirs(OUT, exist_ok=True)
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch()
+        # Use headed mode with GPU for proper Mapbox WebGL rendering (globe fog, atmosphere)
+        browser = await p.chromium.launch(
+            headless=False,
+            args=["--use-gl=angle", "--use-angle=d3d11"],
+        )
         page = await browser.new_page(viewport={"width": 1920, "height": 1080})
 
         await capture_screenshots(page)
