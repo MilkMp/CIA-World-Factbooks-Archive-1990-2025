@@ -4,7 +4,7 @@ A complete, structured archive of the CIA World Factbook spanning **36 years** (
 
 The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves every edition published since 1990 and creates a structured, queryable dataset.
 
-**[Search the interactive archive](https://cia-factbook-archive.fly.dev/)** | **[Project documentation](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)**
+**[Search the interactive archive](https://worldfactbookarchive.org/)** | **[Project documentation](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)**
 
 > **Data Integrity:** No Factbook content is added or altered. The parsing process structures the CIA's raw text into queryable fields — removing formatting artifacts, sectioning headers, and deduplicating noise lines — but the actual data values are exactly as the CIA published them. The only additions to the source data are reference lookup tables (FIPS-to-ISO code mappings, entity classifications, COCOM regional assignments) that sit alongside the original data, not inside it.
 
@@ -215,11 +215,11 @@ Place the downloaded file at `data/factbook.db` in the project root. SQLite requ
 | **Best for** | Power BI, enterprise analytics, large-scale joins | Quick exploration, scripting, lightweight apps |
 | **Schema** | Identical 5-table structure | Identical 5-table structure |
 
-The SQLite database contains the same 5 tables, same indexes, and same 1,061,522 fields as the SQL Server version, plus an FTS5 full-text search index for fast keyword and boolean search. This is what the [live webapp](https://cia-factbook-archive.fly.dev/) runs on.
+The SQLite database contains the same 5 tables, same indexes, and same 1,061,522 fields as the SQL Server version, plus an FTS5 full-text search index for fast keyword and boolean search. This is what the [live webapp](https://worldfactbookarchive.org/) runs on.
 
 ## Live Web Application
 
-The archive is served as a FastAPI + Jinja2 web application at **[cia-factbook-archive.fly.dev](https://cia-factbook-archive.fly.dev/)**. Key features:
+The archive is served as a FastAPI + Jinja2 web application at **[worldfactbookarchive.org](https://worldfactbookarchive.org/)**. Key features:
 
 - **Full-text search** with Library of Congress boolean syntax (AND, OR, NOT, "phrase", truncation)
 - **Browse archive** by year (1990-2025) and country (281 entities)

@@ -1,7 +1,7 @@
 CIA WORLD FACTBOOK ARCHIVE
 ==========================
 36 years of data (1990-2025) — 281 entities, 1,071,213 fields
-Live: https://cia-factbook-archive.fly.dev
+Live: https://worldfactbookarchive.org
 
 DATABASE SCHEMA:
   MasterCountries   -> MasterCountryID, CanonicalCode (FIPS), ISOAlpha2, CanonicalName, EntityType
@@ -74,7 +74,7 @@ UTILITIES:
   scripts/archive/                       One-time migration scripts & diagnostics
 
 HOW TO USE:
-  Option 1: Visit https://cia-factbook-archive.fly.dev (live webapp)
+  Option 1: Visit https://worldfactbookarchive.org (live webapp)
   Option 2: Run locally:
     cd C:\Users\milan\CIA_Factbook_Archive
     python -m uvicorn webapp.main:app --port 8080
