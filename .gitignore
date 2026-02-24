@@ -11,14 +11,6 @@ text_samples/
 html_samples/
 *.zip
 .claude/
-data/factbook.db
-data/factbook.db.backup_before_repair
-data/analytics.db
-data/gif_frames/
-data/debug.html
-data/dashboard_check.html
-data/test_dashboard.html
-data/test_js.js
 tmp_comms.html
 samples/
 notebooks/
@@ -41,3 +33,22 @@ security/
 RESPONSIVE_DASHBOARD_IMPROVEMENT_PLAN.md
 REVERT_NOTE_ANALYTICS.md
 scale-down.ps1
+
+# Large data directories (not tracked)
+CIA_Maps/
+CIA_World_Leaders/
+CIA_Studies_Intelligence/
+CIA_Abbottabad/
+CIA_Spy_Glossary/
+
+# Large data files (not tracked — download separately)
+data/factbook.db
+data/factbook.db.backup_before_repair
+data/analytics.db
+data/analytics.db.bak
+data/gif_frames/
+data/maps_thumbs/
+data/debug.html
+data/dashboard_check.html
+data/test_dashboard.html
+data/test_js.js

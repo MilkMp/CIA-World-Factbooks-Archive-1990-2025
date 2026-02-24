@@ -1,0 +1,282 @@
+MasterCountryID,CanonicalCode,CanonicalName,ISOAlpha2,EntityType,AdministeringMasterCountryID
+1,AA,Aruba,AW,territory,182
+2,AC,Antigua and Barbuda,AG,sovereign,
+3,AE,United Arab Emirates,AE,sovereign,
+4,AF,Afghanistan,AF,sovereign,
+5,AG,Algeria,DZ,sovereign,
+6,AJ,Azerbaijan,AZ,sovereign,
+7,AL,Albania,AL,sovereign,
+8,AM,Armenia,AM,sovereign,
+9,AN,Andorra,AD,sovereign,
+10,AO,Angola,AO,sovereign,
+11,AQ,American Samoa,AS,territory,262
+12,AR,Argentina,AR,sovereign,
+13,AS,Australia,AU,sovereign,
+14,AT,Ashmore and Cartier Islands,AU,territory,13
+15,AU,Austria,AT,sovereign,
+16,AV,Anguilla,AI,territory,259
+17,AX,Akrotiri,,territory,259
+18,AY,Antarctica,AQ,antarctic,
+19,BA,Bahrain,BH,sovereign,
+20,BB,Barbados,BB,sovereign,
+21,BC,Botswana,BW,sovereign,
+22,BD,Bermuda,BM,territory,259
+23,BE,Belgium,BE,sovereign,
+24,BF,"Bahamas, The",BS,sovereign,
+25,BG,Bangladesh,BD,sovereign,
+26,BH,Belize,BZ,sovereign,
+27,BK,Bosnia and Herzegovina,BA,sovereign,
+28,BL,Bolivia,BO,sovereign,
+29,BM,Burma (Myanmar),MM,sovereign,
+30,BN,Benin,BJ,sovereign,
+31,BO,Belarus,BY,sovereign,
+32,BP,Solomon Islands,SB,sovereign,
+33,BQ,Navassa Island,UM,territory,262
+34,BR,Brazil,BR,sovereign,
+35,BS,Bassas da India,RE,territory,89
+36,BT,Bhutan,BT,sovereign,
+37,BU,Bulgaria,BG,sovereign,
+38,BV,Bouvet Island,BV,territory,184
+39,BX,Brunei,BN,sovereign,
+40,BY,Burundi,BI,sovereign,
+41,CA,Canada,CA,sovereign,
+42,CB,Cambodia,KH,sovereign,
+44,CD,Chad,TD,sovereign,
+45,CE,Sri Lanka,LK,sovereign,
+46,CF,"Congo, Republic of the",CG,sovereign,
+47,CG,"Congo, Democratic Republic of the",CD,sovereign,
+48,CH,China,CN,sovereign,
+49,CI,Chile,CL,sovereign,
+50,CJ,Cayman Islands,KY,territory,259
+51,CK,Cocos (Keeling) Islands,CC,territory,13
+52,CM,Cameroon,CM,sovereign,
+53,CN,Comoros,KM,sovereign,
+54,CO,Colombia,CO,sovereign,
+55,CQ,Northern Mariana Islands,MP,territory,262
+56,CR,Coral Sea Islands,AU,territory,13
+57,CS,Costa Rica,CR,sovereign,
+58,CT,Central African Republic,CF,sovereign,
+59,CU,Cuba,CU,sovereign,
+60,CV,Cabo Verde,CV,sovereign,
+61,CW,Cook Islands,CK,territory,190
+62,CY,Cyprus,CY,sovereign,
+63,DA,Denmark,DK,sovereign,
+64,DJ,Djibouti,DJ,sovereign,
+65,DO,Dominica,DM,sovereign,
+66,DQ,Jarvis Island,UM,territory,262
+67,DR,Dominican Republic,DO,sovereign,
+68,DX,Dhekelia,,territory,259
+69,EC,Ecuador,EC,sovereign,
+70,EE,European Union,,misc,
+71,EG,Egypt,EG,sovereign,
+72,EI,Ireland,IE,sovereign,
+73,EK,Equatorial Guinea,GQ,sovereign,
+74,EN,Estonia,EE,sovereign,
+75,ER,Eritrea,ER,sovereign,
+76,ES,El Salvador,SV,sovereign,
+77,ET,Ethiopia,ET,sovereign,
+78,EU,Europa Island,RE,territory,89
+79,EZ,Czechia,CZ,sovereign,
+81,FG,French Guiana,GF,territory,89
+82,FI,Finland,FI,sovereign,
+83,FJ,Fiji,FJ,sovereign,
+84,FK,Falkland Islands (Islas Malvinas),FK,territory,259
+85,FM,"Micronesia, Federated States of",FM,freely_associated,262
+86,FO,Faroe Islands,FO,territory,63
+87,FP,French Polynesia,PF,territory,89
+88,FQ,Baker Island,UM,territory,262
+89,FR,France,FR,sovereign,
+90,FS,French Southern and Antarctic Lands,TF,territory,89
+91,GA,"Gambia, The",GM,sovereign,
+92,GB,Gabon,GA,sovereign,
+93,GG,Georgia,GE,sovereign,
+94,GH,Ghana,GH,sovereign,
+95,GI,Gibraltar,GI,territory,259
+96,GJ,Grenada,GD,sovereign,
+97,GK,Guernsey,GB,crown_dependency,259
+98,GL,Greenland,GL,territory,63
+99,GM,Germany,DE,sovereign,
+100,GO,Glorioso Islands,RE,territory,89
+101,GP,Guadeloupe,GP,territory,89
+102,GQ,Guam,GU,territory,262
+103,GR,Greece,GR,sovereign,
+104,GT,Guatemala,GT,sovereign,
+105,GV,Guinea,GN,sovereign,
+106,GY,Guyana,GY,sovereign,
+107,GZ,Gaza Strip,PS,disputed,
+108,HA,Haiti,HT,sovereign,
+109,HK,Hong Kong,HK,special_admin,48
+110,HM,Heard Island and McDonald Islands,HM,territory,13
+111,HO,Honduras,HN,sovereign,
+112,HQ,Howland Island,UM,territory,262
+113,HR,Croatia,HR,sovereign,
+114,HU,Hungary,HU,sovereign,
+115,IC,Iceland,IS,sovereign,
+116,ID,Indonesia,ID,sovereign,
+117,IM,Isle of Man,GB,crown_dependency,259
+118,IN,India,IN,sovereign,
+119,IO,British Indian Ocean Territory,IO,territory,259
+120,IP,Clipperton Island,PF,territory,89
+121,IR,Iran,IR,sovereign,
+122,IS,Israel,IL,sovereign,
+123,IT,Italy,IT,sovereign,
+124,IV,Cote d'Ivoire,CI,sovereign,
+125,IZ,Iraq,IQ,sovereign,
+126,JA,Japan,JP,sovereign,
+127,JE,Jersey,GB,crown_dependency,259
+128,JM,Jamaica,JM,sovereign,
+129,JN,Jan Mayen,SJ,territory,184
+130,JO,Jordan,JO,sovereign,
+131,JQ,Johnston Atoll,UM,territory,262
+132,JU,Juan de Nova Island,RE,territory,89
+133,KE,Kenya,KE,sovereign,
+134,KG,Kyrgyzstan,KG,sovereign,
+135,KN,"Korea, North",KP,sovereign,
+136,KQ,Kingman Reef,UM,territory,262
+137,KR,Kiribati,KI,sovereign,
+138,KS,"Korea, South",KR,sovereign,
+139,KT,Christmas Island,CX,territory,13
+140,KU,Kuwait,KW,sovereign,
+141,KV,Kosovo,,disputed,
+142,KZ,Kazakhstan,KZ,sovereign,
+143,LA,Laos,LA,sovereign,
+144,LE,Lebanon,LB,sovereign,
+145,LG,Latvia,LV,sovereign,
+146,LH,Lithuania,LT,sovereign,
+147,LI,Liberia,LR,sovereign,
+148,LO,Slovakia,SK,sovereign,
+149,LQ,Palmyra Atoll,UM,territory,262
+150,LS,Liechtenstein,LI,sovereign,
+151,LT,Lesotho,LS,sovereign,
+152,LU,Luxembourg,LU,sovereign,
+153,LY,Libya,LY,sovereign,
+154,MA,Madagascar,MG,sovereign,
+155,MB,Martinique,MQ,territory,89
+156,MC,Macau,MO,special_admin,48
+157,MD,Moldova,MD,sovereign,
+158,MF,Mayotte,YT,territory,89
+159,MG,Mongolia,MN,sovereign,
+160,MH,Montserrat,MS,territory,259
+161,MI,Malawi,MW,sovereign,
+162,MJ,Montenegro,ME,sovereign,
+163,MK,North Macedonia,MK,sovereign,
+164,ML,Mali,ML,sovereign,
+165,MN,Monaco,MC,sovereign,
+166,MO,Morocco,MA,sovereign,
+167,MP,Mauritius,MU,sovereign,
+168,MQ,Midway Islands,UM,territory,262
+169,MR,Mauritania,MR,sovereign,
+170,MT,Malta,MT,sovereign,
+171,MU,Oman,OM,sovereign,
+172,MV,Maldives,MV,sovereign,
+173,MX,Mexico,MX,sovereign,
+174,MY,Malaysia,MY,sovereign,
+175,MZ,Mozambique,MZ,sovereign,
+176,NC,New Caledonia,NC,territory,89
+177,NE,Niue,NU,territory,190
+178,NF,Norfolk Island,NF,territory,13
+179,NG,Niger,NE,sovereign,
+180,NH,Vanuatu,VU,sovereign,
+181,NI,Nigeria,NG,sovereign,
+182,NL,Netherlands,NL,sovereign,
+183,NN,Sint Maarten,SX,territory,182
+184,NO,Norway,NO,sovereign,
+185,NP,Nepal,NP,sovereign,
+186,NR,Nauru,NR,sovereign,
+187,NS,Suriname,SR,sovereign,
+188,NT,Netherlands Antilles,AN,dissolved,
+189,NU,Nicaragua,NI,sovereign,
+190,NZ,New Zealand,NZ,sovereign,
+191,OD,South Sudan,SS,sovereign,
+192,OO,Southern Ocean,,misc,
+193,PA,Paraguay,PY,sovereign,
+194,PC,Pitcairn Islands,PN,territory,259
+195,PE,Peru,PE,sovereign,
+196,PF,Paracel Islands,,disputed,
+197,PG,Spratly Islands,,disputed,
+198,PK,Pakistan,PK,sovereign,
+199,PL,Poland,PL,sovereign,
+200,PM,Panama,PA,sovereign,
+201,PO,Portugal,PT,sovereign,
+202,PP,Papua New Guinea,PG,sovereign,
+203,PS,Palau,PW,freely_associated,262
+204,PU,Guinea-Bissau,GW,sovereign,
+205,QA,Qatar,QA,sovereign,
+207,RE,Reunion,RE,territory,89
+208,RI,Serbia,RS,sovereign,
+209,RM,Marshall Islands,MH,freely_associated,262
+210,RN,Saint Martin,MF,territory,89
+211,RO,Romania,RO,sovereign,
+212,RP,Philippines,PH,sovereign,
+213,RQ,Puerto Rico,PR,territory,262
+214,RS,Russia,RU,sovereign,
+215,RW,Rwanda,RW,sovereign,
+216,SA,Saudi Arabia,SA,sovereign,
+217,SB,Saint Pierre and Miquelon,PM,territory,89
+218,SC,Saint Kitts and Nevis,KN,sovereign,
+219,SE,Seychelles,SC,sovereign,
+220,SF,South Africa,ZA,sovereign,
+221,SG,Senegal,SN,sovereign,
+222,SH,"Saint Helena, Ascension, and Tristan da Cunha",SH,territory,259
+223,SI,Slovenia,SI,sovereign,
+225,SL,Sierra Leone,SL,sovereign,
+226,SM,San Marino,SM,sovereign,
+227,SN,Singapore,SG,sovereign,
+228,SO,Somalia,SO,sovereign,
+229,SP,Spain,ES,sovereign,
+232,ST,Saint Lucia,LC,sovereign,
+233,SU,Sudan,SD,sovereign,
+234,SV,Svalbard,SJ,territory,184
+235,SW,Sweden,SE,sovereign,
+236,SX,South Georgia and the South Sandwich Islands,GS,territory,259
+237,SY,Syria,SY,sovereign,
+238,SZ,Switzerland,CH,sovereign,
+239,TB,Saint Barthelemy,BL,territory,89
+241,TD,Trinidad and Tobago,TT,sovereign,
+242,TE,Tromelin Island,UM,territory,89
+243,TH,Thailand,TH,sovereign,
+244,TI,Tajikistan,TJ,sovereign,
+245,TK,Turks and Caicos Islands,TC,territory,259
+246,TL,Tokelau,TK,territory,190
+247,TN,Tonga,TO,sovereign,
+248,TO,Togo,TG,sovereign,
+249,TP,Sao Tome and Principe,ST,sovereign,
+250,TS,Tunisia,TN,sovereign,
+251,TT,Timor-Leste,TL,sovereign,
+252,TU,Turkiye,TR,sovereign,
+253,TV,Tuvalu,TV,sovereign,
+254,TW,Taiwan,TW,sovereign,
+255,TX,Turkmenistan,TM,sovereign,
+256,TZ,Tanzania,TZ,sovereign,
+257,UC,Curacao,CW,territory,182
+258,UG,Uganda,UG,sovereign,
+259,UK,United Kingdom,GB,sovereign,
+260,UM,United States Pacific Island Wildlife Refuges,,territory,262
+261,UP,Ukraine,UA,sovereign,
+262,US,United States,US,sovereign,
+263,UV,Burkina Faso,BF,sovereign,
+264,UY,Uruguay,UY,sovereign,
+265,UZ,Uzbekistan,UZ,sovereign,
+267,VC,Saint Vincent and the Grenadines,VC,sovereign,
+268,VE,Venezuela,VE,sovereign,
+269,VI,British Virgin Islands,VG,territory,259
+270,VM,Vietnam,VN,sovereign,
+271,VQ,Virgin Islands,VI,territory,262
+272,VT,Holy See (Vatican City),VA,sovereign,
+273,WA,Namibia,NA,sovereign,
+274,WE,West Bank,PS,disputed,
+275,WF,Wallis and Futuna,WF,territory,89
+276,WI,Western Sahara,EH,disputed,
+277,WQ,Wake Island,UM,territory,262
+278,WS,Samoa,WS,sovereign,
+279,WZ,Eswatini,SZ,sovereign,
+280,XO,Indian Ocean,,misc,
+281,XQ,Arctic Ocean,,misc,
+282,XX,World,,misc,
+283,YI,Serbia and Montenegro,CS,dissolved,
+284,YM,Yemen,YE,sovereign,
+285,ZA,Zambia,ZM,sovereign,
+286,ZH,Atlantic Ocean,,misc,
+287,ZI,Zimbabwe,ZW,sovereign,
+288,ZN,Pacific Ocean,,misc,
+289,ZZ,Iles Eparses,,territory,89
