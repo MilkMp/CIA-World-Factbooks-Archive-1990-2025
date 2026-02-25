@@ -260,9 +260,13 @@ Common extraction patterns for other fields:
 The archive is served as a FastAPI + Jinja2 web application at **[worldfactbookarchive.org](https://worldfactbookarchive.org/)**. Key features:
 
 - **Full-text search** with Library of Congress boolean syntax (AND, OR, NOT, "phrase", truncation)
+- **Library** — card-based overview of the entire archive collection
 - **Browse archive** by year (1990-2025) and country (281 entities)
 - **Country profiles** with category drill-down, field time series, and data export (CSV, Excel, PDF)
+- **Text diff** — side-by-side year comparison with highlighted changes for any country
 - **Country dictionary** with ISO codes, entity types, and COCOM region assignments
+- **Interactive maps gallery** — browsable country maps with search and filtering
+- **Data export** — CSV, Excel, print-ready PDF reports, and a complete analysis-ready dataset download
 - **Intelligence analysis dashboards** powered by Mapbox GL JS and Apache ECharts:
   - **Regional Dashboard** — global choropleth with 6 COCOM regions, hover popups, capital city markers, and click-to-zoom
   - **COCOM Region Detail** — per-region map with ranked bar charts for GDP, population, military spending
@@ -270,7 +274,17 @@ The archive is served as a FastAPI + Jinja2 web application at **[worldfactbooka
   - **Map Compare** — two synced maps for side-by-side year comparison with shared color scale
   - **Communications Analysis** — internet, mobile, broadband penetration with digital divide indicators
   - **Global Trends** — multi-indicator time series for any country
+  - **Global Rankings** — sortable country rankings by any indicator with year selection
+  - **Change Detection** — year-over-year field changes with trend charts and region filtering
+  - **Field Explorer** — browse all 416 canonical data fields with coverage statistics across 36 years
   - **Advanced Analytics Explorer** — correlation scatter, heatmap matrix, ranking race, and treemap visualizations
+  - **Query Builder** — custom analytical queries across all indicators with flexible filters
+  - **Trade Networks** — geographic and force-directed graph of global import/export relationships
+  - **Organization Networks** — international organization memberships and alliance visualization
+  - **Geopolitical Atlas** — territorial disputes and infrastructure mapping
+  - **Political Stability** — government type choropleth, regime change tracking, and regional peer comparison
+  - **Natural Resources & Economy** — resource production maps, commodity scatter plots, and country profiles
+  - **Dissolved States** — historical entities no longer in the Factbook with archived indicator data
 - **Intelligence dossiers** following ICD 203 analytic standards
 - **Regional threat briefs** with instability and security indicators
 - **Factbook Quiz** — 4 modes: country identification, capital cities, higher-or-lower, and flag recognition
