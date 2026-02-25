@@ -217,6 +217,44 @@ Place the downloaded file at `data/factbook.db` in the project root. SQLite requ
 
 The SQLite database contains the same 5 tables, same indexes, and same 1,061,522 fields as the SQL Server version, plus an FTS5 full-text search index for fast keyword and boolean search. This is what the [live webapp](https://worldfactbookarchive.org/) runs on.
 
+**Note on numeric values:** The `CountryFields` table stores raw text content exactly as published by the CIA. There is no pre-computed `Value` column. The CSV and Excel exports on the webapp parse numeric values at download time using regex extraction. To extract numeric values yourself, join through `FieldNameMappings` and apply a pattern for the field you need:
+
+```python
+import sqlite3, re
+
+db = sqlite3.connect("factbook.db")
+db.row_factory = sqlite3.Row
+
+# Example: extract Population as an integer
+rows = db.execute("""
+    SELECT c.Year, mc.CanonicalName, cf.Content
+    FROM CountryFields cf
+    JOIN Countries c ON cf.CountryID = c.CountryID
+    JOIN MasterCountries mc ON c.MasterCountryID = mc.MasterCountryID
+    JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+    WHERE fm.CanonicalName = 'Population'
+    ORDER BY mc.CanonicalName, c.Year
+""").fetchall()
+
+for r in rows:
+    m = re.search(r'[\d,]{5,}', r["Content"])
+    value = int(m.group().replace(",", "")) if m else None
+    if value:
+        print(f"{r['CanonicalName']} ({r['Year']}): {value:,}")
+```
+
+Common extraction patterns for other fields:
+
+| Field | Pattern | Example |
+|-------|---------|---------|
+| Population | `re.search(r'[\d,]{5,}', text)` &rarr; remove commas, cast to int | 331,449,281 |
+| Real GDP per capita | `re.search(r'\$([\d,]+)', text)` &rarr; remove commas, cast to int | $63,500 |
+| Life expectancy at birth | `re.search(r'total population:\s*([\d.]+)', text)` &rarr; float | 78.5 years |
+| Population growth rate | `re.search(r'(-?[\d.]+)%', text)` &rarr; float | 0.7% |
+| Military expenditures | `re.search(r'([\d.]+)%\s*of\s*G[DN]P', text)` &rarr; float | 3.45% of GDP |
+| Area | `re.search(r'total\s*:?\s*([\d,]+)\s*sq\s*km', text)` &rarr; remove commas, cast to int | 9,833,517 sq km |
+| Birth/Death rate | `re.search(r'([\d.]+)\s*(?:births\|deaths)\s*/\s*1,000', text)` &rarr; float | 11.0 births/1,000 |
+
 ## Live Web Application
 
 The archive is served as a FastAPI + Jinja2 web application at **[worldfactbookarchive.org](https://worldfactbookarchive.org/)**. Key features:
