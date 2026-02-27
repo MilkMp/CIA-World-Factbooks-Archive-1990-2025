@@ -47,6 +47,7 @@ data/factbook_field_values.db
 data/factbook.db.backup_before_repair
 data/analytics.db
 data/analytics.db.bak
+data/stardict/
 data/gif_frames/
 data/maps_thumbs/
 data/debug.html

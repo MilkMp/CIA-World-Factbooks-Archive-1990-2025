@@ -106,6 +106,8 @@ etl/
     export_field_values_to_sqlite.py  # Export FieldValues + refs to SQLite
     dashboard_preview.py     # Local preview dashboard (8 chart panels)
     DESIGN.md                # Architecture and design document
+  stardict/
+    build_stardict.py        # Generate StarDict dictionaries for KOReader/GoldenDict
 scripts/
   factbook_search.py         # Command-line search utility
   validate_cocom.py          # COCOM region validation
@@ -235,6 +237,26 @@ ORDER BY land_sqkm DESC LIMIT 10;
 ```
 
 See [etl/structured_parsing/DESIGN.md](etl/structured_parsing/DESIGN.md) for the full architecture, parser registry, and sub-field catalog.
+
+### StarDict Dictionaries (for KOReader / GoldenDict)
+
+Offline dictionaries in StarDict format for use with [KOReader](https://koreader.rocks/), [GoldenDict](http://goldendict.org/), and other StarDict-compatible apps. Look up any country by name, ISO code, or FIPS code and get the full Factbook entry.
+
+**Two editions per year:**
+- **General** — full field text grouped by category (Geography, People, Economy, etc.)
+- **Structured** — parsed numeric sub-values with units from the FieldValues table
+
+**72 dictionaries** total: 36 years (1990-2025) x 2 editions, ~97 MB compressed.
+
+**Generate:**
+```bash
+pip install pyglossary python-idzip
+python etl/stardict/build_stardict.py                    # all 72
+python etl/stardict/build_stardict.py --years 2025       # just 2025
+python etl/stardict/build_stardict.py --editions general # general only
+```
+
+Output goes to `data/stardict/`. Each dictionary is a directory with `.ifo`, `.idx`, `.dict.dz`, and `.syn` files. Copy the directory into your dictionary app's data folder (e.g., `koreader/data/dict/` for KOReader).
 
 ### Alternative: SQLite (No SQL Server Required)
 

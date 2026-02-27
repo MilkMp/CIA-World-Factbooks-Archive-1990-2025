@@ -72,6 +72,15 @@ VALIDATION (in scripts/):
   validate_cocom.py                COCOM region assignment verification
   etl/structured_parsing/validate_field_values.py  FieldValues spot checks & coverage
 
+STARDICT DICTIONARIES (for KOReader / GoldenDict / offline use):
+  etl/stardict/build_stardict.py   Builds StarDict (.ifo/.idx/.dict.dz) dictionaries
+  Generates 72 dictionaries: 36 years x 2 editions (General + Structured)
+  General:    full field text grouped by category
+  Structured: parsed numeric sub-values with units from FieldValues
+  Run: python etl/stardict/build_stardict.py
+       python etl/stardict/build_stardict.py --years 2025
+  Requires: pip install pyglossary python-idzip
+
 UTILITIES:
   scripts/factbook_search.py       Command-line search & browse tool
   scripts/capture_screenshots.py   Screenshot capture tool
