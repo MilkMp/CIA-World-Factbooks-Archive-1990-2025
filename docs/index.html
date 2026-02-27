@@ -399,6 +399,7 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
     <div class="nav-section">Reference</div>
     <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank">GitHub Repository</a>
     <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases" target="_blank">Download Data</a>
+    <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/etl/structured_parsing/DESIGN.md" target="_blank">Structured Parsing</a>
   </nav>
 
   <main class="main-content">
@@ -799,6 +800,37 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
           <tr><td>Noise</td><td class="r">281</td><td>Parser artifacts, fragments (flagged IsNoise=1)</td></tr>
         </tbody>
       </table>
+
+      <hr class="doc-rule">
+
+      <div class="sec">
+        <span class="sec-num">ROADMAP</span>
+        <span class="sec-title">In Development</span>
+        <hr class="sec-rule">
+      </div>
+
+      <p><strong style="color: #C5CBD3;">Structured Field Parsing</strong> &mdash; The archive currently stores each field&rsquo;s content as a single text blob. A new structured parsing layer will decompose these blobs into individually typed, queryable sub-values &mdash; no new data is added, just the existing content broken into numeric values, units, and labels.</p>
+
+      <div style="margin: 16px 0 20px; padding: 16px 20px; background: #1C2127; border: 1px solid #2F343C; border-radius: 4px; font-size: 0.85rem; color: #8F99A8; line-height: 1.8;">
+        <strong style="color: #C5CBD3; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px;">Current</strong><br>
+        <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">"total: 7,741,220 sq km land: 7,682,300 sq km water: 58,920 sq km"</span>
+        <br><br>
+        <strong style="color: #C5CBD3; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px;">Target</strong><br>
+        <span style="font-family: Consolas, 'Courier New', monospace; font-size: 0.82rem; color: #C5CBD3;">total: 7,741,220 [sq km] &nbsp;|&nbsp; land: 7,682,300 [sq km] &nbsp;|&nbsp; water: 58,920 [sq km]</span>
+        <br>
+        <span style="font-size: 0.78rem; color: #5F6B7C;">Each sub-value individually queryable, chartable, and rankable across all 36 years.</span>
+      </div>
+
+      <p>Inspired by <a href="https://github.com/iancoleman/cia_world_factbook_api" target="_blank">iancoleman/cia_world_factbook_api</a> (structured JSON parser for 2007&ndash;present). See <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/issues/10" target="_blank">issue #10</a> and <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/issues/9" target="_blank">issue #9</a> for full context.</p>
+
+      <p style="margin-top: 12px;">This also enables:</p>
+      <div style="margin-left: 16px; margin-bottom: 20px; font-size: 0.88rem; color: #8F99A8; line-height: 2;">
+        &bull; StarDict dictionary export for offline e-readers (KOReader, GoldenDict)<br>
+        &bull; Richer data in the book-style reader (currently in beta at <a href="https://worldfactbookarchive.org/book" target="_blank">/book</a>)<br>
+        &bull; Cross-field correlations, sub-field rankings, and time-series charting
+      </div>
+
+      <p>Design document: <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/etl/structured_parsing/DESIGN.md" target="_blank">etl/structured_parsing/DESIGN.md</a></p>
 
       <hr class="doc-rule">
 
