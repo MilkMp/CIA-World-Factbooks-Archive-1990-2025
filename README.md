@@ -20,6 +20,7 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 | **Data fields** | 1,061,522 |
 | **Content size** | ~324 MB |
 | **Field name variants** | 1,090 mapped to 416 canonical names |
+| **Structured sub-values** | 1,423,506 parsed from raw text (1,848 sub-fields) |
 
 
 ## Data Sources
@@ -89,6 +90,7 @@ data/
     country_fields_2025.sql.gz
 schema/
   create_tables.sql          # DDL for all 5 tables
+  create_field_values.sql    # DDL for FieldValues (structured sub-values)
 etl/
   build_archive.py           # HTML parser (2000-2020)
   load_gutenberg_years.py    # Text parser (1990-2001)
@@ -98,6 +100,12 @@ etl/
   repair_1996_truncated.py   # CIA original text parser for 7 truncated 1996 countries
   validate_integrity.py      # Data quality checks
   export_to_sqlite.py        # SQL Server -> SQLite export (with FTS5)
+  structured_parsing/
+    parse_field_values.py    # Decompose text blobs into typed sub-values (33 parsers)
+    validate_field_values.py # Validation: spot checks, coverage, numeric stats
+    export_field_values_to_sqlite.py  # Export FieldValues + refs to SQLite
+    dashboard_preview.py     # Local preview dashboard (8 chart panels)
+    DESIGN.md                # Architecture and design document
 scripts/
   factbook_search.py         # Command-line search utility
   validate_cocom.py          # COCOM region validation
@@ -134,6 +142,9 @@ The raw CIA World Factbook changed format **at least 10 times** between 1990 and
 | `classify_entities.py` | 283 | All | Auto-classifies 281 entities into 9 types (sovereign, territory, disputed, etc.) based on Dependency Status and Government Type fields, with hardcoded overrides for edge cases. |
 | `repair_1996_truncated.py` | 189 | 1996 | Parses CIA's original `wfb-96.txt.gz` (page-header format with centered country/section names) and replaces truncated Gutenberg entries for 7 countries: Venezuela, Armenia, Greece, Luxembourg, Malta, Monaco, Tuvalu. |
 | `validate_integrity.py` | 296 | All | Read-only validation suite with 9 checks: field count benchmarks, US population/GDP ground truth, year-over-year consistency, source provenance, and NULL detection. |
+| `structured_parsing/parse_field_values.py` | 897 | All | Decomposes 1,061,522 raw text blobs into 1,423,506 typed sub-values using 33 field-specific parsers + generic fallback. Extracts land/water area, male/female life expectancy, age brackets, budget revenues/expenditures, elevation extremes, dependency ratios, and more. |
+| `structured_parsing/validate_field_values.py` | 231 | All | Validates FieldValues against the source database: row counts, coverage (98.9%), numeric extraction rate (61.5%), spot checks against known ground truth values (US population, Russia area, Japan military). |
+| `structured_parsing/export_field_values_to_sqlite.py` | 269 | All | Exports FieldValues + all reference tables (Countries, FieldNameMappings, etc.) to a self-contained SQLite database (factbook_field_values.db, ~437 MB). |
 
 ### Why parsing was so difficult
 
@@ -198,6 +209,32 @@ See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) and [docs/ETL_PIPELINE.md](docs/E
    ```sql
    SELECT COUNT(*) FROM CountryFields;  -- Should return 1,061,522
    ```
+
+### Structured Field Values Database (NEW)
+
+The raw text in `CountryFields.Content` has been decomposed into **1,423,506 typed sub-values** across **1,848 distinct sub-fields**. This enables SQL queries that were previously impossible without per-query regex — for example, ranking countries by land-vs-water ratio, comparing male vs female life expectancy, or charting budget deficit trends.
+
+**Download:** [factbook_field_values.db (~437 MB) from Release v3.0](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/v3.0)
+
+**Live dashboard:** [worldfactbookarchive.org/analysis/structured-data](https://worldfactbookarchive.org/analysis/structured-data) — interactive charts showing new queries with SQL and source data tabs.
+
+The database is self-contained with all reference tables included. Example query:
+
+```sql
+-- Top 10 countries by land area (2025) with land/water split
+SELECT c.Name,
+  MAX(CASE WHEN fv.SubField = 'land' THEN fv.NumericVal END) AS land_sqkm,
+  MAX(CASE WHEN fv.SubField = 'water' THEN fv.NumericVal END) AS water_sqkm
+FROM FieldValues fv
+JOIN CountryFields cf ON fv.FieldID = cf.FieldID
+JOIN Countries c ON cf.CountryID = c.CountryID
+JOIN FieldNameMappings fnm ON cf.FieldName = fnm.OriginalName
+WHERE c.Year = 2025 AND fnm.CanonicalName = 'Area'
+GROUP BY c.Name
+ORDER BY land_sqkm DESC LIMIT 10;
+```
+
+See [etl/structured_parsing/DESIGN.md](etl/structured_parsing/DESIGN.md) for the full architecture, parser registry, and sub-field catalog.
 
 ### Alternative: SQLite (No SQL Server Required)
 
@@ -285,6 +322,7 @@ The archive is served as a FastAPI + Jinja2 web application at **[worldfactbooka
   - **Political Stability** — government type choropleth, regime change tracking, and regional peer comparison
   - **Natural Resources & Economy** — resource production maps, commodity scatter plots, and country profiles
   - **Dissolved States** — historical entities no longer in the Factbook with archived indicator data
+  - **Structured Field Data** — interactive dashboard of 1,423,506 parsed sub-values with Chart/SQL/Source tabs showing exactly where each number was extracted from
 - **Intelligence dossiers** following ICD 203 analytic standards
 - **Regional threat briefs** with instability and security indicators
 - **Factbook Quiz** — 4 modes: country identification, capital cities, higher-or-lower, and flag recognition

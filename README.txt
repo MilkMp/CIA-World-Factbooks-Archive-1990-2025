@@ -1,6 +1,7 @@
 CIA WORLD FACTBOOK ARCHIVE
 ==========================
-36 years of data (1990-2025) — 281 entities, 1,071,213 fields
+36 years of data (1990-2025) — 281 entities, 1,061,522 fields
+1,423,506 structured sub-values parsed from raw text (1,848 sub-fields)
 Live: https://worldfactbookarchive.org
 
 DATABASE SCHEMA:
@@ -28,10 +29,14 @@ KEY QUERY — Snapshot of all factbook content with country metadata:
 
 DATABASES:
   SQL Server:  CIA_WorldFactbook on localhost (Windows Auth, ODBC Driver 18)
-  SQLite:      data/factbook.db (238 MB, read-only, identical schema)
+  SQLite:      data/factbook.db (~324 MB, read-only, identical schema)
+  SQLite:      data/factbook_field_values.db (~437 MB, structured sub-values)
 
-  SQLite is used by the webapp. SQL Server is the canonical source.
-  To rebuild SQLite from SQL Server: python etl/export_to_sqlite.py
+  factbook.db is used by the webapp. SQL Server is the canonical source.
+  factbook_field_values.db contains FieldValues (1.4M parsed sub-values)
+    + all reference tables for self-contained queries.
+  To rebuild: python etl/export_to_sqlite.py
+              python etl/structured_parsing/export_field_values_to_sqlite.py
 
 PROJECT STRUCTURE:
   webapp/          Deployable FastAPI app (Jinja2 templates, SQLite backend)
@@ -59,10 +64,13 @@ ETL SCRIPTS (in etl/, run in order):
   Step 4: classify_entities.py     Auto-classifies entities (sovereign/territory/etc.)
   Step 5: build_field_mappings.py  Maps 1,090 field name variants to 414 canonical names
   Step 6: export_to_sqlite.py      Exports SQL Server to SQLite
+  Step 7: structured_parsing/parse_field_values.py  Parses text blobs into typed sub-values
+  Step 8: structured_parsing/export_field_values_to_sqlite.py  Exports to SQLite
 
 VALIDATION (in scripts/):
   validate_integrity.py            Data quality checks (needs steps 1-5)
   validate_cocom.py                COCOM region assignment verification
+  etl/structured_parsing/validate_field_values.py  FieldValues spot checks & coverage
 
 UTILITIES:
   scripts/factbook_search.py       Command-line search & browse tool
