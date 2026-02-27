@@ -43,6 +43,7 @@ CIA_Spy_Glossary/
 
 # Large data files (not tracked — download separately)
 data/factbook.db
+data/factbook_field_values.db
 data/factbook.db.backup_before_repair
 data/analytics.db
 data/analytics.db.bak
