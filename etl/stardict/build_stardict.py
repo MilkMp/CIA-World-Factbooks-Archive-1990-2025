@@ -24,8 +24,12 @@ from collections import OrderedDict
 # ── Paths ───────────────────────────────────────────────────────────
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
+# factbook_field_values.db is the most complete database — it has all 6 tables:
+# MasterCountries, Countries, CountryCategories, CountryFields, FieldNameMappings,
+# and FieldValues.  We use it for BOTH editions (General reads CountryFields.Content,
+# Structured reads FieldValues).  Falls back to factbook.db for General-only builds.
+FIELD_VALUES_DB = os.path.join(PROJECT_ROOT, "data", "factbook_field_values.db")
 GENERAL_DB = os.path.join(PROJECT_ROOT, "data", "factbook.db")
-STRUCTURED_DB = os.path.join(PROJECT_ROOT, "data", "factbook_field_values.db")
 DEFAULT_OUTPUT = os.path.join(PROJECT_ROOT, "data", "stardict")
 
 ALL_YEARS = list(range(1990, 2026))
@@ -349,24 +353,29 @@ def main():
     need_general = "general" in editions
     need_structured = "structured" in editions
 
-    if need_general and not os.path.exists(GENERAL_DB):
-        print(f"ERROR: General DB not found: {GENERAL_DB}")
-        sys.exit(1)
-    if need_structured and not os.path.exists(STRUCTURED_DB):
-        print(f"ERROR: Structured DB not found: {STRUCTURED_DB}")
+    # Prefer factbook_field_values.db (has all 6 tables including FieldValues).
+    # Fall back to factbook.db for general-only builds.
+    if os.path.exists(FIELD_VALUES_DB):
+        db_path = FIELD_VALUES_DB
+    elif os.path.exists(GENERAL_DB):
+        if need_structured:
+            print(f"ERROR: Structured edition requires {FIELD_VALUES_DB}")
+            print(f"  (factbook.db does not contain FieldValues)")
+            sys.exit(1)
+        db_path = GENERAL_DB
+    else:
+        print(f"ERROR: No database found. Expected:")
+        print(f"  {FIELD_VALUES_DB}")
+        print(f"  {GENERAL_DB}")
         sys.exit(1)
 
     os.makedirs(args.output_dir, exist_ok=True)
 
     # Print header
     total = len(years) * len(editions)
+    size = os.path.getsize(db_path) / (1024 * 1024)
     print(f"Building {total} StarDict dictionaries...")
-    if need_general:
-        size = os.path.getsize(GENERAL_DB) / (1024 * 1024)
-        print(f"  General DB:    {GENERAL_DB} ({size:.0f} MB)")
-    if need_structured:
-        size = os.path.getsize(STRUCTURED_DB) / (1024 * 1024)
-        print(f"  Structured DB: {STRUCTURED_DB} ({size:.0f} MB)")
+    print(f"  Database:      {db_path} ({size:.0f} MB)")
     print(f"  Years:         {years[0]}-{years[-1]} ({len(years)} years)")
     print(f"  Editions:      {', '.join(editions)}")
     print(f"  Compression:   {'dictzip' if dictzip else 'none'}")
@@ -377,35 +386,28 @@ def main():
     built = 0
     total_entries = 0
 
-    # Open databases (read-only)
-    gen_db = None
-    struct_db = None
-    if need_general:
-        gen_db = sqlite3.connect(f"file:{GENERAL_DB}?mode=ro", uri=True)
-    if need_structured:
-        struct_db = sqlite3.connect(f"file:{STRUCTURED_DB}?mode=ro", uri=True)
+    # Single database connection (read-only)
+    db = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
 
-    # Load master countries from whichever DB is available
-    ref_db = gen_db or struct_db
     master = {}
-    for row in ref_db.execute(MASTER_QUERY).fetchall():
+    for row in db.execute(MASTER_QUERY).fetchall():
         master[row[0]] = (row[1], row[2], row[3])
     print(f"  Loaded {len(master)} master countries\n")
 
     for year in years:
-        if need_general and gen_db:
+        if need_general:
             try:
-                n = build_general_dict(gen_db, master, year, args.output_dir, dictzip)
+                n = build_general_dict(db, master, year, args.output_dir, dictzip)
                 if n:
                     built += 1
                     total_entries += n
             except Exception as e:
                 print(f"  {year} general:     ERROR: {e}")
 
-        if need_structured and struct_db:
+        if need_structured:
             try:
                 n = build_structured_dict(
-                    struct_db, master, year, args.output_dir, dictzip
+                    db, master, year, args.output_dir, dictzip
                 )
                 if n:
                     built += 1
@@ -413,10 +415,7 @@ def main():
             except Exception as e:
                 print(f"  {year} structured:  ERROR: {e}")
 
-    if gen_db:
-        gen_db.close()
-    if struct_db:
-        struct_db.close()
+    db.close()
 
     elapsed = time.time() - t0
     print(f"\nBuilt {built} dictionaries ({total_entries:,} total entries) in {elapsed:.1f}s")
