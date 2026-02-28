@@ -1,11 +1,11 @@
 # StarDict Dictionary Validation Report
 
-**Date:** 2026-02-27
+**Date:** 2026-02-28
 **Dictionaries:** 72 (36 years x 2 editions)
 **Total entries:** 18,992
 **Total size:** 96.7 MB (dictionaries), 96.6 MB (tarballs)
 
-## Final Score: 15/15 Tests Pass
+## Final Score: 16/16 Tests Pass
 
 | # | Test | Scope | Result |
 |---|------|-------|--------|
@@ -24,6 +24,7 @@
 | 13 | Historical entity names | Soviet Union, Yugoslavia, etc. | PASS |
 | 14 | Encoding quality | 0 bad chars / 330M total = 0.000% | PASS |
 | 15 | Name match | All names match database | PASS |
+| 16 | Round-trip read | pyglossary reads all entries correctly | PASS |
 
 ## Issues Found and Fixed
 

@@ -49,6 +49,7 @@ data/analytics.db
 data/analytics.db.bak
 data/stardict/
 data/stardict-tarballs/
+etl/stardict/preview.html
 data/gif_frames/
 data/maps_thumbs/
 data/debug.html

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deep validation of all StarDict dictionaries -- 15 tests."""
+"""Deep validation of all StarDict dictionaries -- 16 tests."""
 
 import os
 import gzip
@@ -70,7 +70,7 @@ def main():
     results = []
 
     print("=" * 70)
-    print("STARDICT DEEP VALIDATION -- 15 TESTS")
+    print("STARDICT DEEP VALIDATION -- 16 TESTS")
     print("=" * 70)
 
     # ── T1: File presence ──────────────────────────────────────────────
@@ -382,6 +382,91 @@ def main():
     print(f"[T15] Name match: {name_errors} errors -> {'PASS' if t15 else 'FAIL'}")
 
     conn.close()
+
+    # ── T16: Round-trip read via pyglossary ───────────────────────────
+    t16 = True
+    t16_errors = []
+    try:
+        from pyglossary.glossary_v2 import Glossary
+        Glossary.init()
+
+        for edition in ["general", "structured"]:
+            dict_name = f"cia-factbook-2025-{edition}"
+            ifo_path = os.path.join(
+                STARDICT_DIR, dict_name, f"{dict_name}.ifo"
+            )
+
+            glos = Glossary()
+            glos.directRead(ifo_path)
+
+            # Read .ifo wordcount for comparison
+            expected_count = 0
+            with open(ifo_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("wordcount="):
+                        expected_count = int(line.strip().split("=")[1])
+
+            # Iterate all entries, collect by primary headword
+            entry_map = {}
+            entry_count = 0
+            for entry in glos:
+                words = entry.l_term  # list of headwords
+                defi = entry.defi     # definition text
+                fmt = entry.defiFormat  # should be "h"
+                if words:
+                    entry_map[words[0]] = (defi, fmt)
+                    entry_count += 1
+
+            # Check 1: entry count matches
+            if entry_count != expected_count:
+                t16 = False
+                t16_errors.append(
+                    f"{edition}: count {entry_count} != ifo {expected_count}"
+                )
+
+            # Check 2: specific entries exist with expected content
+            spot_checks = [
+                ("United States", "Washington"),
+                ("China", "Beijing"),
+                ("Australia", "Canberra"),
+                ("Japan", "Tokyo"),
+                ("United Kingdom", "London"),
+            ]
+            for country, expected_text in spot_checks:
+                if country not in entry_map:
+                    t16 = False
+                    t16_errors.append(f"{edition}: {country} not found")
+                else:
+                    defi, fmt = entry_map[country]
+                    if fmt != "h":
+                        t16 = False
+                        t16_errors.append(
+                            f"{edition}: {country} format '{fmt}' != 'h'"
+                        )
+                    if expected_text not in defi:
+                        t16 = False
+                        t16_errors.append(
+                            f"{edition}: {country} missing '{expected_text}'"
+                        )
+                    if "<h3>" not in defi:
+                        t16 = False
+                        t16_errors.append(
+                            f"{edition}: {country} missing <h3> tags"
+                        )
+
+            glos.clear()
+
+    except ImportError:
+        t16 = False
+        t16_errors.append("pyglossary not installed")
+    except Exception as e:
+        t16 = False
+        t16_errors.append(f"error: {e}")
+
+    for err in t16_errors:
+        print(f"    FAIL: {err}")
+    results.append(("Round-trip read (pyglossary)", t16))
+    print(f"[T16] Round-trip read: {'PASS' if t16 else 'FAIL'}")
 
     # ── Summary ────────────────────────────────────────────────────────
     passed = sum(1 for _, r in results if r)
