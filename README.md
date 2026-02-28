@@ -258,6 +258,8 @@ python etl/stardict/build_stardict.py --editions general # general only
 
 Output goes to `data/stardict/`. Each dictionary is a directory with `.ifo`, `.idx`, `.dict.dz`, and `.syn` files. Copy the directory into your dictionary app's data folder (e.g., `koreader/data/dict/` for KOReader).
 
+See [etl/stardict/README.md](etl/stardict/README.md) for format details, synonym resolution, validation (16/16 tests), and installation guides.
+
 ### Alternative: SQLite (No SQL Server Required)
 
 A pre-built SQLite database (`factbook.db`, ~325 MB) is available as a release download for users who don't need SQL Server. The file exceeds GitHub's 100 MB file-size limit, so it is not included in the repository itself.
