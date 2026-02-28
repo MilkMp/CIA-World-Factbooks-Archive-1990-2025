@@ -41,7 +41,7 @@ MASTER_QUERY = """
 """
 
 GENERAL_QUERY = """
-    SELECT mc.MasterCountryID, mc.CanonicalName,
+    SELECT co.CountryID, mc.MasterCountryID, co.Name,
            cc.CategoryTitle, cf.FieldName, cf.Content,
            cc.CategoryID, cf.FieldID
     FROM Countries co
@@ -50,11 +50,11 @@ GENERAL_QUERY = """
     JOIN CountryFields cf ON cc.CategoryID = cf.CategoryID
                           AND cf.CountryID = co.CountryID
     WHERE co.Year = ?
-    ORDER BY mc.MasterCountryID, cc.CategoryID, cf.FieldID
+    ORDER BY co.CountryID, cc.CategoryID, cf.FieldID
 """
 
 STRUCTURED_QUERY = """
-    SELECT mc.MasterCountryID, mc.CanonicalName,
+    SELECT co.CountryID, mc.MasterCountryID, co.Name,
            cc.CategoryTitle, cf.FieldName,
            fv.SubField, fv.NumericVal, fv.Units, fv.TextVal,
            cc.CategoryID, cf.FieldID, fv.ValueID
@@ -64,7 +64,7 @@ STRUCTURED_QUERY = """
     JOIN CountryCategories cc ON cf.CategoryID = cc.CategoryID
     JOIN FieldValues fv ON cf.FieldID = fv.FieldID
     WHERE co.Year = ?
-    ORDER BY mc.MasterCountryID, cc.CategoryID, cf.FieldID, fv.ValueID
+    ORDER BY co.CountryID, cc.CategoryID, cf.FieldID, fv.ValueID
 """
 
 
@@ -77,14 +77,52 @@ def esc(text):
     return html.escape(cleaned, quote=False)
 
 
-def build_headwords(name, iso, fips):
-    """Primary headword + ISO/FIPS synonyms."""
+def build_headwords(name, iso, fips, iso_owner=None):
+    """Primary headword + ISO/FIPS synonyms.
+
+    iso_owner: dict mapping each ISO code -> canonical name of the country
+    that "owns" that code (sovereign wins over territory).  When a FIPS
+    code collides with another country's ISO code, the FIPS code is
+    dropped.  When an ISO code is shared (e.g. AU for Australia +
+    territories), only the owner gets the synonym.
+    """
     words = [name]
     if iso:
-        words.append(iso)
+        # Only add ISO if this country is the designated owner of that code
+        if iso_owner is None or iso_owner.get(iso) == name:
+            words.append(iso)
     if fips and fips != iso:
-        words.append(fips)
+        # Only add FIPS if it doesn't collide with any ISO code
+        if iso_owner is None or fips not in iso_owner:
+            words.append(fips)
     return words
+
+
+def _dedup_entries(entries):
+    """Merge entries that share the same primary headword.
+
+    This handles rare cases like Serbia 2008 where two Country rows
+    have the same Name but different CountryIDs (due to a code change).
+    """
+    seen = {}  # primary_name -> index in result list
+    result = []
+    for headwords, body in entries:
+        primary = headwords[0]
+        if primary in seen:
+            # Merge: append body to existing entry
+            idx = seen[primary]
+            existing_hw, existing_body = result[idx]
+            merged_body = existing_body + body
+            # Union headwords (keep unique synonyms)
+            merged_hw = list(existing_hw)
+            for w in headwords:
+                if w not in merged_hw:
+                    merged_hw.append(w)
+            result[idx] = (merged_hw, merged_body)
+        else:
+            seen[primary] = len(result)
+            result.append((headwords, body))
+    return result
 
 
 def format_numeric(val, units):
@@ -185,7 +223,7 @@ def write_stardict(entries, year, edition, output_dir, dictzip=True):
 
 
 # ── Year builders ───────────────────────────────────────────────────
-def build_general_dict(db, master, year, output_dir, dictzip):
+def build_general_dict(db, master, year, output_dir, dictzip, iso_owner=None):
     """Build General edition for one year. Returns entry count or 0."""
     t0 = time.time()
     rows = db.execute(GENERAL_QUERY, (year,)).fetchall()
@@ -193,21 +231,29 @@ def build_general_dict(db, master, year, output_dir, dictzip):
         print(f"  {year} general:     SKIP (no data)")
         return 0
 
-    # Group by MasterCountryID
+    # Group by CountryID (unique per country per year) so distinct
+    # entities like East/West Germany get separate entries.
     grouped = OrderedDict()
-    for mcid, _name, cat, field, content, cid, fid in rows:
-        grouped.setdefault(mcid, []).append((cat, field, content, cid, fid))
+    country_info = {}  # countryID -> (period_name, masterCountryID)
+    for coid, mcid, period_name, cat, field, content, cid, fid in rows:
+        grouped.setdefault(coid, []).append((cat, field, content, cid, fid))
+        country_info[coid] = (period_name, mcid)
 
     entries = []
-    for mcid, country_rows in grouped.items():
+    for coid, country_rows in grouped.items():
+        period_name, mcid = country_info[coid]
         info = master.get(mcid)
         if not info:
             continue
-        name, iso, fips = info
-        headwords = build_headwords(name, iso, fips)
+        _canonical, iso, fips = info
+        headwords = build_headwords(period_name, iso, fips, iso_owner)
         body = build_general_html(country_rows)
         if body.strip():
             entries.append((headwords, body))
+
+    # Merge entries with duplicate primary headwords (e.g. Serbia 2008
+    # has two CountryIDs with the same name due to a code change).
+    entries = _dedup_entries(entries)
 
     if not entries:
         print(f"  {year} general:     SKIP (0 entries)")
@@ -219,7 +265,7 @@ def build_general_dict(db, master, year, output_dir, dictzip):
     return len(entries)
 
 
-def build_structured_dict(db, master, year, output_dir, dictzip):
+def build_structured_dict(db, master, year, output_dir, dictzip, iso_owner=None):
     """Build Structured edition for one year. Returns entry count or 0."""
     t0 = time.time()
     rows = db.execute(STRUCTURED_QUERY, (year,)).fetchall()
@@ -227,23 +273,29 @@ def build_structured_dict(db, master, year, output_dir, dictzip):
         print(f"  {year} structured:  SKIP (no data)")
         return 0
 
-    # Group by MasterCountryID
+    # Group by CountryID (unique per country per year) so distinct
+    # entities like East/West Germany get separate entries.
     grouped = OrderedDict()
-    for mcid, _name, cat, field, sub, numval, units, textval, cid, fid, vid in rows:
-        grouped.setdefault(mcid, []).append(
+    country_info = {}  # countryID -> (period_name, masterCountryID)
+    for coid, mcid, period_name, cat, field, sub, numval, units, textval, cid, fid, vid in rows:
+        grouped.setdefault(coid, []).append(
             (cat, field, sub, numval, units, textval, cid, fid, vid)
         )
+        country_info[coid] = (period_name, mcid)
 
     entries = []
-    for mcid, country_rows in grouped.items():
+    for coid, country_rows in grouped.items():
+        period_name, mcid = country_info[coid]
         info = master.get(mcid)
         if not info:
             continue
-        name, iso, fips = info
-        headwords = build_headwords(name, iso, fips)
+        _canonical, iso, fips = info
+        headwords = build_headwords(period_name, iso, fips, iso_owner)
         body = build_structured_html(country_rows)
         if body.strip():
             entries.append((headwords, body))
+
+    entries = _dedup_entries(entries)
 
     if not entries:
         print(f"  {year} structured:  SKIP (0 entries)")
@@ -392,12 +444,31 @@ def main():
     master = {}
     for row in db.execute(MASTER_QUERY).fetchall():
         master[row[0]] = (row[1], row[2], row[3])
+
+    # Build ISO ownership map: each ISO code -> name of the sovereign owner.
+    # When multiple entities share an ISO code (e.g. AU = Australia + its
+    # territories), the sovereign country wins.  If no sovereign exists
+    # (e.g. PS = Gaza Strip + West Bank), the first entry wins.
+    entity_types = {}
+    for row in db.execute(
+        "SELECT MasterCountryID, EntityType FROM MasterCountries"
+    ).fetchall():
+        entity_types[row[0]] = row[1] or ""
+    iso_owner = {}  # ISO code -> canonical name
+    for mcid, (name, iso, fips) in master.items():
+        if not iso:
+            continue
+        etype = entity_types.get(mcid, "")
+        if iso not in iso_owner:
+            iso_owner[iso] = name
+        elif etype == "sovereign":
+            iso_owner[iso] = name  # sovereign always wins
     print(f"  Loaded {len(master)} master countries\n")
 
     for year in years:
         if need_general:
             try:
-                n = build_general_dict(db, master, year, args.output_dir, dictzip)
+                n = build_general_dict(db, master, year, args.output_dir, dictzip, iso_owner)
                 if n:
                     built += 1
                     total_entries += n
@@ -407,7 +478,7 @@ def main():
         if need_structured:
             try:
                 n = build_structured_dict(
-                    db, master, year, args.output_dir, dictzip
+                    db, master, year, args.output_dir, dictzip, iso_owner
                 )
                 if n:
                     built += 1
