@@ -1,6 +1,6 @@
 # Structured Field Parsing — Design Document
 
-> **Status**: Planning
+> **Status**: Shipped (v3.0 2026-02-26, v3.2 2026-02-28)
 > **Location**: `etl/structured_parsing/`
 > **Author**: Milan Milkovich
 > **Date**: 2026-02-26
@@ -25,7 +25,7 @@ stores each field's content as a single text blob. We have the same underlying d
 just haven't decomposed it yet. Comparing the two side-by-side made the gap clear:
 
 - **Their data**: `"area": {"total": {"value": 7741220, "units": "sq km"}}`
-- **Our data**: `"total: 7,741,220 sq km land: 7,682,300 sq km water: 58,920 sq km"`
+- **Our data**: `"total: 7,741,220 sq km | land: 7,682,300 sq km | water: 58,920 sq km"`
 
 Same information, but theirs is machine-queryable and ours requires regex extraction on
 every query. This project closes that gap — adding a structured parsing layer on top of
@@ -253,12 +253,35 @@ CREATE TABLE FieldValues (
     Units       TEXT,                -- 'sq km', '%', 'years', 'USD', 'bbl/day'
     TextVal     TEXT,                -- non-numeric: country names, descriptions
     DateEst     TEXT,                -- '2024 est.', 'FY93', '2019 est.'
-    Rank        INTEGER              -- global rank if present in source
+    Rank        INTEGER,             -- global rank if present in source
+    SourceFragment TEXT              -- (v3.1) exact substring of Content that produced this row
 );
 
 CREATE INDEX idx_fv_field ON FieldValues(FieldID);
 CREATE INDEX idx_fv_subfield ON FieldValues(SubField);
 CREATE INDEX idx_fv_numeric ON FieldValues(NumericVal) WHERE NumericVal IS NOT NULL;
+```
+
+**SourceFragment** (added v3.1): Stores the exact text slice from `CountryFields.Content`
+that each sub-value was parsed from. Enables debugging (see what text produced each value)
+and automated quality checks (detect when large Content strings produce few sub-values).
+
+ParseConfidence is **not stored** — it can be computed from SourceFragment + Content:
+
+```sql
+-- Fields with lowest parse confidence (most unparsed content)
+SELECT cf.FieldName, c.Name, c.Year,
+       CAST(SUM(LENGTH(fv.SourceFragment)) AS REAL) / LENGTH(cf.Content) AS confidence,
+       COUNT(fv.ValueID) AS values_extracted,
+       LENGTH(cf.Content) AS content_len
+FROM FieldValues fv
+JOIN CountryFields cf ON fv.FieldID = cf.FieldID
+JOIN Countries c ON cf.CountryID = c.CountryID
+WHERE fv.SourceFragment IS NOT NULL
+GROUP BY cf.FieldID
+HAVING confidence < 0.3
+ORDER BY confidence ASC
+LIMIT 50;
 ```
 
 ### Existing Tables — Untouched
@@ -292,12 +315,12 @@ parser must handle all variations.
 ```
 Era                         Records      Delimiter Style
 ─────────────────────────   ─────────    ──────────────────────────────
-1990-1994 (text/early)         85,296    space-separated, inline
-1995-2001 (text/atsign)       165,655    space-separated, inline
-2002-2008 (HTML table)        202,591    space-separated, inline
-2009-2014 (HTML collapsible)  203,848    space-separated, inline
+1990-1994 (text/early)         85,296    pipe-delimited ( | ) [v3.2]
+1995-2001 (text/atsign)       165,655    pipe-delimited ( | ) [v3.2]
+2002-2008 (HTML table)        202,591    pipe-delimited ( | ) [v3.2]
+2009-2014 (HTML collapsible)  203,848    pipe-delimited ( | ) [v3.2]
 2015-2020 (HTML modern)       222,084    pipe-delimited ( | )
-2021-2025 (JSON)              182,048    space-separated, inline
+2021-2025 (JSON)              182,048    pipe-delimited ( | ) [v3.2]
 ─────────────────────────   ─────────
 TOTAL                       1,061,522
 ```
@@ -306,22 +329,22 @@ TOTAL                       1,061,522
 
 ```
 [1990]  76 years male, 82 years female (1990)
-[1995]  total population: 79.44 years male: 76.6 years female: 82.42 years (1995 est.)
-[2002]  total population: 80.91 years female: 84.25 years (2002 est.) male: 77.73 years
-[2010]  total population: 82.17 years country comparison to the world: 5 male: 78.87 ...
+[1995]  total population: 79.44 years | male: 76.6 years | female: 82.42 years (1995 est.)
+[2002]  total population: 80.91 years | female: 84.25 years (2002 est.) | male: 77.73 years
+[2010]  total population: 82.17 years | male: 78.87 years | female: 85.66 years ...
 [2018]  total population: 85.5 years (2018 est.) | male: 82.2 years | female: 89 years
-[2025]  total population: 85.2 years (2024 est.) male: 82.3 years female: 88.2 years
+[2025]  total population: 85.2 years (2024 est.) | male: 82.3 years | female: 88.2 years
 ```
 
 ### Same Field Across Eras — "Area"
 
 ```
 [1990]  (stored as separate fields: "Total area", "Land area", "Comparative area")
-[1995]  total area: 377,835 sq km land area: 374,744 sq km comparative area: ...
-[2002]  total: 377,835 sq km note: ... water: 3,091 sq km land: 374,744 sq km
-[2010]  total: 377,915 sq km country comparison to the world: 61 land: 364,485 ...
+[1995]  total area: 377,835 sq km | land area: 374,744 sq km | comparative area: ...
+[2002]  total: 377,835 sq km | note: ... | water: 3,091 sq km | land: 374,744 sq km
+[2010]  total: 377,915 sq km | land: 364,485 sq km | water: 13,430 sq km ...
 [2018]  total: 377,915 sq km | land: 364,485 sq km | water: 13,430 sq km | note: ...
-[2025]  total : 377,915 sq km land: 364,485 sq km water: 13,430 sq km note: ...
+[2025]  total : 377,915 sq km | land: 364,485 sq km | water: 13,430 sq km | note: ...
 ```
 
 ### Same Field Across Eras — "Exports"
@@ -408,6 +431,23 @@ Some fields have unique structures that need dedicated parsers:
 | Elevation | highest, lowest, mean | `highest point: Mount McKinley 6,190 m` |
 | Birth/Death rate | single value + units | `10.75 births/1,000 population (2025 est.)` |
 | Dependency ratios | total, youth, elderly, support_ratio | `total dependency ratio: 56 youth: 26.8` |
+| Sex ratio | at_birth, 0-14, 15-64, 65+, total_population | `at birth: 1.05 male(s)/female 0-14 years: 1.06 male(s)/female` |
+| Literacy | definition, total_population, male, female | `total population: 81.7% male: 88.3% female: 74.9%` |
+| Maritime claims | territorial_sea, EEZ, contiguous_zone, continental_shelf | `territorial sea: 12 nm exclusive economic zone: 200 nm` |
+| Natural gas | production, consumption, exports, imports, proven_reserves | `production: 1.072 trillion cubic meters` |
+| Internet users | total, percent_of_population | `total: 312.8 million percent of population: 93%` |
+| Telephones | total_subscriptions, subscriptions_per_100 | `total subscriptions: 87.987 million` |
+| GDP composition | agriculture, industry, services | `agriculture: 0.9% industry: 17.3% services: 79.7%` |
+| Household income | lowest_10pct, highest_10pct | `lowest 10%: 1.8% highest 10%: 30.4%` |
+| School life expectancy | total, male, female | `total: 16 years male: 15 years female: 17 years` |
+| Youth unemployment | total, male, female | `total: 9.4% male: 10.4% female: 8.3%` |
+| CO2 emissions | total, from_coal, from_petroleum, from_natural_gas | `4.795 billion metric tonnes of CO2` |
+| Water withdrawal | municipal, industrial, agricultural (or old: total, pcts, per_capita) | `municipal: 58.39 billion cubic meters` |
+| Broadband | total, subscriptions_per_100 | `total: 131 million subscriptions per 100 inhabitants: 38` |
+| Drinking water source | improved/unimproved x urban/rural/total | `improved: urban: 99.9% of population` |
+| Sanitation facility access | improved/unimproved x urban/rural/total | (same structure as drinking water) |
+| Waste and recycling | generated_annually, recycled_annually, percent_recycled | `municipal solid waste generated annually: 265.225 million tons` |
+| Revenue from forest resources | value (% of GDP) | `0.04% of GDP (2018 est.)` |
 
 ### Phase 4 — Generic Fallback Parser
 
@@ -536,3 +576,90 @@ Once FieldValues is populated:
 - **Correlations**: Cross-field analysis (GDP vs. life expectancy, etc.)
 - **API**: Return typed JSON instead of text blobs
 - **CSV/Excel export**: Structured columns instead of text dump
+
+---
+
+## Changelog
+
+### v3.2 (2026-02-28)
+
+Driven by community feedback on [Issue #10](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/issues/10).
+
+**SourceFragment column** — Every FieldValues row now includes the exact substring of
+`CountryFields.Content` that the parser matched to produce that value. Enables debugging
+and automated parse quality checks (e.g. detect when a large Content blob produces only
+one sub-value).
+
+**18 new dedicated parsers** replacing generic fallback for under-parsed fields.
+Systematic audit found fields with structured `label: value` content where the generic
+parser's regex (requires labels starting with a letter) was silently dropping sub-values
+like `0-14 years:`, `lowest 10%:`, or unlabeled totals.
+
+| Parser | Records | Sub-values | What was being lost |
+|---|---|---|---|
+| Sex ratio | 7,000+ | at_birth, 0-14, 15-64, 65+, total_population | Was: 1 (at_birth only). Now: 5 per country |
+| Literacy | 7,700+ | definition, total_population, male, female | Was: total_population only. Now: 3-4 |
+| Maritime claims | 8,600+ | territorial_sea, EEZ, contiguous_zone, continental_shelf | Was: territorial_sea only. Now: 2-4 |
+| Natural gas | 2,000+ | production, consumption, exports, imports, proven_reserves | Was: production only. Now: 5 |
+| Internet users | varies | total, percent_of_population | Now extracts both consistently |
+| Telephones (fixed + mobile) | varies | total_subscriptions, subscriptions_per_100 | Now extracts per-100 density |
+| Debt - external | varies | multi-year dollar values | Now uses parse_multi_year_dollar |
+| GDP composition by sector | 6,931 | agriculture, industry, services | Was: 1 (generic). Now: 3 |
+| Household income | 5,994 | lowest_10pct, highest_10pct | Was: 1. Now: 2 |
+| School life expectancy | 3,217 | total, male, female | Was: 1-2. Now: 3 |
+| Youth unemployment | 2,982 | total, male, female | Was: 1-2. Now: 3 |
+| Carbon dioxide emissions | 2,804 | total, from_coal, from_petroleum, from_natural_gas | Was: 1. Now: 4 |
+| Total water withdrawal | 2,268 | municipal, industrial, agricultural (+ old format) | Was: 1. Now: 3-5 |
+| Broadband subscriptions | 1,685 | total, subscriptions_per_100 | Was: 1. Now: 2 |
+| Drinking water source | 3,100 | improved/unimproved x urban/rural/total | Was: 3. Now: 6 |
+| Sanitation facility access | 3,198 | improved/unimproved x urban/rural/total | Was: 3. Now: 6 |
+| Waste and recycling | 1,085 | generated, recycled, percent_recycled | Was: 1. Now: 2-3 |
+| Revenue from forest resources | 820 | value (% of GDP) | Was: generic. Now: dedicated |
+
+**Registered parsers**: 55 canonical fields (up from 34 in v3.0).
+
+**Content delimiter migration** — `CountryFields.Content` now uses pipe (`|`) delimiters
+between sub-fields across all eras, replacing the previous space-joining that made sub-field
+boundaries ambiguous. Community feedback ([Issue #10](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/issues/10))
+correctly identified that collapsing original newlines to spaces loses structural information.
+
+Changes by era:
+- **2000 (classic HTML)**: `html_to_pipe_text()` replaces `<br>`, `</p><p>` etc. with ` | `
+- **2001-2008 (table HTML)**: Same `html_to_pipe_text()` applied to content cells
+- **2009-2014 (collapsible HTML)**: `' '.join(content_parts)` → `' | '.join(content_parts)`
+- **2015-2020 (modern HTML)**: Already used `' | '.join()` — no change needed
+- **2021-2025 (JSON/HTML)**: `strip_html()` rewritten to insert ` | ` at block element boundaries
+- **1993-1999 (indented text)**: `' '.join(current_value_parts)` → `' | '.join(...)`
+- **1990, 2001 (inline text)**: No change — continuation lines are text wrapping, not sub-fields
+
+No parser or webapp changes required. The generic fallback parser already splits on `' | '`,
+and all 55 dedicated parsers use field-specific regex that works regardless of delimiter.
+The 2015-2020 era already proved pipe compatibility across the entire stack.
+
+### v3.1 (2026-02-28)
+
+StarDict dictionaries release (72 offline dictionaries for KOReader/GoldenDict).
+See [release notes](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/v3.1).
+
+### v3.2 (2026-02-28)
+
+- **Content delimiter migration**: Replaced space-joining with pipe (`|`) delimiters
+  across all eras (Gutenberg text, HTML, JSON) for unambiguous sub-field boundaries.
+  Files changed: `build_archive.py` (`html_to_pipe_text()`), `load_gutenberg_years.py`
+  (pipe-join in `extract_indented_fields`/`extract_mixed_fields`),
+  `reload_json_years.py` (pipe-aware `strip_html()`).
+- **SourceFragment column**: Every FieldValues row now carries the exact text slice
+  that produced the value, enabling parse confidence computation.
+- **18 new dedicated parsers**: sex_ratio, literacy, maritime_claims, natural_gas,
+  internet_users, telephones, gdp_composition, household_income, school_life_expectancy,
+  youth_unemployment, co2_emissions, water_withdrawal, broadband, water_sanitation,
+  waste_recycling, forest_revenue — bringing total to 55 registered parsers.
+- **1996 data repair**: Replaced truncated Gutenberg data for 7 countries (Venezuela,
+  Armenia, Greece, Luxembourg, Malta, Monaco, Tuvalu) with CIA's original `wfb-96.txt.gz`.
+- **Full database rebuild**: 1,071,603 fields decomposed into 1,610,973 sub-values
+  across 2,386 distinct sub-fields. Country-year records: 9,536. Categories: 83,682.
+
+### v3.0 (2026-02-26)
+
+Initial release. Added FieldValues table decomposing 1,061,522 CountryFields entries
+into 1,423,506 individually queryable sub-values across 34 dedicated parsers.

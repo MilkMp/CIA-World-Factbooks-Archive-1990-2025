@@ -584,7 +584,7 @@ def extract_indented_fields(text):
         if line and not line[0].isspace() and ':' in line:
             # Save previous field
             if current_name:
-                val = ' '.join(current_value_parts).strip()
+                val = ' | '.join(current_value_parts).strip()
                 if val:
                     fields.append((current_name, val))
                 current_value_parts = []
@@ -614,7 +614,7 @@ def extract_indented_fields(text):
 
     # Last field
     if current_name:
-        val = ' '.join(current_value_parts).strip()
+        val = ' | '.join(current_value_parts).strip()
         if val:
             fields.append((current_name, val))
 
@@ -650,7 +650,7 @@ def extract_mixed_fields(text):
             if fname and fname[0].isupper():
                 # Save previous
                 if current_name:
-                    val = ' '.join(current_value_parts).strip()
+                    val = ' | '.join(current_value_parts).strip()
                     if val:
                         fields.append((current_name, val))
                 current_name = fname
@@ -670,7 +670,7 @@ def extract_mixed_fields(text):
 
     # Last field
     if current_name:
-        val = ' '.join(current_value_parts).strip()
+        val = ' | '.join(current_value_parts).strip()
         if val:
             fields.append((current_name, val))
 

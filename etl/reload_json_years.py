@@ -52,13 +52,23 @@ REGION_DIRS = [
 
 
 def strip_html(text):
-    """Remove HTML tags and entities from content."""
+    """Remove HTML tags, using pipe delimiters at block-level boundaries."""
     if not text:
         return ""
-    clean = re.sub(r'<[^>]+>', ' ', str(text))
-    clean = re.sub(r'&[a-zA-Z]+;', ' ', clean)
-    clean = re.sub(r'\s+', ' ', clean).strip()
-    return clean
+    s = str(text)
+    # Block-level boundaries → pipe
+    s = re.sub(r'<br\s*/?\s*>\s*(?:<br\s*/?\s*>)?', ' | ', s, flags=re.IGNORECASE)
+    s = re.sub(r'</p>\s*<p[^>]*>', ' | ', s, flags=re.IGNORECASE)
+    # Strip remaining tags
+    s = re.sub(r'<[^>]+>', ' ', s)
+    s = re.sub(r'&[a-zA-Z]+;', ' ', s)
+    # Clean whitespace
+    s = re.sub(r'\s+', ' ', s).strip()
+    # Clean pipe formatting
+    s = re.sub(r'(\s*\|\s*)+', ' | ', s)   # collapse runs of pipes
+    s = re.sub(r'^\s*\|\s*', '', s)         # strip leading pipe
+    s = re.sub(r'\s*\|\s*$', '', s)         # strip trailing pipe
+    return s
 
 
 def ensure_repo():

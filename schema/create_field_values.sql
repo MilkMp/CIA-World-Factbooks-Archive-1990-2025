@@ -35,7 +35,8 @@ CREATE TABLE FieldValues (
     Units       NVARCHAR(50) NULL,      -- 'sq km', '%', 'years', 'USD', 'bbl/day', etc.
     TextVal     NVARCHAR(MAX) NULL,     -- non-numeric content (country names, descriptions)
     DateEst     NVARCHAR(50) NULL,      -- '2024 est.', 'FY93', '2019 est.'
-    Rank        INT NULL                -- global rank if present in source text
+    Rank        INT NULL,               -- global rank if present in source text
+    SourceFragment NVARCHAR(500) NULL  -- exact substring of Content that produced this row
 );
 
 -- Indexes for common query patterns

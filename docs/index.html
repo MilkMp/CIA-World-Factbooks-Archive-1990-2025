@@ -4,17 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CIA World Factbooks Archive 1990-2025</title>
-<meta name="description" content="Complete structured archive of the CIA World Factbook spanning 36 years (1990-2025), 281 entities, and 1,061,522 parsed data fields in a normalized database.">
+<meta name="description" content="Complete structured archive of the CIA World Factbook spanning 36 years (1990-2025), 281 entities, and 1,071,603 parsed data fields in a normalized database.">
 <meta name="keywords" content="CIA World Factbook, CIA Factbook, world factbook archive, geopolitical data, OSINT, open source intelligence, country data, SQL Server, ETL, data archive, public domain">
 <meta property="og:title" content="CIA World Factbooks Archive 1990-2025">
-<meta property="og:description" content="36 years of CIA World Factbook data preserved in a structured, queryable database. 281 entities, 1,061,522 fields, fully normalized.">
+<meta property="og:description" content="36 years of CIA World Factbook data preserved in a structured, queryable database. 281 entities, 1,071,603 fields, fully normalized.">
 <meta property="og:image" content="https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/screenshots/homepage.png">
 <meta property="og:url" content="https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CIA World Factbooks Archive">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="CIA World Factbooks Archive 1990-2025">
-<meta name="twitter:description" content="36 years of CIA World Factbook data preserved in a structured, queryable database. 281 entities, 1,061,522 fields.">
+<meta name="twitter:description" content="36 years of CIA World Factbook data preserved in a structured, queryable database. 281 entities, 1,071,603 fields.">
 <meta name="twitter:image" content="https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/screenshots/homepage.png">
 <link rel="canonical" href="https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/">
 <style>
@@ -425,11 +425,11 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
           <div class="stat-label">Editions</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">9,500</div>
+          <div class="stat-value">9,536</div>
           <div class="stat-label">Country-Year Records</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">1,061,522</div>
+          <div class="stat-value">1,071,603</div>
           <div class="stat-label">Parsed Data Fields</div>
         </div>
       </div>
@@ -443,7 +443,7 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
           Launch Interactive Archive
         </a>
         <div style="margin-top:8px; font-size:0.72rem; color:#5F6B7C; font-family:-apple-system,'Segoe UI',sans-serif;">
-          Search, browse, and analyze all 1,061,522 fields across 36 years
+          Search, browse, and analyze all 1,071,603 fields across 36 years
         </div>
       </div>
 
@@ -481,9 +481,9 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
         </thead>
         <tbody>
           <tr><td class="mono">MasterCountries</td><td class="r">281</td><td>Canonical entities with EntityType, ISO codes</td></tr>
-          <tr><td class="mono">Countries</td><td class="r">9,500</td><td>Per-year country records</td></tr>
-          <tr><td class="mono">CountryCategories</td><td class="r">83,599</td><td>Section headings (Geography, Economy, etc.)</td></tr>
-          <tr><td class="mono">CountryFields</td><td class="r">1,061,522</td><td>Individual data fields (~238 MB)</td></tr>
+          <tr><td class="mono">Countries</td><td class="r">9,536</td><td>Per-year country records</td></tr>
+          <tr><td class="mono">CountryCategories</td><td class="r">83,682</td><td>Section headings (Geography, Economy, etc.)</td></tr>
+          <tr><td class="mono">CountryFields</td><td class="r">1,071,603</td><td>Individual data fields (~238 MB)</td></tr>
           <tr><td class="mono">FieldNameMappings</td><td class="r">1,090</td><td>Maps 1,090 variants to 414 canonical names</td></tr>
         </tbody>
       </table>
@@ -678,7 +678,7 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
           <tr><td class="mono">build_field_mappings.py</td><td>All</td><td>Maps 1,090 raw field name variants to 414 canonical names using a 7-rule system</td></tr>
           <tr><td class="mono">classify_entities.py</td><td>All</td><td>Auto-classifies 281 entities into 9 types based on Dependency Status and Government Type fields</td></tr>
           <tr><td class="mono">validate_integrity.py</td><td>All</td><td>Read-only validation with 9 checks: field count benchmarks, ground truth, year-over-year consistency</td></tr>
-          <tr><td class="mono">parse_field_values.py</td><td>All</td><td>Decomposes 1,061,522 text blobs into 1,423,506 typed sub-values using 33 field-specific parsers (land/water, male/female, revenues/expenditures, age brackets, etc.)</td></tr>
+          <tr><td class="mono">parse_field_values.py</td><td>All</td><td>Decomposes 1,071,603 text blobs into 1,610,973 typed sub-values using 55 field-specific parsers + SourceFragment provenance (land/water, male/female, sex ratios, literacy, revenues/expenditures, age brackets, CO2 emissions, etc.)</td></tr>
           <tr><td class="mono">validate_field_values.py</td><td>All</td><td>Validates parsed FieldValues: coverage (98.9%), numeric extraction rate (61.5%), spot checks against known ground truth</td></tr>
         </tbody>
       </table>
@@ -689,11 +689,11 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
         <hr class="sec-rule">
       </div>
 
-      <p>The 1,061,522 fields in CountryFields store raw text blobs. The structured parsing pipeline decomposes these into <strong style="color:#C5CBD3;">1,423,506 individually queryable, typed sub-values</strong> across <strong style="color:#C5CBD3;">1,848 distinct sub-fields</strong>. This enables SQL queries that were previously impossible without per-query regex.</p>
+      <p>The 1,071,603 fields in CountryFields store raw text blobs with pipe (|) delimiters separating sub-fields. The structured parsing pipeline decomposes these into <strong style="color:#C5CBD3;">1,610,973 individually queryable, typed sub-values</strong> across <strong style="color:#C5CBD3;">2,386 distinct sub-fields</strong> using 55 dedicated parsers. Each row includes a <strong style="color:#C5CBD3;">SourceFragment</strong> showing the exact text slice that produced the value. This enables SQL queries that were previously impossible without per-query regex.</p>
 
       <div style="margin: 16px 0 20px; padding: 16px 20px; background: #1C2127; border: 1px solid #2F343C; border-left: 4px solid #51CF66; border-radius: 4px; font-size: 0.85rem; color: #8F99A8; line-height: 1.8;">
         <strong style="color: #C5CBD3;">New queries enabled:</strong> Land vs water area, male vs female life expectancy, age structure brackets (0-14, 15-64, 65+), budget revenues vs expenditures, dependency ratios (youth/elderly), urbanization rate, elevation extremes, land use composition, multi-year GDP/inflation/unemployment breakdowns, and more.<br><br>
-        <strong style="color: #C5CBD3;">Download:</strong> <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/v3.0" target="_blank" style="color:#4A9EFF;">factbook_field_values.db (~437 MB) from Release v3.0</a><br>
+        <strong style="color: #C5CBD3;">Download:</strong> <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/v3.2" target="_blank" style="color:#4A9EFF;">factbook_field_values.db (~558 MB) from Release v3.2</a><br>
         <strong style="color: #C5CBD3;">Live dashboard:</strong> <a href="https://worldfactbookarchive.org/analysis/structured-data" target="_blank" style="color:#4A9EFF;">worldfactbookarchive.org/analysis/structured-data</a> &mdash; interactive charts with SQL and source data tabs
       </div>
 

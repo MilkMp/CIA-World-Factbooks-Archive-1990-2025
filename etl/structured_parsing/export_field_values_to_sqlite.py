@@ -94,7 +94,8 @@ CREATE TABLE FieldValues (
     Units       TEXT,
     TextVal     TEXT,
     DateEst     TEXT,
-    Rank        INTEGER
+    Rank        INTEGER,
+    SourceFragment TEXT
 );
 """
 
@@ -111,6 +112,20 @@ CREATE INDEX IX_FieldNameMappings_IsNoise ON FieldNameMappings(IsNoise);
 CREATE INDEX IX_FV_FieldID   ON FieldValues(FieldID);
 CREATE INDEX IX_FV_SubField  ON FieldValues(SubField);
 CREATE INDEX IX_FV_Numeric   ON FieldValues(NumericVal) WHERE NumericVal IS NOT NULL;
+"""
+
+# Webapp-only: FTS5 full-text search + ISOCountryCodes reference table.
+# The standalone download doesn't need these, but the webapp does for
+# /search and the Intelligence Atlas GeoJSON joins.
+ISO_SCHEMA = """
+CREATE TABLE ISOCountryCodes (
+    Name TEXT NOT NULL,
+    Alpha2 TEXT NOT NULL,
+    Alpha3 TEXT NOT NULL PRIMARY KEY,
+    NumericCode INTEGER,
+    Region TEXT,
+    SubRegion TEXT
+);
 """
 
 # Reference tables (small — load all at once)
@@ -182,6 +197,11 @@ def main():
         description="Export FieldValues + reference tables to SQLite"
     )
     parser.add_argument("--output", default=DEFAULT_OUTPUT, help="Output .db path")
+    parser.add_argument("--webapp", action="store_true",
+                        help="Add FTS5 search index + ISOCountryCodes for webapp deployment")
+    parser.add_argument("--iso-source", default=None,
+                        help="Path to existing SQLite DB containing ISOCountryCodes "
+                             "(used with --webapp; defaults to data/factbook.db)")
     args = parser.parse_args()
 
     output = os.path.abspath(args.output)
@@ -237,9 +257,9 @@ def main():
     copy_batched(
         mc_tgt, lite,
         "FieldValues",
-        "SELECT ValueID, FieldID, SubField, NumericVal, Units, TextVal, DateEst, Rank "
+        "SELECT ValueID, FieldID, SubField, NumericVal, Units, TextVal, DateEst, Rank, SourceFragment "
         "FROM FieldValues ORDER BY ValueID",
-        "INSERT INTO FieldValues VALUES (?,?,?,?,?,?,?,?)",
+        "INSERT INTO FieldValues VALUES (?,?,?,?,?,?,?,?,?)",
         total_hint=fv_count,
     )
 
@@ -249,6 +269,53 @@ def main():
     lite.executescript(INDEXES)
     lite.commit()
     print(f"  Indexes built ({time.time() - t1:.1f}s)")
+
+    # Webapp extras: FTS5 full-text search index + ISOCountryCodes
+    if args.webapp:
+        print("\n-- Webapp mode: adding FTS5 + ISOCountryCodes --")
+
+        print("Building FTS5 index on CountryFields.Content...")
+        t2 = time.time()
+        lite.execute(
+            "CREATE VIRTUAL TABLE CountryFieldsFTS USING fts5("
+            "Content, content=CountryFields, content_rowid=FieldID)"
+        )
+        lite.execute(
+            "INSERT INTO CountryFieldsFTS(CountryFieldsFTS) VALUES('rebuild')"
+        )
+        lite.commit()
+        print(f"  FTS5 index built ({time.time() - t2:.1f}s)")
+
+        # ISOCountryCodes lives in the webapp's SQLite DB, not SQL Server.
+        # Copy it from an existing SQLite source.
+        iso_source = args.iso_source or os.path.join(
+            os.path.dirname(output), "factbook.db"
+        )
+        if os.path.exists(iso_source):
+            print(f"Copying ISOCountryCodes from {iso_source}...")
+            iso_db = sqlite3.connect(iso_source)
+            iso_cur = iso_db.cursor()
+            iso_cur.execute(
+                "SELECT sql FROM sqlite_master "
+                "WHERE type='table' AND name='ISOCountryCodes'"
+            )
+            row = iso_cur.fetchone()
+            if row:
+                lite.execute(row[0])
+                iso_cur.execute("SELECT * FROM ISOCountryCodes")
+                rows = iso_cur.fetchall()
+                ncols = len(iso_cur.description)
+                lite.executemany(
+                    f"INSERT INTO ISOCountryCodes VALUES ({','.join('?' * ncols)})",
+                    rows,
+                )
+                lite.commit()
+                print(f"  ISOCountryCodes: {len(rows)} rows")
+            else:
+                print("  WARNING: ISOCountryCodes not found in source DB")
+            iso_db.close()
+        else:
+            print(f"  WARNING: ISO source not found at {iso_source} — skipping")
 
     # Compact
     print("Vacuuming...")
@@ -260,8 +327,10 @@ def main():
 
     size_mb = os.path.getsize(output) / (1024 * 1024)
     print(f"\nDone. SQLite database: {size_mb:.1f} MB at {output}")
-    print(f"  Tables: MasterCountries, Countries, CountryCategories,")
-    print(f"          CountryFields, FieldNameMappings, FieldValues")
+    tables = "MasterCountries, Countries, CountryCategories, CountryFields, FieldNameMappings, FieldValues"
+    if args.webapp:
+        tables += ", CountryFieldsFTS, ISOCountryCodes"
+    print(f"  Tables: {tables}")
 
 
 if __name__ == "__main__":

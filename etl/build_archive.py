@@ -21,6 +21,28 @@ import urllib.request
 import urllib.error
 from bs4 import BeautifulSoup
 
+
+def html_to_pipe_text(html_str):
+    """Convert HTML to pipe-delimited text. Block elements become | separators."""
+    if not html_str:
+        return ""
+    s = str(html_str)
+    # Block-level boundaries → pipe
+    s = re.sub(r'<br\s*/?\s*>\s*(?:<br\s*/?\s*>)?', ' | ', s, flags=re.IGNORECASE)
+    s = re.sub(r'</p>\s*<p[^>]*>', ' | ', s, flags=re.IGNORECASE)
+    s = re.sub(r'</div>\s*<div[^>]*>', ' | ', s, flags=re.IGNORECASE)
+    # Strip remaining tags
+    s = re.sub(r'<[^>]+>', ' ', s)
+    s = re.sub(r'&[a-zA-Z]+;', ' ', s)
+    # Clean whitespace
+    s = re.sub(r'\s+', ' ', s).strip()
+    # Clean pipe formatting
+    s = re.sub(r'(\s*\|\s*)+', ' | ', s)   # collapse runs of pipes
+    s = re.sub(r'^\s*\|\s*', '', s)         # strip leading pipe
+    s = re.sub(r'\s*\|\s*$', '', s)         # strip trailing pipe
+    return s
+
+
 # ============================================================
 # CONFIGURATION
 # ============================================================
@@ -335,10 +357,7 @@ def parse_classic(soup, html):
         for fm in field_matches:
             fname = fm.group(1).strip()
             fcontent = fm.group(2).strip()
-            # Strip HTML from content
-            clean = re.sub(r'<[^>]+>', ' ', fcontent)
-            clean = re.sub(r'&[a-zA-Z]+;', ' ', clean)
-            clean = re.sub(r'\s+', ' ', clean).strip()
+            clean = html_to_pipe_text(fcontent)
             if clean and fname:
                 fields.append((fname, clean))
 
@@ -408,8 +427,7 @@ def parse_table_format(soup, html):
                 for img_link in content_td.find_all('a'):
                     if img_link.find('img'):
                         img_link.decompose()
-                content = content_td.get_text(separator=' ', strip=True)
-                content = re.sub(r'\s+', ' ', content).strip()
+                content = html_to_pipe_text(content_td.decode_contents())
             else:
                 content = ""
 
@@ -431,8 +449,7 @@ def parse_table_format(soup, html):
                     for img_link in content_td.find_all('a'):
                         if img_link.find('img'):
                             img_link.decompose()
-                    content = content_td.get_text(separator=' ', strip=True)
-                    content = re.sub(r'\s+', ' ', content).strip()
+                    content = html_to_pipe_text(content_td.decode_contents())
                     if content:
                         fields.append((fname, content))
             if fields:
@@ -546,7 +563,7 @@ def parse_collapsiblepanel_format(soup, html):
 
                 next_tr = next_tr.find_next_sibling('tr')
 
-            content = ' '.join(content_parts)
+            content = ' | '.join(content_parts)
             content = re.sub(r'\s+', ' ', content).strip()
             if fname and content:
                 fields.append((fname, content))
