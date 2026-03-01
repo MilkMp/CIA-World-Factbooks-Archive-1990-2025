@@ -1,7 +1,7 @@
 CIA WORLD FACTBOOK ARCHIVE
 ==========================
-36 years of data (1990-2025) — 281 entities, 1,061,522 fields
-1,423,506 structured sub-values parsed from raw text (1,848 sub-fields)
+36 years of data (1990-2025) — 281 entities, 1,071,603 fields
+1,610,973 structured sub-values parsed from raw text (2,386 sub-fields)
 Live: https://worldfactbookarchive.org
 
 DATABASE SCHEMA:
@@ -10,6 +10,7 @@ DATABASE SCHEMA:
   CountryCategories -> CountryID, CategoryTitle
   CountryFields     -> CategoryID, CountryID, FieldName, Content
   FieldNameMappings -> RawFieldName, CanonicalFieldName (maps 1,090 variants to 414 canonical names)
+  FieldValues       -> FieldID, SubField, NumericVal, Units, TextVal, DateEst, SourceFragment
 
   MasterCountries centralizes country identity across all 36 years.
   CanonicalCode = original FIPS 10-4 code (preserved for reference)
@@ -24,19 +25,16 @@ KEY QUERY — Snapshot of all factbook content with country metadata:
   FROM MasterCountries mc
   JOIN CountryFields cf ON mc.MasterCountryID = cf.CountryID
 
-  This joins the master country table to all 1,071,213 field entries,
+  This joins the master country table to all 1,071,603 field entries,
   giving you every piece of data in the archive with its country context.
 
 DATABASES:
   SQL Server:  CIA_WorldFactbook on localhost (Windows Auth, ODBC Driver 18)
-  SQLite:      data/factbook.db (~324 MB, read-only, identical schema)
-  SQLite:      data/factbook_field_values.db (~437 MB, structured sub-values)
+  SQLite:      data/factbook.db (~636 MB, all tables + FTS5 + ISOCountryCodes)
 
-  factbook.db is used by the webapp. SQL Server is the canonical source.
-  factbook_field_values.db contains FieldValues (1.4M parsed sub-values)
-    + all reference tables for self-contained queries.
-  To rebuild: python etl/export_to_sqlite.py
-              python etl/structured_parsing/export_field_values_to_sqlite.py
+  factbook.db is a self-contained database used by the webapp and for distribution.
+  SQL Server is the canonical source for ETL.
+  To rebuild: python etl/structured_parsing/export_field_values_to_sqlite.py --webapp
 
 PROJECT STRUCTURE:
   webapp/          Deployable FastAPI app (Jinja2 templates, SQLite backend)

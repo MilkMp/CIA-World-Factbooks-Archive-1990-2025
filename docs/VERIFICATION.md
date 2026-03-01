@@ -9,10 +9,11 @@ Run these queries against either database to confirm the expected totals:
 | Table | Expected Count |
 |-------|---------------|
 | MasterCountries | 281 |
-| Countries | 9,500 |
-| CountryCategories | ~83,623 |
-| CountryFields | 1,061,522 |
+| Countries | 9,536 |
+| CountryCategories | 83,682 |
+| CountryFields | 1,071,603 |
 | FieldNameMappings | 1,090 |
+| FieldValues | 1,610,973 |
 
 ### SQLite
 
@@ -131,7 +132,7 @@ FROM FieldNameMappings
 WHERE IsNoise = 0;
 ```
 
-Expected: 416 canonical names.
+Expected: 414 canonical names.
 
 ```sql
 SELECT COUNT(*) AS noise_entries

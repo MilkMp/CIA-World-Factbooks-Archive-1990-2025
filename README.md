@@ -146,7 +146,7 @@ The raw CIA World Factbook changed format **at least 10 times** between 1990 and
 | `validate_integrity.py` | 296 | All | Read-only validation suite with 9 checks: field count benchmarks, US population/GDP ground truth, year-over-year consistency, source provenance, and NULL detection. |
 | `structured_parsing/parse_field_values.py` | 1,400+ | All | Decomposes 1,071,603 raw text blobs into 1,610,973 typed sub-values using 55 field-specific parsers + generic fallback. Each row includes a `SourceFragment` column showing the exact text slice that produced the value. Extracts land/water area, male/female life expectancy, age brackets, sex ratios, literacy, budget, elevation, dependency ratios, GDP composition, CO2 emissions, water/sanitation, and more. |
 | `structured_parsing/validate_field_values.py` | 231 | All | Validates FieldValues against the source database: row counts, coverage, numeric extraction rate, spot checks against known ground truth values (US population, Russia area, Japan military). |
-| `structured_parsing/export_field_values_to_sqlite.py` | 269 | All | Exports FieldValues + all reference tables (Countries, FieldNameMappings, etc.) to a self-contained SQLite database (factbook_field_values.db, ~558 MB). |
+| `structured_parsing/export_field_values_to_sqlite.py` | 269 | All | Exports FieldValues + all reference tables to a self-contained SQLite database (factbook.db, ~636 MB with FTS5 + ISOCountryCodes when using `--webapp`). |
 
 ### Why parsing was so difficult
 
@@ -216,7 +216,7 @@ See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) and [docs/ETL_PIPELINE.md](docs/E
 
 The raw text in `CountryFields.Content` has been decomposed into **1,610,973 typed sub-values** across **2,386 distinct sub-fields** using 55 dedicated parsers. Each row includes a `SourceFragment` showing the exact text slice that produced the value. Sub-field boundaries in Content use pipe (`|`) delimiters for unambiguous parsing. This enables SQL queries that were previously impossible without per-query regex — for example, ranking countries by land-vs-water ratio, comparing male vs female life expectancy, or charting budget deficit trends.
 
-**Download:** [factbook_field_values.db (~558 MB) from Release v3.2](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/v3.2)
+**Download:** [factbook.db (~636 MB) from Release v3.2](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/v3.2) — single self-contained database with all tables, FTS5 search index, and ISO country codes.
 
 **Live dashboard:** [worldfactbookarchive.org/analysis/structured-data](https://worldfactbookarchive.org/analysis/structured-data) — interactive charts showing new queries with SQL and source data tabs.
 

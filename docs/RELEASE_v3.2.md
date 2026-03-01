@@ -31,6 +31,12 @@ Both problems were real. We fixed both.
 
 Every delta is positive. No data was lost — only gained.
 
+### Single Database
+
+v3.0 shipped two separate SQLite files: `factbook.db` (core tables + FTS5 search) and `factbook_field_values.db` (core tables + FieldValues). This was confusing — people didn't know which to use or whether they needed both.
+
+v3.2 consolidates everything into one file: **`factbook.db`** (636 MB). It contains all 8 tables (core + FieldValues + FTS5 + ISOCountryCodes). The size difference was only 78 MB, not worth the confusion of two files. Download one database, get everything.
+
 ---
 
 ## Architecture: How the Pipeline Works
