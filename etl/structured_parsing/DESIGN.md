@@ -42,8 +42,11 @@ The CIA Factbook Archive stores 1,061,522 field records across 281 entities and 
 those text blobs into individually addressable, typed sub-values — without adding any new
 information.
 
-**This is not new data. Every value extracted already exists inside the text blobs. We are
-decomposing, not inventing.**
+**Almost every value extracted already exists inside the text blobs. We are decomposing,
+not inventing.** A small number of values are computed from neighboring sub-values when
+the source text omits an aggregate (e.g. total life expectancy averaged from male and
+female in pre-1995 data). These are flagged with `IsComputed = 1` in the FieldValues table
+so consumers can distinguish extracted values from derived ones.
 
 ---
 
@@ -254,7 +257,8 @@ CREATE TABLE FieldValues (
     TextVal     TEXT,                -- non-numeric: country names, descriptions
     DateEst     TEXT,                -- '2024 est.', 'FY93', '2019 est.'
     Rank        INTEGER,             -- global rank if present in source
-    SourceFragment TEXT              -- (v3.1) exact substring of Content that produced this row
+    SourceFragment TEXT,             -- (v3.2) exact substring of Content that produced this row
+    IsComputed  INTEGER NOT NULL DEFAULT 0  -- (v3.3) 1 = value derived by computation, not in source text
 );
 
 CREATE INDEX idx_fv_field ON FieldValues(FieldID);
@@ -262,9 +266,15 @@ CREATE INDEX idx_fv_subfield ON FieldValues(SubField);
 CREATE INDEX idx_fv_numeric ON FieldValues(NumericVal) WHERE NumericVal IS NOT NULL;
 ```
 
-**SourceFragment** (added v3.1): Stores the exact text slice from `CountryFields.Content`
+**SourceFragment** (added v3.2): Stores the exact text slice from `CountryFields.Content`
 that each sub-value was parsed from. Enables debugging (see what text produced each value)
 and automated quality checks (detect when large Content strings produce few sub-values).
+
+**IsComputed** (added v3.3): Flag indicating the value was derived by computation rather
+than extracted directly from the source text.  Most values have `IsComputed = 0` (direct
+extraction).  A small number — e.g. total life expectancy averaged from male and female
+values in pre-1995 legacy data — have `IsComputed = 1`.  Consumers can filter on this
+column to distinguish source-of-truth values from derived ones.
 
 ParseConfidence is **not stored** — it can be computed from SourceFragment + Content:
 

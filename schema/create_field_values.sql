@@ -25,7 +25,6 @@ GO
 --
 -- Each row in CIA_WorldFactbook.dbo.CountryFields may produce
 -- 1-N rows here. FieldID links back to the source record.
--- No data is invented — every value exists in the text blob.
 -- ============================================================
 CREATE TABLE FieldValues (
     ValueID     INT IDENTITY(1,1) PRIMARY KEY,
@@ -36,7 +35,8 @@ CREATE TABLE FieldValues (
     TextVal     NVARCHAR(MAX) NULL,     -- non-numeric content (country names, descriptions)
     DateEst     NVARCHAR(50) NULL,      -- '2024 est.', 'FY93', '2019 est.'
     Rank        INT NULL,               -- global rank if present in source text
-    SourceFragment NVARCHAR(500) NULL  -- exact substring of Content that produced this row
+    SourceFragment NVARCHAR(500) NULL,  -- exact substring of Content that produced this row
+    IsComputed  BIT NOT NULL DEFAULT 0  -- 1 = value was derived/computed, not directly in source text
 );
 
 -- Indexes for common query patterns

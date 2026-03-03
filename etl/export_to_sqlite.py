@@ -108,6 +108,55 @@ TABLES = [
 BATCH_SIZE = 50_000
 
 
+def backfill_missing_mappings(lite_conn):
+    """Find CountryFields.FieldName values missing from FieldNameMappings and add them.
+
+    The build_field_mappings.py script should cover all field names, but if new
+    data is loaded after the mappings were generated, gaps can appear.  This
+    function detects those gaps and inserts 'unmapped' rows so that every
+    FieldName has a corresponding FieldNameMappings entry.
+    """
+    unmapped = lite_conn.execute("""
+        SELECT DISTINCT cf.FieldName
+        FROM CountryFields cf
+        LEFT JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+        WHERE fm.MappingID IS NULL AND cf.FieldName IS NOT NULL
+    """).fetchall()
+
+    if not unmapped:
+        print("  All field names are mapped. OK")
+        return
+
+    print(f"  WARNING: {len(unmapped)} field name(s) missing from FieldNameMappings:")
+    next_id = lite_conn.execute(
+        "SELECT COALESCE(MAX(MappingID), 0) + 1 FROM FieldNameMappings"
+    ).fetchone()[0]
+
+    for (field_name,) in unmapped:
+        meta = lite_conn.execute("""
+            SELECT MIN(c.Year), MAX(c.Year), COUNT(*)
+            FROM CountryFields cf
+            JOIN Countries c ON cf.CountryID = c.CountryID
+            WHERE cf.FieldName = ?
+        """, (field_name,)).fetchone()
+        first_year, last_year, use_count = meta
+
+        lite_conn.execute(
+            "INSERT INTO FieldNameMappings "
+            "(MappingID, OriginalName, CanonicalName, MappingType, ConsolidatedTo, "
+            " IsNoise, FirstYear, LastYear, UseCount, Notes) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (next_id, field_name, field_name, "unmapped", None,
+             0, first_year, last_year, use_count,
+             "Auto-added during export — missing from build_field_mappings.py"),
+        )
+        print(f"    + {field_name!r} ({first_year}-{last_year}, n={use_count})")
+        next_id += 1
+
+    lite_conn.commit()
+    print(f"  Backfilled {len(unmapped)} mapping(s). Re-run build_field_mappings.py to classify them.")
+
+
 def copy_table(ms_cursor, lite_conn, name, select_sql, insert_sql):
     """Copy a table from SQL Server to SQLite."""
     t0 = time.time()
@@ -183,6 +232,10 @@ def main():
 
     # Copy CountryFields (1M+ rows) in batches
     copy_fields(mc, lite)
+
+    # Integrity check: every CountryFields.FieldName must exist in FieldNameMappings
+    print("Verifying FieldNameMappings coverage...")
+    backfill_missing_mappings(lite)
 
     # Create indexes after data load
     print("Creating indexes...")

@@ -699,6 +699,19 @@ def verify(cursor):
     status = "PASS" if total == mapped else "FAIL"
     print(f"  Coverage: {mapped}/{total} field names mapped  [{status}]")
 
+    if total != mapped:
+        cursor.execute("""
+            SELECT DISTINCT cf.FieldName
+            FROM CountryFields cf
+            LEFT JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+            WHERE fm.MappingID IS NULL AND cf.FieldName IS NOT NULL
+        """)
+        missing = [row[0] for row in cursor.fetchall()]
+        print(f"  UNMAPPED FIELD NAMES ({len(missing)}):")
+        for name in sorted(missing):
+            print(f"    - {name}")
+        print("  ACTION: Add these to KNOWN_RENAMES, CONSOLIDATION_MAP, or other rule sets.")
+
     # Check 2: No duplicates
     cursor.execute("""
         SELECT OriginalName, COUNT(*) AS C

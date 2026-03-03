@@ -83,14 +83,16 @@ Individual data fields. This is the main data table (~1M rows, ~263 MB of conten
 
 ### 5. FieldNameMappings
 
-Maps the 1,090 distinct field name variants to 414 canonical names. Join on `CountryFields.FieldName = FieldNameMappings.OriginalName`.
+Maps the distinct field name variants to canonical names. Join on `CountryFields.FieldName = FieldNameMappings.OriginalName`.
+
+**Coverage guarantee:** Every distinct `CountryFields.FieldName` value must have a corresponding row in `FieldNameMappings`. The export pipeline (`export_to_sqlite.py`) verifies this and auto-backfills any gaps as `MappingType = 'unmapped'` with a note to re-run `build_field_mappings.py`.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | MappingID | INT IDENTITY | Primary key |
 | OriginalName | NVARCHAR(200) | Raw field name as found in CountryFields |
 | CanonicalName | NVARCHAR(200) | Standardized field name |
-| MappingType | NVARCHAR(30) | How it was classified: identity, rename, dash_format, consolidation, country_specific, noise |
+| MappingType | NVARCHAR(30) | How it was classified: identity, rename, dash_format, consolidation, country_specific, noise, unmapped |
 | ConsolidatedTo | NVARCHAR(200) | Parent field for sub-field consolidation (e.g. "Petroleum" for oil sub-fields) |
 | IsNoise | BIT | 1 = parser artifact/fragment, should be excluded from analysis |
 | FirstYear | INT | Earliest year this field name appears |
@@ -100,12 +102,35 @@ Maps the 1,090 distinct field name variants to 414 canonical names. Join on `Cou
 
 **Indexes:** CanonicalName, Unique on OriginalName.
 
+### 6. FieldValues
+
+Structured sub-values parsed from `CountryFields.Content`. Each CountryFields row may produce 1-N FieldValues rows. Stored in `factbook.db` (consolidated since v3.2).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| ValueID | INT IDENTITY | Primary key |
+| FieldID | INT | FK to CountryFields.FieldID |
+| SubField | TEXT | Sub-field label: 'total', 'male', 'female', 'land', 'value', etc. |
+| NumericVal | REAL | Parsed numeric value (NULL if non-numeric) |
+| Units | TEXT | Unit string: 'sq km', '%', 'years', 'USD', 'bbl/day', etc. |
+| TextVal | TEXT | Non-numeric content (country names, descriptions) |
+| DateEst | TEXT | Estimation date: '2024 est.', 'FY93' |
+| Rank | INT | Global rank if present in source text |
+| SourceFragment | TEXT | Exact substring of Content that produced this row |
+| IsComputed | BIT | 1 = value was derived by computation (e.g. averaging male/female), not directly present in source text |
+
+**Indexes:** FieldID, SubField, NumericVal (WHERE NOT NULL).
+
+**IsComputed flag:** Most values are extracted directly from `CountryFields.Content` and `IsComputed = 0`. A small number of values are computed from neighboring sub-values when the source text does not include them explicitly (e.g. total life expectancy averaged from male and female values in pre-1995 data). These are flagged with `IsComputed = 1` so consumers can distinguish extracted values from derived ones.
+
 ## Key Relationships
 
 - Every `Countries` row should link to a `MasterCountries` row via `MasterCountryID` (some historical entities may be NULL)
 - Every `CountryCategories` row belongs to exactly one `Countries` row
 - Every `CountryFields` row belongs to both a `CountryCategories` row and a `Countries` row
+- Every `CountryFields.FieldName` must have a corresponding `FieldNameMappings.OriginalName` entry
 - `FieldNameMappings` is a standalone lookup table joined by field name string matching
+- Every `FieldValues` row belongs to exactly one `CountryFields` row via `FieldID`
 
 ## Cross-Year Querying Pattern
 

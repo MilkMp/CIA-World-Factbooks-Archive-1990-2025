@@ -6,7 +6,7 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 
 **[Search the interactive archive](https://worldfactbookarchive.org/)** | **[Project documentation](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)**
 
-> **Data Integrity:** No Factbook content is added or altered. The parsing process structures the CIA's raw text into queryable fields — removing formatting artifacts, sectioning headers, and deduplicating noise lines — but the actual data values are exactly as the CIA published them. The only additions to the source data are reference lookup tables (FIPS-to-ISO code mappings, entity classifications, COCOM regional assignments) that sit alongside the original data, not inside it.
+> **Data Integrity:** No Factbook content is added or altered. The parsing process structures the CIA's raw text into queryable fields — removing formatting artifacts, sectioning headers, and deduplicating noise lines — but the actual data values are exactly as the CIA published them. The only additions to the source data are reference lookup tables (FIPS-to-ISO code mappings, entity classifications, COCOM regional assignments) that sit alongside the original data, not inside it. In FieldValues, a small number of rows are derived by computation from neighboring sub-values (e.g. total life expectancy averaged from male/female in pre-1995 data); these are clearly flagged with `IsComputed = 1`.
 
 
 ## Database Statistics
@@ -214,7 +214,7 @@ See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) and [docs/ETL_PIPELINE.md](docs/E
 
 ### Structured Field Values Database (NEW)
 
-The raw text in `CountryFields.Content` has been decomposed into **1,610,973 typed sub-values** across **2,386 distinct sub-fields** using 55 dedicated parsers. Each row includes a `SourceFragment` showing the exact text slice that produced the value. Sub-field boundaries in Content use pipe (`|`) delimiters for unambiguous parsing. This enables SQL queries that were previously impossible without per-query regex — for example, ranking countries by land-vs-water ratio, comparing male vs female life expectancy, or charting budget deficit trends.
+The raw text in `CountryFields.Content` has been decomposed into **1,610,973 typed sub-values** across **2,386 distinct sub-fields** using 55 dedicated parsers. Each row includes a `SourceFragment` showing the exact text slice that produced the value, and an `IsComputed` flag distinguishing values extracted directly from source text (`0`) from values derived by computation (`1`, e.g. averaging male/female life expectancy for pre-1995 data). Sub-field boundaries in Content use pipe (`|`) delimiters for unambiguous parsing. This enables SQL queries that were previously impossible without per-query regex — for example, ranking countries by land-vs-water ratio, comparing male vs female life expectancy, or charting budget deficit trends.
 
 **Download:** [factbook.db (~636 MB) from Release v3.2](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/v3.2) — single self-contained database with all tables, FTS5 search index, and ISO country codes.
 

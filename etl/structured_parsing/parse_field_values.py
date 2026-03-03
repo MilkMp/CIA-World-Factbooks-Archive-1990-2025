@@ -82,11 +82,17 @@ def normalize_content(content):
 
 
 def make_row(field_id, sub_field, numeric_val=None, units=None,
-             text_val=None, date_est=None, rank=None, source_frag=None):
-    """Create a FieldValues row tuple."""
+             text_val=None, date_est=None, rank=None, source_frag=None,
+             is_computed=False):
+    """Create a FieldValues row tuple.
+
+    Set is_computed=True when the value is derived by calculation (e.g.
+    averaging male/female) rather than extracted directly from the source text.
+    """
     if source_frag and len(source_frag) > MAX_FRAG_LEN:
         source_frag = source_frag[:MAX_FRAG_LEN]
-    return (field_id, sub_field, numeric_val, units, text_val, date_est, rank, source_frag)
+    return (field_id, sub_field, numeric_val, units, text_val, date_est, rank,
+            source_frag, 1 if is_computed else 0)
 
 
 # ============================================================
@@ -209,7 +215,7 @@ def parse_life_exp(field_id, content):
             rows.append(make_row(field_id, 'total_population',
                                  numeric_val=round((male_v + female_v) / 2, 1),
                                  units='years', date_est=date_est, rank=rank,
-                                 source_frag=frag))
+                                 source_frag=frag, is_computed=True))
         else:
             # Bare: "75.6 years"
             m = re.search(r'^([\d.]+)\s*years?', content.strip())
@@ -1550,8 +1556,8 @@ def main():
     total_fields = 0
     total_values = 0
     insert_sql = """
-        INSERT INTO FieldValues (FieldID, SubField, NumericVal, Units, TextVal, DateEst, Rank, SourceFragment)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO FieldValues (FieldID, SubField, NumericVal, Units, TextVal, DateEst, Rank, SourceFragment, IsComputed)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     batch = []
     t0 = time.time()
