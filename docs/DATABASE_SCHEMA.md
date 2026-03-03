@@ -100,6 +100,27 @@ Maps the 1,090 distinct field name variants to 414 canonical names. Join on `Cou
 
 **Indexes:** CanonicalName, Unique on OriginalName.
 
+### 6. FieldValues
+
+Structured decomposition of `CountryFields.Content` text blobs into individually queryable sub-values. Each CountryFields row produces 1-N FieldValues rows. Lives in a separate database (`factbook_field_values.db`).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| ValueID | INT IDENTITY | Primary key |
+| FieldID | INT | FK to CountryFields — the source field this value was parsed from |
+| SubField | NVARCHAR(100) | Sub-field label: 'total', 'male', 'female', 'land', 'value', etc. |
+| NumericVal | FLOAT | Parsed numeric value (NULL if non-numeric) |
+| Units | NVARCHAR(50) | Unit of measurement: 'sq km', '%', 'years', 'USD', 'bbl/day', etc. |
+| TextVal | NVARCHAR(MAX) | Non-numeric content (country names, descriptions) |
+| DateEst | NVARCHAR(50) | Date estimate: '2024 est.', 'FY93', etc. |
+| Rank | INT | Global rank if present in source text |
+| SourceFragment | NVARCHAR(500) | Exact substring of Content that produced this row |
+| IsComputed | BIT | 1 = value was derived by the parser (e.g. averaged from neighbors), not extracted directly from source text. Always filter or flag these in analysis. |
+
+**Indexes:** FieldID, SubField, NumericVal (filtered).
+
+**Important:** Most FieldValues rows are direct extractions from the source text (`IsComputed = 0`). A small number of values are computed by the parser when the original data is incomplete — for example, legacy 1990s life expectancy entries that only provide male and female values get a computed `total_population` derived by averaging. These are flagged with `IsComputed = 1` so downstream consumers can distinguish original data from parser-derived estimates.
+
 ## Key Relationships
 
 - Every `Countries` row should link to a `MasterCountries` row via `MasterCountryID` (some historical entities may be NULL)

@@ -484,13 +484,17 @@ def is_gov_body(name, use_count, first_year, last_year):
 def build_mappings(cursor):
     """Build the complete mapping for all distinct field names."""
     # Step 1: Get all distinct field names with metadata
+    # Uses LEFT JOIN to include CountryFields with orphan CountryIDs,
+    # and filters out NULL/empty FieldNames (cannot be mapped).
     cursor.execute("""
         SELECT cf.FieldName,
                MIN(c.Year) AS FirstYear,
                MAX(c.Year) AS LastYear,
                COUNT(*)    AS UseCount
         FROM CountryFields cf
-        JOIN Countries c ON cf.CountryID = c.CountryID
+        LEFT JOIN Countries c ON cf.CountryID = c.CountryID
+        WHERE cf.FieldName IS NOT NULL
+          AND LTRIM(RTRIM(cf.FieldName)) <> ''
         GROUP BY cf.FieldName
     """)
     all_fields = cursor.fetchall()
@@ -688,16 +692,62 @@ def verify(cursor):
     """Run verification checks after applying."""
     print("\n--- Verification ---")
 
-    # Check 1: Every FieldName has a mapping
+    # Check 1: Every non-NULL FieldName has a mapping
     cursor.execute("""
         SELECT COUNT(DISTINCT cf.FieldName) AS Total,
                COUNT(DISTINCT CASE WHEN fm.MappingID IS NOT NULL THEN cf.FieldName END) AS Mapped
         FROM CountryFields cf
         LEFT JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+        WHERE cf.FieldName IS NOT NULL
     """)
     total, mapped = cursor.fetchone()
     status = "PASS" if total == mapped else "FAIL"
-    print(f"  Coverage: {mapped}/{total} field names mapped  [{status}]")
+    print(f"  Coverage: {mapped}/{total} non-NULL field names mapped  [{status}]")
+
+    if total != mapped:
+        cursor.execute("""
+            SELECT cf.FieldName, COUNT(*) AS UseCount
+            FROM CountryFields cf
+            LEFT JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+            WHERE fm.MappingID IS NULL
+              AND cf.FieldName IS NOT NULL
+            GROUP BY cf.FieldName
+            ORDER BY COUNT(*) DESC
+        """)
+        unmapped = cursor.fetchall()
+        print(f"  Unmapped field names ({len(unmapped)}):")
+        for name, cnt in unmapped[:20]:
+            print(f"    {name[:60]:<60}  (n={cnt})")
+        if len(unmapped) > 20:
+            print(f"    ... and {len(unmapped) - 20} more")
+
+    # Check 1b: NULL/empty FieldName audit
+    cursor.execute("""
+        SELECT COUNT(*) FROM CountryFields
+        WHERE FieldName IS NULL OR LTRIM(RTRIM(FieldName)) = ''
+    """)
+    null_count = cursor.fetchone()[0]
+    if null_count > 0:
+        print(f"  WARNING: {null_count:,} CountryFields rows have NULL/empty FieldName (unmappable)")
+    else:
+        print(f"  NULL/empty FieldNames: 0  [PASS]")
+
+    # Check 1c: Exact gap query from user reports (LEFT JOIN showing unmapped rows)
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM CountryFields c
+        LEFT JOIN FieldNameMappings f ON c.FieldName = f.OriginalName
+        WHERE f.MappingID IS NULL
+    """)
+    gap_count = cursor.fetchone()[0]
+    if gap_count > 0 and gap_count == null_count:
+        print(f"  LEFT JOIN gap: {gap_count:,} rows (all NULL/empty FieldNames — expected)")
+    elif gap_count > 0:
+        non_null_gaps = gap_count - null_count
+        status = "FAIL" if non_null_gaps > 0 else "PASS"
+        print(f"  LEFT JOIN gap: {gap_count:,} total ({null_count:,} NULL + {non_null_gaps:,} unmapped)  [{status}]")
+    else:
+        print(f"  LEFT JOIN gap: 0 rows  [PASS]")
 
     # Check 2: No duplicates
     cursor.execute("""

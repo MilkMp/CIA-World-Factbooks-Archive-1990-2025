@@ -1,6 +1,6 @@
 # Structured Field Parsing — Design Document
 
-> **Status**: Shipped (v3.0 2026-02-26, v3.2 2026-02-28)
+> **Status**: Shipped (v3.0 2026-02-26, v3.2 2026-02-28, v3.3 2026-03-03)
 > **Location**: `etl/structured_parsing/`
 > **Author**: Milan Milkovich
 > **Date**: 2026-02-26
@@ -254,7 +254,8 @@ CREATE TABLE FieldValues (
     TextVal     TEXT,                -- non-numeric: country names, descriptions
     DateEst     TEXT,                -- '2024 est.', 'FY93', '2019 est.'
     Rank        INTEGER,             -- global rank if present in source
-    SourceFragment TEXT              -- (v3.1) exact substring of Content that produced this row
+    SourceFragment TEXT,             -- (v3.1) exact substring of Content that produced this row
+    IsComputed  INTEGER NOT NULL DEFAULT 0  -- (v3.3) 1 = derived by parser, not from source text
 );
 
 CREATE INDEX idx_fv_field ON FieldValues(FieldID);
@@ -265,6 +266,13 @@ CREATE INDEX idx_fv_numeric ON FieldValues(NumericVal) WHERE NumericVal IS NOT N
 **SourceFragment** (added v3.1): Stores the exact text slice from `CountryFields.Content`
 that each sub-value was parsed from. Enables debugging (see what text produced each value)
 and automated quality checks (detect when large Content strings produce few sub-values).
+
+**IsComputed** (added v3.3): Boolean flag (`0` or `1`) indicating whether the value was
+derived by the parser rather than extracted directly from the source text. For example,
+legacy 1990s life expectancy entries that only provide male and female values get a
+computed `total_population` = `round((male + female) / 2, 1)`. This flag ensures data
+consumers can distinguish original CIA data from parser-derived estimates. Query
+with `WHERE IsComputed = 0` to get only values directly from the source.
 
 ParseConfidence is **not stored** — it can be computed from SourceFragment + Content:
 
@@ -580,6 +588,21 @@ Once FieldValues is populated:
 ---
 
 ## Changelog
+
+### v3.3 (2026-03-03)
+
+Two data consistency fixes driven by community review:
+
+- **IsComputed column**: Added `IsComputed BIT NOT NULL DEFAULT 0` to FieldValues.
+  Flags values derived by the parser (e.g. life expectancy `total_population` averaged
+  from male+female in legacy 1990s data) rather than extracted directly from source text.
+  Addresses the principle that "every value extracted already exists inside the text blobs"
+  — computed values now carry explicit provenance so consumers can filter them.
+
+- **FieldNameMappings completeness**: Fixed `build_field_mappings.py` to use LEFT JOIN
+  and explicitly handle NULL/empty FieldNames. Updated verification to detect and report
+  the exact gap from the community-reported query (`LEFT JOIN ... WHERE MappingID IS NULL`).
+  NULL FieldNames in CountryFields are now documented as unmappable parser artifacts.
 
 ### v3.2 (2026-02-28)
 

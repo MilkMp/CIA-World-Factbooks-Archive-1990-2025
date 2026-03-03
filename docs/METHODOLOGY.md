@@ -466,6 +466,16 @@ GROUP BY c.Year ORDER BY c.Year
 ```
 Flags years where >5% of fields have empty content, indicating a parser failing to extract field values.
 
+#### Check 10: FieldNameMappings Completeness
+Runs the exact LEFT JOIN query from community reports to detect CountryFields rows without a corresponding FieldNameMappings entry:
+```sql
+SELECT COUNT(*)
+FROM CountryFields c
+LEFT JOIN FieldNameMappings f ON c.FieldName = f.OriginalName
+WHERE f.MappingID IS NULL;
+```
+Reports three metrics: (1) non-NULL field name coverage, (2) NULL/empty FieldName count, (3) total LEFT JOIN gap. The gap should consist entirely of NULL/empty FieldName rows — any non-NULL unmapped field names indicate a regression in `build_field_mappings.py`.
+
 ### Additional Verification Queries
 
 Beyond the automated script, the following SQL queries were used during development to verify data quality:
@@ -540,6 +550,41 @@ Germany's GDP data for 1994-1996 was stored under the field name "Germany" (a se
 
 **Fix**: Inserted 3 new CountryFields records with `FieldName='National product'` for Germany 1994-1996, using the GDP values from the self-named "Germany" fields.
 
+### v3.3 Data Consistency Fixes
+
+Two data inconsistencies reported by community review:
+
+#### FieldNameMappings Coverage Gap
+
+**Problem**: A LEFT JOIN from `CountryFields` to `FieldNameMappings` revealed rows with no matching mapping:
+```sql
+SELECT * FROM CountryFields c
+LEFT JOIN FieldNameMappings f ON c.FieldName = f.OriginalName
+WHERE f.MappingID IS NULL;
+```
+
+**Root cause**: Some `CountryFields` rows have NULL or empty `FieldName` values (parser artifacts from edge cases). The `build_field_mappings.py` script processed all non-NULL field names and generated mappings for every one, but NULL values cannot be mapped (since `NULL = NULL` is false in SQL). The verify function used `COUNT(DISTINCT cf.FieldName)` which silently skips NULLs, masking the gap.
+
+**Fix**: Updated `build_field_mappings.py` to:
+1. Use `LEFT JOIN` to Countries (catches orphan CountryFields rows)
+2. Explicitly filter `WHERE cf.FieldName IS NOT NULL AND LTRIM(RTRIM(cf.FieldName)) <> ''`
+3. The verify function now runs the exact LEFT JOIN gap query and reports NULL/empty FieldNames separately from genuinely unmapped fields
+4. The validate_integrity.py script now includes a dedicated FieldNameMappings completeness check
+
+#### Computed Values in FieldValues Without Provenance
+
+**Problem**: The life expectancy parser for legacy 1990s data (format: "76 years male, 82 years female") computed a `total_population` value by averaging male and female values — `round((male_v + female_v) / 2, 1)`. This synthesized value does not exist in the original source text, violating the project's principle that "every value extracted already exists inside the text blobs."
+
+**Fix**: Added an `IsComputed` column (`BIT NOT NULL DEFAULT 0`) to the `FieldValues` table. When `IsComputed = 1`, the value was derived by the parser rather than extracted directly from the source text. The computed life expectancy averages are now flagged with `IsComputed = 1`. Downstream consumers should filter or flag these in analysis:
+```sql
+-- Exclude computed values
+SELECT * FROM FieldValues WHERE IsComputed = 0;
+
+-- Or include but flag them
+SELECT *, CASE WHEN IsComputed = 1 THEN 'computed' ELSE 'original' END AS Provenance
+FROM FieldValues;
+```
+
 ---
 
 ## 9. Known Limitations
@@ -549,6 +594,7 @@ Germany's GDP data for 1994-1996 was stored under the field name "Germany" (a se
 - **1994 has inflated field counts** (28,633 vs ~19,000 for neighboring years) because the HTML structure that year caused sub-field labels to be parsed as standalone fields (these are flagged as noise)
 - **2001 uses text source** instead of HTML, which has slightly different field granularity
 - **Content is text-only** — images, maps, and flags from the original Factbook are not included
+- **NULL FieldNames** — Some CountryFields rows have NULL or empty FieldName values (parser artifacts). These cannot be mapped in FieldNameMappings and will appear as unmapped in LEFT JOIN queries. Use `WHERE cf.FieldName IS NOT NULL` to filter them.
 
 ### Parser Limitations
 - **"Full Content" fallback**: If a parser can't identify structured sections, it captures the entire page text as a single field. This happens rarely but means some country-years may have one large text blob instead of structured categories/fields
@@ -558,6 +604,10 @@ Germany's GDP data for 1994-1996 was stored under the field name "Germany" (a se
 - **Some 1990s field names are ambiguous** — e.g., "Branches" could refer to military branches or government branches. Context-dependent mappings default to the most common usage
 - **Consolidation is logical only** — sub-field data is not actually merged in the database, just tagged with a `ConsolidatedTo` parent
 - **281 noise entries may include some legitimate fields** — the noise heuristics are conservative but imperfect. Review with `SELECT * FROM FieldNameMappings WHERE IsNoise = 1 ORDER BY UseCount DESC`
+
+### FieldValues Limitations
+- **Computed values exist** — A small number of FieldValues rows have `IsComputed = 1`, meaning the parser derived them rather than extracting them from source text. Currently this only affects legacy life expectancy `total_population` values (averaged from male+female). Always check `IsComputed` when data provenance matters.
+- **Generic parser fallback** — Fields without a dedicated parser use the generic `key: value` splitter, which may miss some sub-values or misclassify labels
 
 ### Entity Resolution
 - **Some historical entities have no MasterCountryID** — dissolved states or very old entries may not link to the master table (NULL foreign key)

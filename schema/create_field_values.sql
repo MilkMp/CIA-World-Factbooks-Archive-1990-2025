@@ -36,7 +36,8 @@ CREATE TABLE FieldValues (
     TextVal     NVARCHAR(MAX) NULL,     -- non-numeric content (country names, descriptions)
     DateEst     NVARCHAR(50) NULL,      -- '2024 est.', 'FY93', '2019 est.'
     Rank        INT NULL,               -- global rank if present in source text
-    SourceFragment NVARCHAR(500) NULL  -- exact substring of Content that produced this row
+    SourceFragment NVARCHAR(500) NULL,  -- exact substring of Content that produced this row
+    IsComputed  BIT NOT NULL DEFAULT 0  -- 1 = value derived by parser (e.g. averaged), not directly from source text
 );
 
 -- Indexes for common query patterns

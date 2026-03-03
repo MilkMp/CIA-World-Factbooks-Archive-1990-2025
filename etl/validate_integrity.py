@@ -274,6 +274,66 @@ for yr, empty, total in cursor.fetchall():
         print(f"  {yr}: {empty:,} empty of {total:,} ({pct:.1f}%){flag}")
 
 # ============================================================
+# 10. FIELD NAME MAPPING COMPLETENESS
+# ============================================================
+print(f"\n{SEP}")
+print("  10. FIELD NAME MAPPING COMPLETENESS")
+print(SEP)
+
+# Check for non-NULL FieldNames missing from FieldNameMappings
+cursor.execute("""
+    SELECT COUNT(DISTINCT cf.FieldName) AS Total,
+           COUNT(DISTINCT CASE WHEN fm.MappingID IS NOT NULL THEN cf.FieldName END) AS Mapped
+    FROM CountryFields cf
+    LEFT JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+    WHERE cf.FieldName IS NOT NULL
+""")
+total_fn, mapped_fn = cursor.fetchone()
+fn_status = "PASS" if total_fn == mapped_fn else "FAIL"
+print(f"  Non-NULL field name coverage: {mapped_fn}/{total_fn}  [{fn_status}]")
+
+if total_fn != mapped_fn:
+    cursor.execute("""
+        SELECT cf.FieldName, COUNT(*) AS UseCount
+        FROM CountryFields cf
+        LEFT JOIN FieldNameMappings fm ON cf.FieldName = fm.OriginalName
+        WHERE fm.MappingID IS NULL AND cf.FieldName IS NOT NULL
+        GROUP BY cf.FieldName
+        ORDER BY COUNT(*) DESC
+    """)
+    unmapped = cursor.fetchall()
+    for name, cnt in unmapped[:10]:
+        print(f"    UNMAPPED: {name[:60]:<60} (n={cnt})")
+    mapping_issues = True
+else:
+    mapping_issues = False
+
+# Check for NULL/empty FieldNames
+cursor.execute("""
+    SELECT COUNT(*) FROM CountryFields
+    WHERE FieldName IS NULL OR LTRIM(RTRIM(FieldName)) = ''
+""")
+null_fn = cursor.fetchone()[0]
+if null_fn > 0:
+    print(f"  NULL/empty FieldName rows: {null_fn:,} (unmappable, expected)")
+else:
+    print(f"  NULL/empty FieldName rows: 0  [CLEAN]")
+
+# Full LEFT JOIN gap (exact query from community report)
+cursor.execute("""
+    SELECT COUNT(*)
+    FROM CountryFields c
+    LEFT JOIN FieldNameMappings f ON c.FieldName = f.OriginalName
+    WHERE f.MappingID IS NULL
+""")
+gap_total = cursor.fetchone()[0]
+non_null_gap = gap_total - null_fn
+if non_null_gap > 0:
+    print(f"  LEFT JOIN gap (non-NULL unmapped): {non_null_gap}  [FAIL]")
+else:
+    print(f"  LEFT JOIN gap: {gap_total} total ({null_fn} NULL/empty only)  [PASS]")
+
+# ============================================================
 # SUMMARY
 # ============================================================
 print(f"\n{SEP}")
@@ -285,6 +345,10 @@ if pop_matches < pop_total:
     issues.append(f"Population benchmark: {pop_matches}/{pop_total} years matched")
 if anomalies:
     issues.append(f"Field count anomalies: {', '.join(f'{yr}({p:+.0f}%)' for yr, p in anomalies)}")
+if mapping_issues:
+    issues.append(f"FieldNameMappings: {total_fn - mapped_fn} non-NULL field names unmapped")
+if non_null_gap > 0:
+    issues.append(f"LEFT JOIN gap: {non_null_gap} non-NULL CountryFields rows without mapping")
 
 if not issues:
     print("  HIGH CONFIDENCE - all benchmarks pass")

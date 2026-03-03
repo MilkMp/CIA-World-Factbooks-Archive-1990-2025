@@ -95,7 +95,8 @@ CREATE TABLE FieldValues (
     TextVal     TEXT,
     DateEst     TEXT,
     Rank        INTEGER,
-    SourceFragment TEXT
+    SourceFragment TEXT,
+    IsComputed  INTEGER NOT NULL DEFAULT 0
 );
 """
 
@@ -257,9 +258,9 @@ def main():
     copy_batched(
         mc_tgt, lite,
         "FieldValues",
-        "SELECT ValueID, FieldID, SubField, NumericVal, Units, TextVal, DateEst, Rank, SourceFragment "
+        "SELECT ValueID, FieldID, SubField, NumericVal, Units, TextVal, DateEst, Rank, SourceFragment, IsComputed "
         "FROM FieldValues ORDER BY ValueID",
-        "INSERT INTO FieldValues VALUES (?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO FieldValues VALUES (?,?,?,?,?,?,?,?,?,?)",
         total_hint=fv_count,
     )
 
