@@ -27,10 +27,13 @@ cursor.execute("""
 """)
 entities = []
 for row in cursor.fetchall():
+    iso2 = row.ISOAlpha2 or ""
+    fips = row.CanonicalCode
     entities.append({
         "name": row.CanonicalName,
-        "fips": row.CanonicalCode,
-        "iso2": row.ISOAlpha2 or "",
+        "fips": fips,
+        "iso2": iso2,
+        "link_code": iso2 if iso2 else fips.lower(),
         "type": row.EntityType or "unknown",
         "first": row.FirstYear,
         "last": row.LastYear,
