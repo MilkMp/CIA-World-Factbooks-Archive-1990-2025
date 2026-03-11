@@ -120,7 +120,7 @@ docs/
   ETL_PIPELINE.md            # How the archive was built
   FIELD_EVOLUTION.md         # How CIA field names changed over time
   METHODOLOGY.md             # Complete methodology: parsing, standardization, validation
-  screenshots/               # 29 PNGs + 5 animated GIFs of the web application
+  screenshots/               # 49 PNGs + 9 animated GIFs of the web application
   index.html                 # GitHub Pages static landing page
 ```
 
@@ -339,14 +339,20 @@ The archive is served as a FastAPI + Jinja2 web application at **[worldfactbooka
   - **Change Detection** — year-over-year field changes with trend charts and region filtering
   - **Field Explorer** — browse all 414 canonical data fields with coverage statistics across 36 years
   - **Advanced Analytics Explorer** — correlation scatter, heatmap matrix, ranking race, and treemap visualizations
+  - **Scatter Plot Analysis** — multi-indicator scatter plots with regression lines and outlier detection
   - **Query Builder** — custom analytical queries across all indicators with flexible filters
+  - **Dashboard Builder** — custom multi-panel dashboards with drag-and-drop indicator selection
   - **Trade Networks** — geographic and force-directed graph of global import/export relationships
   - **Organization Networks** — international organization memberships and alliance visualization
-  - **Geopolitical Atlas** — territorial disputes and infrastructure mapping
+  - **Geopolitical Atlas** — territorial disputes, infrastructure mapping, and missile site tracking
   - **Political Stability** — government type choropleth, regime change tracking, and regional peer comparison
   - **Natural Resources & Economy** — resource production maps, commodity scatter plots, and country profiles
+  - **Demographics** — population pyramids with country comparison and year-over-year animation
   - **Dissolved States** — historical entities no longer in the Factbook with archived indicator data
+  - **Data Coverage** — field availability matrix across all 36 years and 281 entities
   - **Structured Field Data** — interactive dashboard of 1,775,588 parsed sub-values with Chart/SQL/Source tabs showing exactly where each number was extracted from
+- **CIA Studies in Intelligence** — searchable archive of declassified CIA analytical journal articles with dashboard and browse views
+- **World Leaders Database** — comprehensive leadership data with governance analysis, power concentration metrics, security apparatus tracking, and interactive choropleth maps
 - **Intelligence dossiers** following ICD 203 analytic standards
 - **Regional threat briefs** with instability and security indicators
 - **Factbook Quiz** — 4 modes: country identification, capital cities, higher-or-lower, and flag recognition
@@ -396,47 +402,24 @@ See [queries/sample_queries.sql](queries/sample_queries.sql) for 18 ready-to-use
 
 ## Screenshots
 
-### Search & Browse
 | | |
 |---|---|
-| ![Homepage](docs/screenshots/homepage.png) | ![About](docs/screenshots/about.png) |
-| **Homepage** — Database statistics, navigation, and live search | **About** — Project mission, architecture, and methodology |
-| ![Full-Text Search](docs/screenshots/search_results.png) | ![Boolean Search](docs/screenshots/search_boolean.png) |
-| **Full-Text Search** — Keyword search across 1,071,603 fields | **Boolean Search** — AND/OR/NOT operators with phrase matching |
+| ![Homepage](docs/screenshots/homepage.png) | ![Full-Text Search](docs/screenshots/search_results.png) |
+| **Homepage** — Database statistics, navigation, and live search | **Full-Text Search** — Keyword search across 1,071,603 fields |
+| ![Country Profile](docs/screenshots/country_profile.png) | ![Library](docs/screenshots/library.png) |
+| **Country Profile** — Complete factbook data by category | **Library** — Card-based overview of the entire archive collection |
+| ![Regional Dashboard](docs/screenshots/regional_dashboard.png) | ![Geopolitical Atlas](docs/screenshots/atlas.png) |
+| **Regional Dashboard** — Mapbox GL JS choropleth with COCOM drill-down | **Geopolitical Atlas** — Territorial disputes, infrastructure, and missile sites |
+| ![Timeline Map](docs/screenshots/timeline_map.png) | ![Communications](docs/screenshots/communications.png) |
+| **Timeline Map** — Animated Mapbox choropleth 1990-2025 with time series | **Communications Analysis** — Internet, mobile, broadband indicators |
+| ![Trade Networks](docs/screenshots/trade_networks.png) | ![Global Rankings](docs/screenshots/rankings.png) |
+| **Trade Networks** — Geographic and force-directed graph of global trade | **Global Rankings** — Sortable country rankings by any indicator |
+| ![Political Stability](docs/screenshots/political.png) | ![Demographics](docs/screenshots/demographics.png) |
+| **Political Stability** — Government type choropleth and regime change tracking | **Demographics** — Population pyramids with country comparison and animation |
+| ![CSI Search](docs/screenshots/csi_search.png) | ![World Leaders Map](docs/screenshots/world_leaders_map.png) |
+| **CIA Studies in Intelligence** — Searchable archive of declassified CIA journal articles | **World Leaders Map** — Interactive choropleth of governance metrics |
 
-### The Archive
-| | |
-|---|---|
-| ![Library](docs/screenshots/library.png) | ![Browse Years](docs/screenshots/browse_years.png) |
-| **Library** — Card-based overview of the entire archive collection | **Browse Archive** — Navigate all 281 entities across 36 years |
-| ![Country Profile](docs/screenshots/country_profile.png) | ![Field Time Series](docs/screenshots/field_timeseries.png) |
-| **Country Profile** — Complete factbook data by category | **Field Time Series** — Track any field across 36 years with Apache ECharts |
-| ![Data Export](docs/screenshots/country_export.png) | ![Country Dictionary](docs/screenshots/country_dictionary.png) |
-| **Data Export** — CSV, Excel, and print-ready PDF reports | **Country Dictionary** — All 281 entities with type, region, and ISO codes |
-| ![Text Diff](docs/screenshots/text_diff.png) | ![Factbook Quiz](docs/screenshots/quiz.png) |
-| **Text Diff** — Side-by-side year comparison with highlighted changes | **Factbook Quiz** — 4 game modes to test your world knowledge |
-
-### Intelligence Analysis
-| | |
-|---|---|
-| ![Analysis Overview](docs/screenshots/analysis_overview.png) | ![Regional Dashboard](docs/screenshots/regional_dashboard.png) |
-| **Analysis Overview** — Available dashboards and analytical products | **Regional Dashboard** — Mapbox GL JS choropleth with hover popups, capital markers, and COCOM drill-down |
-| ![Region Detail](docs/screenshots/region_eucom.png) | ![Compare Countries](docs/screenshots/compare_countries.png) |
-| **COCOM Region Detail** — Mapbox regional map with country-level KPIs | **Compare Countries** — Side-by-side comparison of any two nations |
-| ![Timeline Map](docs/screenshots/timeline_map.png) | ![Map Compare](docs/screenshots/map_compare.png) |
-| **Timeline Map** — Animated Mapbox choropleth 1990-2025 with multi-country time series | **Map Compare** — Two synced Mapbox maps for side-by-side year comparison |
-| ![Communications](docs/screenshots/communications.png) | ![Intelligence Dossier](docs/screenshots/dossier.png) |
-| **Communications Analysis** — Mapbox choropleth with internet, mobile, broadband indicators | **Intelligence Dossier** — Per-country assessment following ICD 203 standards |
-| ![Trade Networks](docs/screenshots/trade_networks.png) | ![Query Builder](docs/screenshots/query_builder.png) |
-| **Trade Networks** — Geographic and force-directed graph of global trade relationships | **Query Builder** — Custom analytical queries across all indicators |
-| ![Global Rankings](docs/screenshots/rankings.png) | ![Global Trends](docs/screenshots/global_trends.png) |
-| **Global Rankings** — Sortable country rankings by any indicator | **Global Trends** — Multi-indicator time series across all editions |
-| ![Change Detection](docs/screenshots/change_detection.png) | ![Field Explorer](docs/screenshots/field_explorer.png) |
-| **Change Detection** — Year-over-year field changes with trend charts | **Field Explorer** — Browse all data fields with coverage statistics |
-| ![Threat Brief](docs/screenshots/threats.png) | ![Dissolved States](docs/screenshots/dissolved_states.png) |
-| **Regional Threat Brief** — COCOM-level instability and security indicators | **Dissolved States** — Historical entities no longer in the Factbook |
-| ![Organization Networks](docs/screenshots/org_networks.png) | |
-| **Organization Networks** — International org memberships and alliances | |
+*49 screenshots and 9 animated GIF demos are available in [docs/screenshots/](docs/screenshots/). See the full gallery on the [project page](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/).*
 
 
 

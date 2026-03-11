@@ -186,6 +186,237 @@ PRESETS = {
         "actions": [],
         "wait_after": 2000,
     },
+
+    # ─── World Leaders ───────────────────────────────────────────────
+    "world_leaders_china": {
+        "name": "world_leaders_china",
+        "description": "World Leaders: China government roster with structure chart",
+        "path": "/analysis/world-leaders",
+        "wait_for_load": 4000,
+        "actions": [
+            {"type": "js", "code": """
+                var sel = document.getElementById('wl-country-select');
+                if (sel) {
+                    for (var i = 0; i < sel.options.length; i++) {
+                        if (sel.options[i].text.includes('China')) {
+                            sel.value = sel.options[i].value;
+                            sel.dispatchEvent(new Event('change'));
+                            break;
+                        }
+                    }
+                }
+            """, "wait": 3000},
+        ],
+        "wait_after": 3000,
+    },
+    "world_leaders_analysis": {
+        "name": "world_leaders_analysis",
+        "description": "World Leaders: Comparative analysis tab with charts",
+        "path": "/analysis/world-leaders",
+        "wait_for_load": 4000,
+        "actions": [
+            {"type": "js", "code": """
+                var tabs = document.querySelectorAll('.wl-tab[data-panel]');
+                for (var t of tabs) {
+                    if (t.dataset.panel === 'analysis-panel') { t.click(); break; }
+                }
+            """, "wait": 3000},
+        ],
+        "wait_after": 3000,
+    },
+    "world_leaders_map_complexity": {
+        "name": "world_leaders_map_complexity",
+        "description": "World Leaders Map: Globe choropleth by governance complexity",
+        "path": "/analysis/world-leaders/map",
+        "wait_for_load": 5000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+    "world_leaders_map_security": {
+        "name": "world_leaders_map_security",
+        "description": "World Leaders Map: Globe choropleth by security ratio",
+        "path": "/analysis/world-leaders/map",
+        "wait_for_load": 5000,
+        "actions": [
+            {"type": "js", "code": """
+                var sel = document.getElementById('metricSelect');
+                if (sel) { sel.value = 'security_ratio'; sel.dispatchEvent(new Event('change')); }
+            """, "wait": 2000},
+        ],
+        "wait_after": 3000,
+    },
+    "world_leaders_governance": {
+        "name": "world_leaders_governance",
+        "description": "World Leaders: Governance structure donut + regional breakdown",
+        "path": "/analysis/world-leaders/governance",
+        "wait_for_load": 4000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+    "world_leaders_concentration": {
+        "name": "world_leaders_concentration",
+        "description": "World Leaders: Power concentration analysis",
+        "path": "/analysis/world-leaders/concentration",
+        "wait_for_load": 4000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+    "world_leaders_security": {
+        "name": "world_leaders_security",
+        "description": "World Leaders: Security apparatus analysis",
+        "path": "/analysis/world-leaders/security",
+        "wait_for_load": 4000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+
+    # ─── Demographics ────────────────────────────────────────────────
+    "demographics_us_china": {
+        "name": "demographics_us_china",
+        "description": "Demographics: US vs China population pyramids + timeline",
+        "path": "/analysis/demographics",
+        "wait_for_load": 4000,
+        "actions": [
+            {"type": "js", "code": """
+                var a = document.getElementById('country-a');
+                if (a) { a.value = 'US'; a.dispatchEvent(new Event('change')); }
+            """, "wait": 2000},
+            {"type": "js", "code": """
+                var b = document.getElementById('country-b');
+                if (b) { b.value = 'CH'; b.dispatchEvent(new Event('change')); }
+            """, "wait": 2000},
+        ],
+        "wait_after": 3000,
+    },
+
+    # ─── Political ───────────────────────────────────────────────────
+    "political": {
+        "name": "political",
+        "description": "Political Change Over Time: regime shifts and political indicators",
+        "path": "/analysis/political",
+        "wait_for_load": 5000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+
+    # ─── Development ─────────────────────────────────────────────────
+    "development_overview": {
+        "name": "development_overview",
+        "description": "Development & Inequality: overview tab with availability heatmap",
+        "path": "/analysis/development",
+        "wait_for_load": 5000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+    "development_health": {
+        "name": "development_health",
+        "description": "Development: Health tab with charts",
+        "path": "/analysis/development",
+        "wait_for_load": 5000,
+        "actions": [
+            {"type": "js", "code": """
+                var tabs = document.querySelectorAll('.dev-tab[data-tab]');
+                for (var t of tabs) {
+                    if (t.dataset.tab === 'health') { t.click(); break; }
+                }
+            """, "wait": 3000},
+        ],
+        "wait_after": 3000,
+    },
+
+    # ─── Resources ───────────────────────────────────────────────────
+    "resources_map": {
+        "name": "resources_map",
+        "description": "Natural Resources: World map with resource categories",
+        "path": "/analysis/resources",
+        "wait_for_load": 5000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+    "resources_curse": {
+        "name": "resources_curse",
+        "description": "Natural Resources: Resource curse scatter plot",
+        "path": "/analysis/resources",
+        "wait_for_load": 5000,
+        "actions": [
+            {"type": "js", "code": "switchTab('curse')", "wait": 3000},
+        ],
+        "wait_after": 3000,
+    },
+
+    # ─── Scatter Plot ────────────────────────────────────────────────
+    "scatter_gdp_lifeexp": {
+        "name": "scatter_gdp_lifeexp",
+        "description": "Scatter: GDP per capita vs Life Expectancy, 2025",
+        "path": "/analysis/scatter",
+        "wait_for_load": 4000,
+        "actions": [
+            {"type": "js", "code": "loadScatter()", "wait": 4000},
+        ],
+        "wait_after": 3000,
+    },
+
+    # ─── CSI (CIA Studies in Intelligence) ───────────────────────────
+    "csi_search": {
+        "name": "csi_search",
+        "description": "CSI: Studies in Intelligence search interface",
+        "path": "/analysis/csi",
+        "wait_for_load": 4000,
+        "actions": [],
+        "wait_after": 2000,
+    },
+    "csi_dashboard": {
+        "name": "csi_dashboard",
+        "description": "CSI: Dashboard with publication stats and trends",
+        "path": "/analysis/csi/dashboard",
+        "wait_for_load": 5000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+
+    # ─── Explorer & Structured Data ──────────────────────────────────
+    "explorer": {
+        "name": "explorer",
+        "description": "Advanced Analytics Explorer with multi-panel analysis",
+        "path": "/analysis/explorer",
+        "wait_for_load": 5000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+    "structured_data": {
+        "name": "structured_data",
+        "description": "Structured Field Data: parsed sub-fields with charts",
+        "path": "/analysis/structured-data",
+        "wait_for_load": 5000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+    "coverage": {
+        "name": "coverage",
+        "description": "Intelligence Gap Analysis: entity coverage heatmap",
+        "path": "/analysis/coverage",
+        "wait_for_load": 5000,
+        "actions": [],
+        "wait_after": 3000,
+    },
+
+    # ─── Maps ────────────────────────────────────────────────────────
+    "maps_gallery": {
+        "name": "maps_gallery",
+        "description": "CIA Reference Maps: gallery with carousel browser",
+        "path": "/maps",
+        "wait_for_load": 4000,
+        "actions": [],
+        "wait_after": 2000,
+    },
+    "maps_country_china": {
+        "name": "maps_country_china",
+        "description": "CIA Maps: China admin, physiography, and transport maps",
+        "path": "/maps/CN",
+        "wait_for_load": 4000,
+        "actions": [],
+        "wait_after": 2000,
+    },
 }
 
 
