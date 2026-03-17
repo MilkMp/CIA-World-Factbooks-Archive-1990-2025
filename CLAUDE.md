@@ -119,6 +119,58 @@ for year in years:
 # After detaching HEAD, git log only shows history reachable from that commit
 ```
 
+## Beyond the Factbook -- OSINT Data Collections
+
+This repo also archives several related CIA open-source intelligence datasets:
+
+### Atlas (Interactive Globe)
+- Full-screen Mapbox GL JS globe at `/analysis/atlas` on the webapp
+- 20+ toggleable layers: military bases, nuclear facilities, missile sites, COCOM regions, disputed territories, submarine cables, shipping lanes, EEZ zones, night lights
+- Missile facilities from ACA, FAS, CSIS Missile Threat OSINT data (~200+ sites)
+- 7 facility types: silo fields, submarine bases, mobile garrisons, air bases, test ranges, production, storage
+- Data: `data/missile_facilities_osint.csv`, loaded by `scripts/populate_missiles.py` and `scripts/populate_missile_sites.py` (in webapp repo)
+- Webapp router: `webapp/routers/atlas.py`, template: `webapp/templates/analysis/atlas.html`
+
+### World Leaders (Chiefs of State)
+- Parsed from CIA's "Chiefs of State and Cabinet Members" directory
+- 5,696 records across 193 countries and 6 years (2022-2026 + historical PDFs 2003-2019)
+- 12 controlled subfields (executive head of state, defense, foreign affairs, etc.), 3-tier role classification
+- Data: `data/world_leaders_model.json`, `data/world_leaders_structured.sqlite`
+- Build: `scripts/build_world_leaders_model.py`
+- Scraper: `CIA_World_Leaders/scrape_world_leaders.py`
+- Webapp: 6 pages (overview, browse, governance, concentration, security, map)
+- Docs: `docs/WORLD_LEADERS_HANDOFF.md`, `docs/WORLD_LEADERS_RESEARCH_PROJECT.md`
+
+### CIA Maps Archive
+- ~300+ maps by country (administrative, physiography, transportation variants)
+- Scraped from cia.gov public domain maps
+- Scraper: `CIA_Maps/scrape_cia_maps.py`
+- Metadata: `CIA_Maps/maps_metadata.json`
+- Webapp gallery: `/maps` route with pagination and type filters
+
+### CIA Studies in Intelligence
+- Parsed corpus of CIA's *Studies in Intelligence* journal
+- Local-only analytics dashboard (not deployed to Fly.io)
+- Data: `data/csi_studies_index.sqlite`, entity graph artifacts
+- Corpus: `CIA_Studies_Intelligence_clean/` (text files by year, 1992-2002+)
+- Server: `scripts/csi_reader_server.py` (local `http.server`)
+- Handoff doc: `docs/CLAUDE_HANDOFF.md`
+
+## Version History
+
+| Version | Date | Key Changes |
+|---------|------|-------------|
+| v3.5 | 2026-03-17 | Accent fix (6,717 fields), StarDict per-field rebuild (2.1M entries), sync script |
+| v3.4.2 | 2026-03-12 | Documentation cleanup, DOI update |
+| v3.4.1 | 2026-03-06 | Screenshots refresh (49 PNGs + 9 GIFs) |
+| v3.4 | 2026-03-05 | Pipe-after-colon parser fix, +164,494 sub-values (1,775,588 total) |
+| v3.3 | 2026-03-05 | IsComputed flag, case-sensitive field mappings, 0 unmapped fields |
+| v3.2 | 2026-03-01 | StarDict dictionaries (per-country), encoding repair (117 U+FFFD -> 0), single DB consolidation |
+| v3.1 | 2026-02-28 | Pipe delimiters, SourceFragment, 18 new parsers, 1996 data repair |
+| v3.0 | 2026-02-26 | Structured field parsing (FieldValues table), 55 parsers |
+
+82 commits total. Initial release was the raw SQL Server database with ETL scripts. The project evolved through adding a webapp, migrating to SQLite, building structured parsing, adding StarDict exports, and accumulating OSINT data collections.
+
 ## Code Style
 
 - Python: `C:/Users/milan/anaconda3/python.exe`
@@ -128,15 +180,44 @@ for year in years:
 
 ## Key File Locations
 
+### ETL & Data Pipeline
 | File | Purpose |
 |------|---------|
 | `etl/reload_json_years.py` | JSON-era parser (2021-2025), has `strip_html()` |
-| `etl/sync_sqlite_to_sqlserver.py` | Sync SQLite -> SQL Server |
-| `etl/stardict/build_stardict.py` | Build StarDict dictionaries |
-| `etl/stardict/validate_stardict.py` | Validate StarDict dictionaries (16 tests) |
-| `etl/structured_parsing/parse_field_values.py` | Parse raw text into FieldValues sub-values |
+| `etl/load_gutenberg_years.py` | Plain-text parser (1990-2001), 4 format variants |
+| `etl/build_archive.py` | HTML parser (2000-2020), 5 layout variants |
+| `etl/build_field_mappings.py` | Maps 1,132 field name variants to 416 canonical names |
+| `etl/structured_parsing/parse_field_values.py` | Parse raw text into 1,775,588 FieldValues sub-values |
+| `etl/structured_parsing/export_field_values_to_sqlite.py` | Export to factbook.db (use `--webapp` for FTS5) |
 | `etl/fix_encoding_and_duplicates.py` | Fix U+FFFD encoding corruption |
+| `etl/sync_sqlite_to_sqlserver.py` | Sync SQLite -> SQL Server |
+| `etl/validate_integrity.py` | 10-check validation suite |
+
+### StarDict
+| File | Purpose |
+|------|---------|
+| `etl/stardict/build_stardict.py` | Build StarDict dictionaries |
+| `etl/stardict/validate_stardict.py` | 16-test validation suite |
+| `etl/stardict/README.md` | Full design doc (format, synonyms, validation) |
 | `CIA_Factbook_Tars/` | Mirror of StarDict scripts -- **must stay in sync** with `etl/stardict/` |
+
+### Data Files
+| File | Purpose |
+|------|---------|
 | `data/factbook.db` | SQLite database (source of truth) |
+| `data/factbook_v3.2_backup.db` | Pre-v3.5 backup |
+| `data/missile_facilities_osint.csv` | OSINT missile site locations |
+| `data/world_leaders_model.json` | Structured world leaders data |
+| `data/world_leaders_structured.sqlite` | World leaders SQLite DB |
 | `data/stardict/` | Built StarDict dictionaries |
 | `data/stardict-tarballs/` | Compressed tarballs for release |
+
+### Documentation
+| File | Purpose |
+|------|---------|
+| `docs/METHODOLOGY.md` | Full parsing methodology |
+| `docs/ETL_PIPELINE.md` | ETL pipeline documentation |
+| `docs/RELEASE_v3.*.md` | Release notes for each version |
+| `docs/WORLD_LEADERS_HANDOFF.md` | World leaders implementation doc |
+| `docs/CLAUDE_HANDOFF.md` | CSI Studies Intelligence handoff |
+| `docs/CIA_Factbook_Archive_Executive_Summary.pdf` | 3-page executive summary |

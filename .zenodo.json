@@ -1,0 +1,23 @@
+{
+  "title": "CIA World Factbook Archive (1990-2025)",
+  "description": "Complete archive of the CIA World Factbook from 1990 to 2025, preserving 36 years of geopolitical data across 281 entities with 1,071,603 data fields and 1,775,588 structured sub-values. Includes SQLite database, StarDict dictionaries, and a live web application.",
+  "creators": [
+    {
+      "name": "Milkovich, Milan",
+      "affiliation": "Independent Researcher"
+    }
+  ],
+  "upload_type": "dataset",
+  "access_right": "open",
+  "license": "CC-BY-4.0",
+  "keywords": [
+    "CIA World Factbook",
+    "geopolitical data",
+    "country profiles",
+    "open data",
+    "OSINT",
+    "archive",
+    "SQLite",
+    "StarDict"
+  ]
+}
