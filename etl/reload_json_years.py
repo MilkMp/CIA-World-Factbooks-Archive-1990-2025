@@ -55,13 +55,15 @@ def strip_html(text):
     """Remove HTML tags, using pipe delimiters at block-level boundaries."""
     if not text:
         return ""
+    import html as html_mod
     s = str(text)
     # Block-level boundaries → pipe
     s = re.sub(r'<br\s*/?\s*>\s*(?:<br\s*/?\s*>)?', ' | ', s, flags=re.IGNORECASE)
     s = re.sub(r'</p>\s*<p[^>]*>', ' | ', s, flags=re.IGNORECASE)
     # Strip remaining tags
     s = re.sub(r'<[^>]+>', ' ', s)
-    s = re.sub(r'&[a-zA-Z]+;', ' ', s)
+    # Decode HTML entities (e.g. &aacute; -> á, &eacute; -> é)
+    s = html_mod.unescape(s)
     # Clean whitespace
     s = re.sub(r'\s+', ' ', s).strip()
     # Clean pipe formatting

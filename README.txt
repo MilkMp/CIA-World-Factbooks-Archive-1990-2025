@@ -30,7 +30,7 @@ KEY QUERY — Snapshot of all factbook content with country metadata:
 
 DATABASES:
   SQL Server:  CIA_WorldFactbook on localhost (Windows Auth, ODBC Driver 18)
-  SQLite:      data/factbook.db (~656 MB, all tables + FTS5 + ISOCountryCodes)
+  SQLite:      data/factbook.db (~662 MB, all tables + FTS5 + ISOCountryCodes)
 
   factbook.db is a self-contained database used by the webapp and for distribution.
   SQL Server is the canonical source for ETL.

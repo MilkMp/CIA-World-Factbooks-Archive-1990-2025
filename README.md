@@ -18,7 +18,7 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 | **Country-year records** | 9,536 |
 | **Category records** | 83,682 |
 | **Data fields** | 1,071,603 |
-| **Content size** | ~656 MB (with FieldValues + FTS) |
+| **Content size** | ~662 MB (with FieldValues + FTS) |
 | **Field name variants** | 1,132 mapped to 416 canonical names |
 | **Structured sub-values** | 1,775,588 parsed from raw text (2,599 sub-fields) |
 
@@ -146,7 +146,7 @@ The raw CIA World Factbook changed format **at least 10 times** between 1990 and
 | `validate_integrity.py` | 296 | All | Read-only validation suite with 10 checks: field count benchmarks, US population/GDP ground truth, year-over-year consistency, source provenance, NULL detection, and unmapped field name gap analysis. |
 | `structured_parsing/parse_field_values.py` | 1,400+ | All | Decomposes 1,071,603 raw text blobs into 1,775,588 typed sub-values using 55 field-specific parsers + generic fallback. Each row includes a `SourceFragment` column showing the exact text slice that produced the value, and an `IsComputed` flag distinguishing source-extracted values (0) from parser-derived values (1). Extracts land/water area, male/female life expectancy, age brackets, sex ratios, literacy, budget, elevation, dependency ratios, GDP composition, CO2 emissions, water/sanitation, and more. |
 | `structured_parsing/validate_field_values.py` | 231 | All | Validates FieldValues against the source database: row counts, coverage, numeric extraction rate, spot checks against known ground truth values (US population, Russia area, Japan military). |
-| `structured_parsing/export_field_values_to_sqlite.py` | 269 | All | Exports FieldValues + all reference tables to a self-contained SQLite database (factbook.db, ~656 MB with FTS5 + ISOCountryCodes when using `--webapp`). Includes post-export integrity check that detects and backfills any unmapped field names. |
+| `structured_parsing/export_field_values_to_sqlite.py` | 269 | All | Exports FieldValues + all reference tables to a self-contained SQLite database (factbook.db, ~662 MB with FTS5 + ISOCountryCodes when using `--webapp`). Includes post-export integrity check that detects and backfills any unmapped field names. |
 
 ### Why parsing was so difficult
 
@@ -216,7 +216,7 @@ See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) and [docs/ETL_PIPELINE.md](docs/E
 
 The raw text in `CountryFields.Content` has been decomposed into **1,775,588 typed sub-values** across **2,599 distinct sub-fields** using 55 dedicated parsers. Each row includes a `SourceFragment` showing the exact text slice that produced the value, and an `IsComputed` flag distinguishing values extracted directly from source text (`0`) from values derived by computation (`1`, e.g. averaging male/female life expectancy for pre-1995 data). Sub-field boundaries in Content use pipe (`|`) delimiters for unambiguous parsing. This enables SQL queries that were previously impossible without per-query regex — for example, ranking countries by land-vs-water ratio, comparing male vs female life expectancy, or charting budget deficit trends.
 
-**Download:** [factbook.db (~656 MB) from Release v3.4](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/v3.4) — single self-contained database with all tables, FTS5 search index, and ISO country codes.
+**Download:** [factbook.db (~662 MB) from Release v3.5](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/v3.5) — single self-contained database with all tables, FTS5 search index, and ISO country codes.
 
 **Live dashboard:** [worldfactbookarchive.org/analysis/structured-data](https://worldfactbookarchive.org/analysis/structured-data) — interactive charts showing new queries with SQL and source data tabs.
 
@@ -240,20 +240,17 @@ See [etl/structured_parsing/DESIGN.md](etl/structured_parsing/DESIGN.md) for the
 
 ### StarDict Dictionaries (for KOReader / GoldenDict)
 
-Offline dictionaries in StarDict format for use with [KOReader](https://koreader.rocks/), [GoldenDict](http://goldendict.org/), and other StarDict-compatible apps. Look up any country by name, ISO code, or FIPS code and get the full Factbook entry.
+Offline dictionaries in StarDict format for use with [KOReader](https://koreader.rocks/), [GoldenDict-ng](https://xiaoyifang.github.io/goldendict-ng/), and other StarDict-compatible apps. Each (country, field) pair is its own dictionary entry (e.g., "Afghanistan - Population"), matching the per-field format used by KOReader's existing factbook dictionary. Entries are searchable by country name, ISO Alpha-2 code, or FIPS 10-4 code combined with the field name.
 
-**Two editions per year:**
-- **General** — full field text grouped by category (Geography, People, Economy, etc.)
-- **Structured** — parsed numeric sub-values with units from the FieldValues table
+**36 dictionaries** (one per year, 1990-2025), **~2.1 million entries** total, ~130 MB compressed.
 
-**72 dictionaries** total: 36 years (1990-2025) x 2 editions, ~97 MB compressed.
+**Download:** [StarDict tarballs from Release v3.5-stardict](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/v3.5-stardict) — grab individual years or all 36.
 
-**Generate:**
+**Generate locally:**
 ```bash
 pip install pyglossary python-idzip
-python etl/stardict/build_stardict.py                    # all 72
+python etl/stardict/build_stardict.py                    # all 36 years
 python etl/stardict/build_stardict.py --years 2025       # just 2025
-python etl/stardict/build_stardict.py --editions general # general only
 ```
 
 Output goes to `data/stardict/`. Each dictionary is a directory with `.ifo`, `.idx`, `.dict.dz`, and `.syn` files. Copy the directory into your dictionary app's data folder (e.g., `koreader/data/dict/` for KOReader).
@@ -262,7 +259,7 @@ See [etl/stardict/README.md](etl/stardict/README.md) for format details, synonym
 
 ### Alternative: SQLite (No SQL Server Required)
 
-A pre-built SQLite database (`factbook.db`, ~656 MB) is available as a release download for users who don't need SQL Server. The file exceeds GitHub's 100 MB file-size limit, so it is not included in the repository itself.
+A pre-built SQLite database (`factbook.db`, ~662 MB) is available as a release download for users who don't need SQL Server. The file exceeds GitHub's 100 MB file-size limit, so it is not included in the repository itself.
 
 **Download:** [factbook.db from the latest release](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/latest)
 
@@ -271,7 +268,7 @@ Place the downloaded file at `data/factbook.db` in the project root. SQLite requ
 | | SQL Server | SQLite |
 |--|-----------|--------|
 | **Setup** | Install SQL Server + ODBC driver, run schema + import scripts | Download one `.db` file |
-| **Size** | ~263 MB across 36 gzipped SQL files | ~656 MB single file |
+| **Size** | ~263 MB across 36 gzipped SQL files | ~662 MB single file |
 | **Query tool** | SSMS, sqlcmd, pyodbc | Python `sqlite3`, DB Browser, any SQLite client |
 | **Best for** | Power BI, enterprise analytics, large-scale joins | Quick exploration, scripting, lightweight apps |
 | **Schema** | Identical 5-table structure | Identical 5-table structure |

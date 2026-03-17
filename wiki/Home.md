@@ -18,7 +18,7 @@ An interactive web application for exploring this archive is available at **[wor
 | **Data fields** | 1,071,601 |
 | **Structured sub-values** | 1,775,588 (parsed from raw text) |
 | **Field name variants** | 1,132 mapped to 416 canonical names |
-| **Database size** | ~656 MB (SQLite with FTS5 index) |
+| **Database size** | ~662 MB (SQLite with FTS5 index) |
 | **License** | MIT (code) / Public Domain (data) |
 | **DOI** | [10.5281/zenodo.18884612](https://doi.org/10.5281/zenodo.18884612) |
 
