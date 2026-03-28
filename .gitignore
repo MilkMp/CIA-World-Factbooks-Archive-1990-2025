@@ -3,6 +3,7 @@ __pycache__/
 *.pyo
 .env
 *.bak
+CLAUDE.md
 *.log
 .DS_Store
 Thumbs.db
