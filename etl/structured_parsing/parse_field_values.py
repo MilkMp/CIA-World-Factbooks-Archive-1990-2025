@@ -237,10 +237,11 @@ def parse_age_structure(field_id, content):
 
     # Pattern: "0-14 years: 18.1% (male 31,618,532/female 30,254,223)"
     # Also: "0-14 years: 18.72% (male 2,457,418; female 2,309,706)"
+    # Also: "65 years and over: 18.5% (2024 est.) (male 28,426,426/female 34,927,914)"
     for m in re.finditer(
         r'(\d+[-–]\d+\s*years?|65\s*years?\s*and\s*over)\s*:\s*([\d.]+)%'
-        r'(?:\s*\(?\s*(?:male\s*([\d,]+)\s*[/;]\s*female\s*([\d,]+)|'
-        r'\(\d{4}\s*est\.\))\s*\(?(?:\s*\(male\s*([\d,]+)[/;]\s*female\s*([\d,]+)\))?)?',
+        r'(?:\s*(?:\(\d{4}\s*est\.?\)\s*)?'
+        r'\(male\s*([\d,]+)\s*[/;]\s*female\s*([\d,]+)\))?',
         content
     ):
         bracket = m.group(1).strip().replace('–', '-')
@@ -248,8 +249,8 @@ def parse_age_structure(field_id, content):
         rows.append(make_row(field_id, bracket + '_pct',
                              numeric_val=pct, units='%', date_est=date_est,
                              source_frag=m.group(0)))
-        male_v = m.group(3) or m.group(5)
-        female_v = m.group(4) or m.group(6)
+        male_v = m.group(3)
+        female_v = m.group(4)
         if male_v:
             rows.append(make_row(field_id, bracket + '_male',
                                  numeric_val=parse_number(male_v),
