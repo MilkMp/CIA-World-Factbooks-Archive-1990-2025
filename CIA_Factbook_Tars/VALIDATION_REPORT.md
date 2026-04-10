@@ -1,10 +1,10 @@
 # StarDict Dictionary Validation Report
 
-**Date:** 2026-03-17
+**Date:** 2026-04-09 (updated from 2026-03-17)
 **Dictionaries:** 72 (36 years x 2 editions)
 **Format:** Per-field (one entry per country+field pair)
-**Total entries:** 2,095,643
-**Total size:** 252.8 MB (dictionaries)
+**Total entries (general):** 1,060,301
+**Total size:** 135.7 MB (general dictionaries)
 
 ## Final Score: 16/16 Tests Pass
 
@@ -23,7 +23,7 @@
 | 11 | Ground truth | 50 verified data points | PASS |
 | 12 | Structured sub-fields | 20 countries checked | PASS |
 | 13 | Historical entity names | Soviet Union, Yugoslavia, GDR, Czechoslovakia | PASS |
-| 14 | Encoding quality | 0 bad chars / 380,588,409 total = 0.000% | PASS |
+| 14 | Encoding quality | 0 bad chars / 380,564,585 total = 0.000% | PASS |
 | 15 | Name match | All names match database | PASS |
 | 16 | Round-trip read | pyglossary reads all entries correctly | PASS |
 
@@ -119,16 +119,26 @@
 | Colombia | 2025 | General | Colombia - Capital | Bogota | PASS |
 | ... and 35 additional checks across multiple years and countries | | | | | PASS |
 
+### Issue 8: Missing Bare Country Name Lookups (KOReader/GoldenDict)
+
+**Problem:** Users could not find entries by typing a country name (e.g. "Afghanistan") because all headwords were in `"Country - Field"` format (e.g. `"Afghanistan - Population"`). The old KOReader 2014 factbook dict included standalone country names as synonyms pointing to the first entry, which is how dictionary apps resolve bare lookups.
+
+**Reported by:** shuvashish76 on [koreader/koreader#15043](https://github.com/koreader/koreader/issues/15043) (2026-03-18).
+
+**Fix:** Added bare country name and ISO/FIPS codes as headwords on each country's first field entry. For example, "Afghanistan" now appears as a primary headword on the first field entry for Afghanistan, alongside "AF" (ISO) as a synonym. This matches the 2014 dict's lookup behavior.
+
+**Result:** ~451 bare country name/code headwords added across ~260 entities per year. Synonym count for 2025 general: 40,661 -> 41,112.
+
 ## Entry Count Summary
 
 | Era | Years | Source Format | Entries/Year | Synonyms/Year |
 |-----|-------|---------------|-------------|---------------|
-| 1990-1991 | 2 | old/tagged text | 14,811-15,654 | 17,519-18,168 |
-| 1992 | 1 | colon text | 17,255 | 21,016 |
-| 1993-2000 | 8 | asterisk/atsign | 18,439-26,387 | 22,441-32,340 |
-| 2001-2005 | 5 | equals/HTML | 27,132-28,958 | 34,085-36,185 |
-| 2006-2020 | 15 | HTML | 28,951-37,163 | 36,306-47,611 |
-| 2021-2025 | 5 | JSON | 31,623-38,132 | 40,661-48,918 |
+| 1990-1991 | 2 | old/tagged text | 14,811-15,654 | ~18,000-18,600 |
+| 1992 | 1 | colon text | 17,255 | ~21,500 |
+| 1993-2000 | 8 | asterisk/atsign | 18,439-26,387 | ~22,900-32,800 |
+| 2001-2005 | 5 | equals/HTML | 27,132-28,958 | ~34,500-36,600 |
+| 2006-2020 | 15 | HTML | 28,951-37,163 | ~36,800-48,100 |
+| 2021-2025 | 5 | JSON | 31,623-38,132 | ~41,100-49,400 |
 
 ## Size Progression
 
@@ -155,4 +165,5 @@ python etl/stardict/validate_stardict.py
 
 The remaining 0.5% accounts for:
 
-- Not tested on actual KOReader/GoldenDict hardware (binary format validated structurally and via pyglossary round-trip)
+- KOReader hardware testing is pending (user shuvashish76 reported bare name lookups broken in v3.5, fixed in this update -- awaiting confirmation)
+- Binary format validated structurally and via pyglossary round-trip

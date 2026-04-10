@@ -238,6 +238,7 @@ def build_general_dict(db, master, year, output_dir, dictzip, iso_owner=None):
             field_entries[key] = (period_name, mcid, cat, content)
 
     entries = []
+    seen_countries = set()  # track which countries have had bare-name synonyms added
     for (coid, field_name), (period_name, mcid, cat, content) in field_entries.items():
         info = master.get(mcid)
         if not info:
@@ -245,6 +246,12 @@ def build_general_dict(db, master, year, output_dir, dictzip, iso_owner=None):
         _canonical, iso, fips = info
         codes = build_country_codes(period_name, iso, fips, iso_owner)
         headwords = build_field_headwords(codes, field_name)
+        # Add bare country name/codes as synonyms on the FIRST field entry
+        # for each country so KOReader can find entries by typing just the
+        # country name (matching the 2014 factbook dict behavior).
+        if coid not in seen_countries:
+            seen_countries.add(coid)
+            headwords = codes + headwords  # bare names first, then "Name - Field"
         body = build_general_field_html(period_name, cat, content)
         entries.append((headwords, body))
 
@@ -277,6 +284,7 @@ def build_structured_dict(db, master, year, output_dir, dictzip, iso_owner=None)
         field_meta[key] = (period_name, mcid, cat)
 
     entries = []
+    seen_countries = set()
     for (coid, field_name), sub_rows in field_entries.items():
         period_name, mcid, cat = field_meta[(coid, field_name)]
         info = master.get(mcid)
@@ -285,6 +293,10 @@ def build_structured_dict(db, master, year, output_dir, dictzip, iso_owner=None)
         _canonical, iso, fips = info
         codes = build_country_codes(period_name, iso, fips, iso_owner)
         headwords = build_field_headwords(codes, field_name)
+        # Add bare country name/codes as synonyms on the FIRST field entry
+        if coid not in seen_countries:
+            seen_countries.add(coid)
+            headwords = codes + headwords
         body = build_structured_field_html(period_name, cat, field_name, sub_rows)
         if body.strip():
             entries.append((headwords, body))
