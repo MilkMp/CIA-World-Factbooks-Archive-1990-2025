@@ -1,4 +1,4 @@
--- MasterCountries: 281 rows
+-- MasterCountries: 282 rows
 -- Exported from CIA_WorldFactbook archive
 
 SET IDENTITY_INSERT MasterCountries ON;
@@ -65,7 +65,7 @@ VALUES
   (58, N'CT', N'Central African Republic', N'CF', N'sovereign', NULL),
   (59, N'CU', N'Cuba', N'CU', N'sovereign', NULL),
   (60, N'CV', N'Cabo Verde', N'CV', N'sovereign', NULL),
-  (61, N'CW', N'Cook Islands', N'CK', N'territory', 190),
+  (61, N'CW', N'Cook Islands', N'CK', N'freely_associated', 190),
   (62, N'CY', N'Cyprus', N'CY', N'sovereign', NULL),
   (63, N'DA', N'Denmark', N'DK', N'sovereign', NULL),
   (64, N'DJ', N'Djibouti', N'DJ', N'sovereign', NULL),
@@ -180,7 +180,7 @@ VALUES
   (174, N'MY', N'Malaysia', N'MY', N'sovereign', NULL),
   (175, N'MZ', N'Mozambique', N'MZ', N'sovereign', NULL),
   (176, N'NC', N'New Caledonia', N'NC', N'territory', 89),
-  (177, N'NE', N'Niue', N'NU', N'territory', 190),
+  (177, N'NE', N'Niue', N'NU', N'freely_associated', 190),
   (178, N'NF', N'Norfolk Island', N'NF', N'territory', 13),
   (179, N'NG', N'Niger', N'NE', N'sovereign', NULL),
   (180, N'NH', N'Vanuatu', N'VU', N'sovereign', NULL),
@@ -286,7 +286,8 @@ VALUES
   (286, N'ZH', N'Atlantic Ocean', NULL, N'misc', NULL),
   (287, N'ZI', N'Zimbabwe', N'ZW', N'sovereign', NULL),
   (288, N'ZN', N'Pacific Ocean', NULL, N'misc', NULL),
-  (289, N'ZZ', N'Iles Eparses', NULL, N'territory', 89);
+  (289, N'ZZ', N'Iles Eparses', NULL, N'territory', 89),
+  (290, N'IY', N'Iraq - Saudi Arabia Neutral Zone', NULL, N'dissolved', NULL);
 GO
 
 SET IDENTITY_INSERT MasterCountries OFF;
