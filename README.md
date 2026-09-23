@@ -11,10 +11,6 @@ The CIA World Factbook was discontinued on **February 4, 2026**. This archive pr
 The full archive is also a **free, fully-offline app** — the entire
 36-year dataset is bundled inside, so it runs with no account and no network.
 
-- **Windows 10/11 (64-bit):** [**Download for Windows**](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/download/windows-v1.0.0/WorldFactbookArchive-Windows-x64.zip) — portable zip; unzip and run `factbook.exe`. Not yet code-signed, so Windows may show a SmartScreen prompt the first time (More info -> Run anyway).
-- **Android:** [**Download for Android**](https://worldfactbookarchive.org/android) — direct install.
-- **iPhone / iPad:** *Coming soon* — in review on the App Store.
-
 > **Data Integrity:** No Factbook content is added or altered. The parsing process structures the CIA's raw text into queryable fields — removing formatting artifacts, sectioning headers, and deduplicating noise lines — but the actual data values are exactly as the CIA published them. The only additions to the source data are reference lookup tables (FIPS-to-ISO code mappings, entity classifications, COCOM regional assignments) that sit alongside the original data, not inside it. In FieldValues, a small number of rows are derived by computation from neighboring sub-values (e.g. total life expectancy averaged from male/female in pre-1995 data); these are clearly flagged with `IsComputed = 1`.
 
 
