@@ -16,7 +16,6 @@ Run:
   python load_gutenberg_years.py --year 1995      # Load single year
   python load_gutenberg_years.py --dry-run        # Preview without DB writes
 """
-import pyodbc
 import sys
 import os
 import re
@@ -279,6 +278,8 @@ def parse_atsign_format(text):
        Area:
        total area: 647,500 sq km
     """
+    # Back matter follows Zimbabwe and is not a country section.
+    text = re.split(r'^@NOTES AND DEFINITIONS\s*$', text, maxsplit=1, flags=re.MULTILINE)[0]
     countries = []
 
     # Skip preamble: find first _____ separator line (marks start of country data)
@@ -681,6 +682,33 @@ def extract_mixed_fields(text):
 # NAME-TO-CODE MAPPING
 # ============================================================
 
+HISTORICAL_ALIASES = {
+    'cape verde': 'CV', 'cocos islands': 'CK', 'man, isle of': 'IM',
+    'south georgia and the': 'SX', 'wake atoll': 'WQ',
+    'st. helena': 'SH', 'st. kitts and nevis': 'SC', 'st. lucia': 'ST',
+    'st. pierre and miquelon': 'SB', 'st. vincent and the grenadines': 'VC',
+    'pacific islands, trust territory of the': 'PS',
+    'pacific islands (palau), trust territory of the': 'PS',
+    'pacific islands, trust territory of the (palau)': 'PS',
+    'iraq - saudi arabia neutral zone': 'IY',
+    'burkina': 'UV', 'burma': 'BM', 'congo': 'CF',
+    'falkland islands': 'FK', 'kazakstan': 'KZ', 'vatican city': 'VT',
+    'western samoa': 'WS', 'turkey': 'TU', 'saint helena': 'SH',
+    'macedonia': 'MK', 'macedonia,': 'MK',
+    'macedonia, the former yugoslav republic of': 'MK',
+    'the former yugoslav republic of macedonia': 'MK',
+    # Preserve the archive's existing predecessor grouping explicitly.
+    'german democratic republic': 'GM', 'germany, federal republic of': 'GM',
+    'yemen arab republic': 'YM', "yemen, people's democratic republic of": 'YM',
+}
+
+
+def validate_country_matches(countries, name_map):
+    missing = [name for name, _ in countries if find_master_match(name, name_map)[0] is None]
+    if missing:
+        raise ValueError('Unreviewed country identities (no data deleted): ' + ', '.join(missing))
+
+
 def build_name_to_master_map(cursor):
     """Build a mapping from various country names to MasterCountryID and code."""
     cursor.execute("SELECT MasterCountryID, CanonicalCode, CanonicalName FROM MasterCountries")
@@ -708,6 +736,12 @@ def build_name_to_master_map(cursor):
         if canonical.lower() in name_map and alias.lower() not in name_map:
             name_map[alias.lower()] = name_map[canonical.lower()]
 
+    # Reviewed aliases use FIPS explicitly; prefixes like "ca", "ma" and
+    # substrings like "Georgia" cannot establish country identity.
+    for alias, fips in HISTORICAL_ALIASES.items():
+        if fips.lower() in code_map:
+            name_map[alias.casefold()] = (code_map[fips.lower()], fips.lower())
+
     return name_map, code_map
 
 
@@ -725,34 +759,12 @@ def find_master_match(country_name, name_map):
         if without_the in name_map:
             return name_map[without_the]
 
-    # Try fuzzy: strip common suffixes/prefixes
-    for name, val in name_map.items():
-        if key in name or name in key:
-            return val
-
     return None, None
-
-
-def make_code(country_name):
-    """Generate a short code from a country name (fallback when no master match)."""
-    # Use first 2 consonants + first vowel, or first 2 chars
-    clean = re.sub(r'[^a-zA-Z]', '', country_name)
-    return clean[:2].lower() if len(clean) >= 2 else country_name[:2].lower()
 
 
 # ============================================================
 # DATABASE OPERATIONS
 # ============================================================
-
-def snapshot_master_links(cursor, year):
-    """Capture Code -> MasterCountryID mapping before deletion."""
-    cursor.execute("""
-        SELECT Code, MasterCountryID
-        FROM Countries
-        WHERE Year = ? AND MasterCountryID IS NOT NULL
-    """, year)
-    return {row[0]: row[1] for row in cursor.fetchall()}
-
 
 def delete_year_data(cursor, conn, year):
     """Delete all data for a year, respecting FK constraints."""
@@ -772,7 +784,7 @@ def delete_year_data(cursor, conn, year):
     return len(country_ids)
 
 
-def load_year(cursor, conn, year, countries, name_map, old_master_links):
+def load_year(cursor, conn, year, countries, name_map):
     """Insert parsed countries into the database."""
     success = 0
     failed = 0
@@ -782,12 +794,8 @@ def load_year(cursor, conn, year, countries, name_map, old_master_links):
         try:
             # Find code and MasterCountryID
             master_id, code = find_master_match(country_name, name_map)
-            if not code:
-                code = make_code(country_name)
-
-            # Check old master links by code
-            if not master_id and code in old_master_links:
-                master_id = old_master_links[code]
+            if master_id is None or code is None:
+                raise ValueError(f'Unreviewed country identity: {country_name}')
 
             # Insert country
             cursor.execute(
@@ -920,6 +928,7 @@ def main():
     print()
 
     # Connect to database
+    import pyodbc
     conn = pyodbc.connect(CONN_STR)
     cursor = conn.cursor()
     print("Connected to database.")
@@ -982,20 +991,21 @@ def main():
             results[year] = f"dry-run ({len(countries)} countries, {total_fields:,} fields)"
             continue
 
+        # Fail before deleting an existing edition if any identity is ambiguous.
+        validate_country_matches(countries, name_map)
+
         # Step 3: Check if year already exists
         cursor.execute("SELECT COUNT(*) FROM Countries WHERE Year = ?", year)
         existing = cursor.fetchone()[0]
-        old_master_links = {}
         if existing > 0:
             print(f"  Step 3: Deleting existing {existing} countries for {year}...")
-            old_master_links = snapshot_master_links(cursor, year)
             delete_year_data(cursor, conn, year)
         else:
             print(f"  Step 3: No existing data for {year}")
 
         # Step 4: Load
         print(f"  Step 4: Loading into database...")
-        success, failed, unlinked = load_year(cursor, conn, year, countries, name_map, old_master_links)
+        success, failed, unlinked = load_year(cursor, conn, year, countries, name_map)
 
         # Step 5: Verify
         print(f"  Step 5: Verifying...")

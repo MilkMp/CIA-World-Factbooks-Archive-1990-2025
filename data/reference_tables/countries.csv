@@ -2973,7 +2973,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 12003,1992,cb,Cambodia,text,42
 12004,1992,cm,Cameroon,text,52
 12005,1992,ca,Canada,text,41
-12006,1992,ca,Cape Verde,text,60
+12006,1992,cv,Cape Verde,text,60
 12007,1992,cj,Cayman Islands,text,50
 12008,1992,ct,Central African Republic,text,58
 12009,1992,cd,Chad,text,44
@@ -2981,7 +2981,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 12011,1992,ch,China,text,48
 12012,1992,kt,Christmas Island,text,139
 12013,1992,ip,Clipperton Island,text,120
-12014,1992,co,Cocos Islands,text,51
+12014,1992,ck,Cocos Islands,text,51
 12015,1992,co,Colombia,text,54
 12016,1992,cn,Comoros,text,53
 12017,1992,cf,Congo,text,46
@@ -3079,7 +3079,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 12109,1992,mv,Maldives,text,172
 12110,1992,ml,Mali,text,164
 12111,1992,mt,Malta,text,170
-12112,1992,ma,"Man, Isle of",text,117
+12112,1992,im,"Man, Isle of",text,117
 12113,1992,rm,Marshall Islands,text,209
 12114,1992,mb,Martinique,text,155
 12115,1992,mr,Mauritania,text,169
@@ -3110,7 +3110,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 12140,1992,cq,Northern Mariana Islands,text,55
 12141,1992,no,Norway,text,184
 12142,1992,mu,Oman,text,171
-12143,1992,pa,"Pacific Islands, Trust Territory of the",text,
+12143,1992,ps,"Pacific Islands, Trust Territory of the",text,203
 12144,1992,zn,Pacific Ocean,text,288
 12145,1992,pk,Pakistan,text,198
 12146,1992,lq,Palmyra Atoll,text,149
@@ -3236,7 +3236,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 12531,1996,cb,Cambodia,text,42
 12532,1996,cm,Cameroon,text,52
 12533,1996,ca,Canada,text,41
-12534,1996,ca,Cape Verde,text,60
+12534,1996,cv,Cape Verde,text,60
 12535,1996,cj,Cayman Islands,text,50
 12536,1996,ct,Central African Republic,text,58
 12537,1996,cd,Chad,text,44
@@ -3342,7 +3342,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 12637,1996,mv,Maldives,text,172
 12638,1996,ml,Mali,text,164
 12639,1996,mt,Malta,text,170
-12640,1996,ma,"Man, Isle of",text,117
+12640,1996,im,"Man, Isle of",text,117
 12641,1996,rm,Marshall Islands,text,209
 12642,1996,mb,Martinique,text,155
 12643,1996,mr,Mauritania,text,169
@@ -3503,7 +3503,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 12798,1999,cb,Cambodia,text,42
 12799,1999,cm,Cameroon,text,52
 12800,1999,ca,Canada,text,41
-12801,1999,ca,Cape Verde,text,60
+12801,1999,cv,Cape Verde,text,60
 12802,1999,cj,Cayman Islands,text,50
 12803,1999,ct,Central African Republic,text,58
 12804,1999,cd,Chad,text,44
@@ -3611,7 +3611,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 12906,1999,mv,Maldives,text,172
 12907,1999,ml,Mali,text,164
 12908,1999,mt,Malta,text,170
-12909,1999,ma,"Man, Isle of",text,117
+12909,1999,im,"Man, Isle of",text,117
 12910,1999,rm,Marshall Islands,text,209
 12911,1999,mb,Martinique,text,155
 12912,1999,mr,Mauritania,text,169
@@ -3716,7 +3716,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13011,1999,ve,Venezuela,text,268
 13012,1999,vm,Vietnam,text,270
 13013,1999,vq,Virgin Islands,text,271
-13014,1999,wa,Wake Atoll,text,277
+13014,1999,wq,Wake Atoll,text,277
 13015,1999,wf,Wallis and Futuna,text,275
 13016,1999,we,West Bank,text,274
 13017,1999,wi,Western Sahara,text,276
@@ -3765,7 +3765,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13060,1990,cb,Cambodia,text,42
 13061,1990,cm,Cameroon,text,52
 13062,1990,ca,Canada,text,41
-13063,1990,ca,Cape Verde,text,60
+13063,1990,cv,Cape Verde,text,60
 13064,1990,cj,Cayman Islands,text,50
 13065,1990,ct,Central African Republic,text,58
 13066,1990,cd,Chad,text,44
@@ -3831,7 +3831,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13126,1990,id,Indonesia,text,116
 13127,1990,ir,Iran,text,121
 13128,1990,iz,Iraq,text,125
-13129,1990,iz,Iraq - Saudi Arabia Neutral Zone,text,125
+13129,1990,iy,Iraq - Saudi Arabia Neutral Zone,text,290
 13130,1990,ei,Ireland,text,72
 13131,1990,is,Israel,text,122
 13132,1990,it,Italy,text,123
@@ -3864,7 +3864,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13159,1990,mv,Maldives,text,172
 13160,1990,ml,Mali,text,164
 13161,1990,mt,Malta,text,170
-13162,1990,ma,"Man, Isle of",text,117
+13162,1990,im,"Man, Isle of",text,117
 13163,1990,rm,Marshall Islands,text,209
 13164,1990,mb,Martinique,text,155
 13165,1990,mr,Mauritania,text,169
@@ -3894,7 +3894,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13189,1990,cq,Northern Mariana Islands,text,55
 13190,1990,no,Norway,text,184
 13191,1990,mu,Oman,text,171
-13192,1990,pa,"Pacific Islands, Trust Territory of the",text,
+13192,1990,ps,"Pacific Islands, Trust Territory of the",text,203
 13193,1990,zn,Pacific Ocean,text,288
 13194,1990,pk,Pakistan,text,198
 13195,1990,lq,Palmyra Atoll,text,149
@@ -3912,11 +3912,11 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13207,1990,re,Reunion,text,207
 13208,1990,ro,Romania,text,211
 13209,1990,rw,Rwanda,text,215
-13210,1990,st,St. Helena,text,222
-13211,1990,st,St. Kitts and Nevis,text,218
+13210,1990,sh,St. Helena,text,222
+13211,1990,sc,St. Kitts and Nevis,text,218
 13212,1990,st,St. Lucia,text,232
-13213,1990,st,St. Pierre and Miquelon,text,217
-13214,1990,st,St. Vincent and the Grenadines,text,267
+13213,1990,sb,St. Pierre and Miquelon,text,217
+13214,1990,vc,St. Vincent and the Grenadines,text,267
 13215,1990,sm,San Marino,text,226
 13216,1990,tp,Sao Tome and Principe,text,249
 13217,1990,sa,Saudi Arabia,text,216
@@ -4014,7 +4014,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13309,1991,cb,Cambodia,text,42
 13310,1991,cm,Cameroon,text,52
 13311,1991,ca,Canada,text,41
-13312,1991,ca,Cape Verde,text,60
+13312,1991,cv,Cape Verde,text,60
 13313,1991,cj,Cayman Islands,text,50
 13314,1991,ct,Central African Republic,text,58
 13315,1991,cd,Chad,text,44
@@ -4079,7 +4079,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13374,1991,id,Indonesia,text,116
 13375,1991,ir,Iran,text,121
 13376,1991,iz,Iraq,text,125
-13377,1991,iz,Iraq - Saudi Arabia Neutral Zone,text,125
+13377,1991,iy,Iraq - Saudi Arabia Neutral Zone,text,290
 13378,1991,ei,Ireland,text,72
 13379,1991,is,Israel,text,122
 13380,1991,it,Italy,text,123
@@ -4112,7 +4112,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13407,1991,mv,Maldives,text,172
 13408,1991,ml,Mali,text,164
 13409,1991,mt,Malta,text,170
-13410,1991,ma,"Man, Isle of",text,117
+13410,1991,im,"Man, Isle of",text,117
 13411,1991,rm,Marshall Islands,text,209
 13412,1991,mb,Martinique,text,155
 13413,1991,mr,Mauritania,text,169
@@ -4142,7 +4142,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13437,1991,cq,Northern Mariana Islands,text,55
 13438,1991,no,Norway,text,184
 13439,1991,mu,Oman,text,171
-13440,1991,pa,"Pacific Islands, Trust Territory of the",text,
+13440,1991,ps,"Pacific Islands, Trust Territory of the",text,203
 13441,1991,zn,Pacific Ocean,text,288
 13442,1991,pk,Pakistan,text,198
 13443,1991,lq,Palmyra Atoll,text,149
@@ -4265,7 +4265,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13825,1995,cb,Cambodia,text,42
 13826,1995,cm,Cameroon,text,52
 13827,1995,ca,Canada,text,41
-13828,1995,ca,Cape Verde,text,60
+13828,1995,cv,Cape Verde,text,60
 13829,1995,cj,Cayman Islands,text,50
 13830,1995,ct,Central African Republic,text,58
 13831,1995,cd,Chad,text,44
@@ -4372,7 +4372,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 13932,1995,mv,Maldives,text,172
 13933,1995,ml,Mali,text,164
 13934,1995,mt,Malta,text,170
-13935,1995,ma,"Man, Isle Of",text,117
+13935,1995,im,"Man, Isle Of",text,117
 13936,1995,rm,Marshall Islands,text,209
 13937,1995,mb,Martinique,text,155
 13938,1995,mr,Mauritania,text,169
@@ -4531,7 +4531,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 14357,1998,cb,Cambodia,text,42
 14358,1998,cm,Cameroon,text,52
 14359,1998,ca,Canada,text,41
-14360,1998,ca,Cape Verde,text,60
+14360,1998,cv,Cape Verde,text,60
 14361,1998,cj,Cayman Islands,text,50
 14362,1998,ct,Central African Republic,text,58
 14363,1998,cd,Chad,text,44
@@ -4639,7 +4639,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 14465,1998,mv,Maldives,text,172
 14466,1998,ml,Mali,text,164
 14467,1998,mt,Malta,text,170
-14468,1998,ma,"Man, Isle of",text,117
+14468,1998,im,"Man, Isle of",text,117
 14469,1998,rm,Marshall Islands,text,209
 14470,1998,mb,Martinique,text,155
 14471,1998,mr,Mauritania,text,169
@@ -8481,7 +8481,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 20708,1997,cb,Cambodia,text,42
 20709,1997,cm,Cameroon,text,52
 20710,1997,ca,Canada,text,41
-20711,1997,ca,Cape Verde,text,60
+20711,1997,cv,Cape Verde,text,60
 20712,1997,cj,Cayman Islands,text,50
 20713,1997,ct,Central African Republic,text,58
 20714,1997,cd,Chad,text,44
@@ -8589,7 +8589,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 20816,1997,mv,Maldives,text,172
 20817,1997,ml,Mali,text,164
 20818,1997,mt,Malta,text,170
-20819,1997,ma,"Man, Isle of",text,117
+20819,1997,im,"Man, Isle of",text,117
 20820,1997,rm,Marshall Islands,text,209
 20821,1997,mb,Martinique,text,155
 20822,1997,mr,Mauritania,text,169
@@ -8657,7 +8657,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 20884,1997,bp,Solomon Islands,text,32
 20885,1997,so,Somalia,text,228
 20886,1997,sf,South Africa,text,220
-20887,1997,gg,South Georgia and the,text,93
+20887,1997,sx,South Georgia and the South Sandwich Islands,text,236
 20888,1997,sp,Spain,text,229
 20889,1997,pg,Spratly Islands,text,197
 20890,1997,ce,Sri Lanka,text,45
@@ -8747,7 +8747,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 21239,1993,cb,Cambodia,text,42
 21240,1993,cm,Cameroon,text,52
 21241,1993,ca,Canada,text,41
-21242,1993,ca,Cape Verde,text,60
+21242,1993,cv,Cape Verde,text,60
 21243,1993,cj,Cayman Islands,text,50
 21244,1993,ct,Central African Republic,text,58
 21245,1993,cd,Chad,text,44
@@ -8854,7 +8854,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 21346,1993,mv,Maldives,text,172
 21347,1993,ml,Mali,text,164
 21348,1993,mt,Malta,text,170
-21349,1993,ma,"Man, Isle of",text,117
+21349,1993,im,"Man, Isle of",text,117
 21350,1993,rm,Marshall Islands,text,209
 21351,1993,mb,Martinique,text,155
 21352,1993,mr,Mauritania,text,169
@@ -9013,7 +9013,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 21771,2001,cb,Cambodia,text,42
 21772,2001,cm,Cameroon,text,52
 21773,2001,ca,Canada,text,41
-21774,2001,ca,Cape Verde,text,60
+21774,2001,cv,Cape Verde,text,60
 21775,2001,cj,Cayman Islands,text,50
 21776,2001,ct,Central African Republic,text,58
 21777,2001,cd,Chad,text,44
@@ -9120,7 +9120,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 21878,2001,mv,Maldives,text,172
 21879,2001,ml,Mali,text,164
 21880,2001,mt,Malta,text,170
-21881,2001,ma,"Man, Isle of",text,117
+21881,2001,im,"Man, Isle of",text,117
 21882,2001,rm,Marshall Islands,text,209
 21883,2001,mb,Martinique,text,155
 21884,2001,mr,Mauritania,text,169
@@ -9278,7 +9278,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 22036,1994,cb,Cambodia,text,42
 22037,1994,cm,Cameroon,text,52
 22038,1994,ca,Canada,text,41
-22039,1994,ca,Cape Verde,text,60
+22039,1994,cv,Cape Verde,text,60
 22040,1994,cj,Cayman Islands,text,50
 22041,1994,ct,Central African Republic,text,58
 22042,1994,cd,Chad,text,44
@@ -9384,7 +9384,7 @@ CountryID,Year,Code,Name,Source,MasterCountryID
 22142,1994,mv,Maldives,text,172
 22143,1994,ml,Mali,text,164
 22144,1994,mt,Malta,text,170
-22145,1994,ma,"Man, Isle of",text,117
+22145,1994,im,"Man, Isle of",text,117
 22146,1994,rm,Marshall Islands,text,209
 22147,1994,mb,Martinique,text,155
 22148,1994,mr,Mauritania,text,169

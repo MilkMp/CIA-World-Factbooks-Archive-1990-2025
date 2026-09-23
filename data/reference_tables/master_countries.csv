@@ -58,7 +58,7 @@ MasterCountryID,CanonicalCode,CanonicalName,ISOAlpha2,EntityType,AdministeringMa
 58,CT,Central African Republic,CF,sovereign,
 59,CU,Cuba,CU,sovereign,
 60,CV,Cabo Verde,CV,sovereign,
-61,CW,Cook Islands,CK,territory,190
+61,CW,Cook Islands,CK,freely_associated,190
 62,CY,Cyprus,CY,sovereign,
 63,DA,Denmark,DK,sovereign,
 64,DJ,Djibouti,DJ,sovereign,
@@ -173,7 +173,7 @@ MasterCountryID,CanonicalCode,CanonicalName,ISOAlpha2,EntityType,AdministeringMa
 174,MY,Malaysia,MY,sovereign,
 175,MZ,Mozambique,MZ,sovereign,
 176,NC,New Caledonia,NC,territory,89
-177,NE,Niue,NU,territory,190
+177,NE,Niue,NU,freely_associated,190
 178,NF,Norfolk Island,NF,territory,13
 179,NG,Niger,NE,sovereign,
 180,NH,Vanuatu,VU,sovereign,
@@ -280,3 +280,4 @@ MasterCountryID,CanonicalCode,CanonicalName,ISOAlpha2,EntityType,AdministeringMa
 287,ZI,Zimbabwe,ZW,sovereign,
 288,ZN,Pacific Ocean,,misc,
 289,ZZ,Iles Eparses,,territory,89
+290,IY,Iraq - Saudi Arabia Neutral Zone,,dissolved,

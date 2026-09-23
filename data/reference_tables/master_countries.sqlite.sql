@@ -1,4 +1,4 @@
--- MasterCountries: 281 rows
+-- MasterCountries: 282 rows
 -- Reference table: FIPS codes, ISO Alpha-2, entity types, territory links
 -- Exported from CIA World Factbook Archive (1990-2025)
 
@@ -70,7 +70,7 @@ INSERT INTO MasterCountries VALUES (57, 'CS', 'Costa Rica', 'CR', 'sovereign', N
 INSERT INTO MasterCountries VALUES (58, 'CT', 'Central African Republic', 'CF', 'sovereign', NULL);
 INSERT INTO MasterCountries VALUES (59, 'CU', 'Cuba', 'CU', 'sovereign', NULL);
 INSERT INTO MasterCountries VALUES (60, 'CV', 'Cabo Verde', 'CV', 'sovereign', NULL);
-INSERT INTO MasterCountries VALUES (61, 'CW', 'Cook Islands', 'CK', 'territory', 190);
+INSERT INTO MasterCountries VALUES (61, 'CW', 'Cook Islands', 'CK', 'freely_associated', 190);
 INSERT INTO MasterCountries VALUES (62, 'CY', 'Cyprus', 'CY', 'sovereign', NULL);
 INSERT INTO MasterCountries VALUES (63, 'DA', 'Denmark', 'DK', 'sovereign', NULL);
 INSERT INTO MasterCountries VALUES (64, 'DJ', 'Djibouti', 'DJ', 'sovereign', NULL);
@@ -185,7 +185,7 @@ INSERT INTO MasterCountries VALUES (173, 'MX', 'Mexico', 'MX', 'sovereign', NULL
 INSERT INTO MasterCountries VALUES (174, 'MY', 'Malaysia', 'MY', 'sovereign', NULL);
 INSERT INTO MasterCountries VALUES (175, 'MZ', 'Mozambique', 'MZ', 'sovereign', NULL);
 INSERT INTO MasterCountries VALUES (176, 'NC', 'New Caledonia', 'NC', 'territory', 89);
-INSERT INTO MasterCountries VALUES (177, 'NE', 'Niue', 'NU', 'territory', 190);
+INSERT INTO MasterCountries VALUES (177, 'NE', 'Niue', 'NU', 'freely_associated', 190);
 INSERT INTO MasterCountries VALUES (178, 'NF', 'Norfolk Island', 'NF', 'territory', 13);
 INSERT INTO MasterCountries VALUES (179, 'NG', 'Niger', 'NE', 'sovereign', NULL);
 INSERT INTO MasterCountries VALUES (180, 'NH', 'Vanuatu', 'VU', 'sovereign', NULL);
@@ -292,3 +292,4 @@ INSERT INTO MasterCountries VALUES (286, 'ZH', 'Atlantic Ocean', NULL, 'misc', N
 INSERT INTO MasterCountries VALUES (287, 'ZI', 'Zimbabwe', 'ZW', 'sovereign', NULL);
 INSERT INTO MasterCountries VALUES (288, 'ZN', 'Pacific Ocean', NULL, 'misc', NULL);
 INSERT INTO MasterCountries VALUES (289, 'ZZ', 'Iles Eparses', NULL, 'territory', 89);
+INSERT INTO MasterCountries VALUES (290, 'IY', 'Iraq - Saudi Arabia Neutral Zone', NULL, 'dissolved', NULL);

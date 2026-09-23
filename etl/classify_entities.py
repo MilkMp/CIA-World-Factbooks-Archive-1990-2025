@@ -10,7 +10,6 @@ Phase 2 (--apply):  Adds EntityType column and writes to MasterCountries.
 Run:  py classify_entities.py          # review mode
       py classify_entities.py --apply  # write to database
 """
-import pyodbc
 import sys
 
 CONN_STR = (
@@ -37,6 +36,16 @@ CONN_STR = (
 # Hardcoded overrides for entries we know can't be auto-classified
 # or where the auto-classifier gets it wrong
 OVERRIDES = {
+    # Independent states: reviewed against UN membership (issue #38).
+    "GG": "sovereign",
+    "ZI": "sovereign",
+
+    # Historical entries must retain their archival identity.
+    "IY": "dissolved",
+    "UR": "dissolved",
+    "LO": "dissolved",
+    "YU": "dissolved",
+
     # Oceans and non-countries
     "XQ": "misc",      # Arctic Ocean
     "ZH": "misc",      # Atlantic Ocean
@@ -68,6 +77,8 @@ OVERRIDES = {
     "IM": "crown_dependency",  # Isle of Man
 
     # Freely associated states
+    "CW": "freely_associated",  # Cook Islands
+    "NE": "freely_associated",  # Niue
     "RM": "freely_associated",  # Marshall Islands
     "FM": "freely_associated",  # Micronesia
     "PS": "freely_associated",  # Palau
@@ -109,17 +120,19 @@ OVERRIDES = {
 
 
 def connect_db():
+    import pyodbc
     return pyodbc.connect(CONN_STR)
 
 
 def get_gov_fields(cursor, master_id):
-    """Get the most recent Government type and Dependency status for a country."""
+    """Read both fields from the latest edition, never an old dependency label."""
     # Get the most recent year's data
     cursor.execute("""
         SELECT TOP 1 cf.FieldName, cf.Content
         FROM CountryFields cf
         JOIN Countries c ON cf.CountryID = c.CountryID
         WHERE c.MasterCountryID = ?
+          AND c.Year = (SELECT MAX(Year) FROM Countries WHERE MasterCountryID = c.MasterCountryID)
           AND cf.FieldName LIKE '%ependency%status%'
         ORDER BY c.Year DESC
     """, master_id)
@@ -131,6 +144,7 @@ def get_gov_fields(cursor, master_id):
         FROM CountryFields cf
         JOIN Countries c ON cf.CountryID = c.CountryID
         WHERE c.MasterCountryID = ?
+          AND c.Year = (SELECT MAX(Year) FROM Countries WHERE MasterCountryID = c.MasterCountryID)
           AND cf.FieldName LIKE '%overnment%type%'
         ORDER BY c.Year DESC
     """, master_id)
@@ -146,12 +160,17 @@ def classify(dep_status, gov_type, fips_code, name):
     if fips_code in OVERRIDES:
         return OVERRIDES[fips_code], "override"
 
+    # Glossary text is not evidence about a country (Zimbabwe 1998).
+    if dep_status.lower().startswith(('this entry ', 'this information ')):
+        dep_status = ''
     dep_lower = dep_status.lower()
     gov_lower = gov_type.lower()
     name_lower = name.lower()
 
     # If there's a dependency status, it's almost certainly a territory
     if dep_lower:
+        if 'free association' in dep_lower or 'freely associated' in dep_lower:
+            return "freely_associated", f"dep: {dep_status[:60]}"
         if any(kw in dep_lower for kw in [
             'territory', 'dependency', 'overseas', 'unincorporated',
             'self-governing', 'crown', 'collectivity', 'constituent',
@@ -159,8 +178,6 @@ def classify(dep_status, gov_type, fips_code, name):
         ]):
             return "territory", f"dep: {dep_status[:60]}"
 
-        if 'free association' in dep_lower or 'freely associated' in dep_lower:
-            return "freely_associated", f"dep: {dep_status[:60]}"
 
         # Generic dependency — classify as territory
         if dep_lower and dep_lower not in ('none', 'n/a', ''):
