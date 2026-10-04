@@ -4,17 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CIA World Factbooks Archive 1990-2025</title>
-<meta name="description" content="Complete structured archive of the CIA World Factbook spanning 36 years (1990-2025), 281 entities, and 1,071,603 parsed data fields in a normalized database.">
+<meta name="description" content="CIA World Factbook archive spanning 36 editions (1990-2025), with source documentation, a dated executive summary, and a full methods report.">
 <meta name="keywords" content="CIA World Factbook, CIA Factbook, world factbook archive, geopolitical data, OSINT, open source intelligence, country data, SQL Server, ETL, data archive, public domain">
 <meta property="og:title" content="CIA World Factbooks Archive 1990-2025">
-<meta property="og:description" content="36 years of CIA World Factbook data preserved in a structured, queryable database. 281 entities, 1,071,603 fields, fully normalized.">
+<meta property="og:description" content="36 CIA World Factbook editions preserved with source documentation, an executive summary, and a full methods report.">
 <meta property="og:image" content="https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/screenshots/homepage.png">
 <meta property="og:url" content="https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CIA World Factbooks Archive">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="CIA World Factbooks Archive 1990-2025">
-<meta name="twitter:description" content="36 years of CIA World Factbook data preserved in a structured, queryable database. 281 entities, 1,071,603 fields.">
+<meta name="twitter:description" content="36 CIA World Factbook editions with source documentation, an executive summary, and a full methods report.">
 <meta name="twitter:image" content="https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/screenshots/homepage.png">
 <link rel="canonical" href="https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/">
 <style>
@@ -90,6 +90,13 @@ a:hover { text-decoration: underline; color: #FFFFFF; }
 
 /* Body text */
 p { font-size: 0.9rem; color: #8F99A8; max-width: 860px; margin-bottom: 12px; }
+.report-note {
+  max-width: 860px; margin: 0 0 24px; padding: 14px 18px;
+  border-left: 3px solid #2D72D2; background: #1C2127;
+  font-size: 0.88rem; line-height: 1.6; color: #C5CBD3;
+}
+.report-note strong { color: #FFFFFF; }
+.report-note a { color: #A9C8F4; text-decoration: underline; }
 
 /* Data tables */
 .data-table { width: 100%; border-collapse: collapse; margin: 14px 0 8px; font-size: 0.85rem; }
@@ -408,6 +415,8 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
 
     <div class="nav-section">Reference</div>
     <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025" target="_blank">GitHub Repository</a>
+    <a href="CIA_Factbook_Archive_Executive_Summary.pdf">Executive Summary</a>
+    <a href="PROJECT_REPORT_FULL_2026-10-03.pdf">Full Project Report</a>
     <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases" target="_blank">Download Data</a>
     <a href="https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/etl/structured_parsing/DESIGN.md" target="_blank">Structured Parsing</a>
   </nav>
@@ -425,10 +434,20 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
         <div class="subtitle">36 years of geopolitical intelligence preserved and structured for analysis.</div>
       </div>
 
+      <div class="report-note">
+        <strong>Updated research reports (3 October 2026).</strong>
+        Read the <a href="CIA_Factbook_Archive_Executive_Summary.pdf">executive summary</a>
+        or the <a href="PROJECT_REPORT_FULL_2026-10-03.pdf">full project report</a>
+        for dated archive counts, methods, validation limits, and the offline app.
+        The figures and country list below document the earlier v3.5 release snapshot.
+        The archive's final CIA digital edition is labeled 2025; a commercial 2026–27 book title
+        does not establish a new CIA online edition.
+      </div>
+
       <div class="stat-grid">
         <div class="stat-card">
           <div class="stat-value">281</div>
-          <div class="stat-label">Entities</div>
+          <div class="stat-label">Entities (v3.5)</div>
         </div>
         <div class="stat-card">
           <div class="stat-value">36</div>
@@ -436,11 +455,11 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
         </div>
         <div class="stat-card">
           <div class="stat-value">9,536</div>
-          <div class="stat-label">Country-Year Records</div>
+          <div class="stat-label">Country-Year Records (v3.5)</div>
         </div>
         <div class="stat-card">
           <div class="stat-value">1,071,603</div>
-          <div class="stat-label">Parsed Data Fields</div>
+          <div class="stat-label">Parsed Data Fields (v3.5)</div>
         </div>
       </div>
 
@@ -453,7 +472,7 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
           Launch Interactive Archive
         </a>
         <div style="margin-top:8px; font-size:0.72rem; color:#5F6B7C; font-family:-apple-system,'Segoe UI',sans-serif;">
-          Search, browse, and analyze all 1,071,603 fields across 36 years
+          Search and analyze the current archive; the counts below describe v3.5
         </div>
       </div>
 
@@ -465,7 +484,7 @@ footer a:hover { text-decoration: underline; color: #8F99A8; }
         <hr class="sec-rule">
       </div>
 
-      <p>The CIA World Factbook was published continuously from 1962 until its discontinuation on February 4, 2026. This archive preserves every publicly available edition from 1990 to 2025 in a structured, queryable SQL Server database.</p>
+      <p>The CIA World Factbook was published continuously from 1962 until its discontinuation on February 4, 2026. This archive preserves selected source snapshots for 36 editions labeled 1990 to 2025. The current archive is distributed as SQLite; the SQL Server examples on this documentation page describe an earlier release workflow.</p>
       <p>Data was collected from three sources: Project Gutenberg and CIA original text files (1990s plain text editions), the Wayback Machine (2000-2020 HTML archives), and the <a href="https://github.com/factbook/cache.factbook.json" target="_blank">factbook/cache.factbook.json</a> GitHub repository (2021-2025 JSON snapshots).</p>
 
       <table class="data-table">

@@ -1,0 +1,56 @@
+{
+  "checked_local_date": "2026-10-03",
+  "archive_page": {
+    "url": "https://worldfactbookarchive.org/archive",
+    "entities": 285,
+    "editions": 36,
+    "fields": 1071313
+  },
+  "country_api": {
+    "url": "https://worldfactbookarchive.org/api/countries",
+    "entity_rows": 285,
+    "sum_year_count": 9535
+  },
+  "final_snapshot_comparison": {
+    "url": "https://worldfactbookarchive.org/about",
+    "comparison_date": "2026-05-12",
+    "country_codes": 260,
+    "fields_compared": 32594,
+    "reported_content_differences": 0
+  },
+  "commercial_book": {
+    "url": "https://www.skyhorsepublishing.com/9781510786042/the-cia-world-factbook-2026-2027/",
+    "title": "The CIA World Factbook 2026-2027",
+    "isbn": "9781510786042",
+    "publisher_date": "2026-04-07",
+    "pages": 1040,
+    "page_level_comparison_performed": false
+  },
+  "app_release": {
+    "url": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/apps-v1.4.1",
+    "tag": "apps-v1.4.1",
+    "published_utc": "2026-10-03T16:38:45Z",
+    "assets": [
+      {
+        "name": "WorldFactbookArchive-1.4.1+63-android.apk",
+        "bytes": 510272121,
+        "sha256": "8e02963c1709b0db5698789e71beb5587960551da9e053e342ef35769c72b171"
+      },
+      {
+        "name": "WorldFactbookArchive-1.4.1+63-windows-x64.zip",
+        "bytes": 433574304,
+        "sha256": "8ee5c3a9d2536995322f1a568d3e7e284d462ea9b0c9205244de6514b545e33a"
+      },
+      {
+        "name": "WorldFactbookArchive-1.4.1+63-windows-x64.msix",
+        "bytes": 463187146,
+        "sha256": "57b1a9c9cb4a1bb1bc3221045271a17932b28640c3c668d612cebd9aa38dfdbf"
+      },
+      {
+        "name": "World-Factbook-Archive-1.4.1-macOS.dmg",
+        "bytes": 455933203,
+        "sha256": "b74faf4dc434a382f4042620fec81e9ff264d27a96d25a804a6722a3a5079a1f"
+      }
+    ]
+  }
+}
