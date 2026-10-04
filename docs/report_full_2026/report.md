@@ -2,12 +2,12 @@
 title: "The CIA World Factbook Archive"
 subtitle: "Preservation, methods, evidence, website, and offline app | Full project report"
 author: "Milan Milkovich, MLIS"
-date: "3 October 2026 | Review draft"
-documentclass: report
+date: "3 October 2026"
+documentclass: article
 classoption: oneside
-fontsize: 10pt
+fontsize: 12pt
 geometry:
-  - margin=0.83in
+  - margin=1in
   - headheight=15pt
 colorlinks: true
 linkcolor: MidnightBlue
@@ -21,12 +21,16 @@ header-includes:
   - \pagestyle{fancy}
   - \fancyhf{}
   - \fancyhead[L]{\small CIA World Factbook Archive}
-  - \fancyhead[R]{\small Review draft | 3 October 2026}
+  - \fancyhead[R]{\small Methods report | 3 October 2026}
   - \fancyfoot[C]{\thepage}
   - \usepackage{microtype}
   - \let\originaltableofcontents\tableofcontents
-  - \renewcommand{\tableofcontents}{\begingroup\footnotesize\setcounter{tocdepth}{0}\originaltableofcontents\setcounter{tocdepth}{1}\endgroup}
+  - \renewcommand{\tableofcontents}{\clearpage\begingroup\fontsize{9}{11}\selectfont\setcounter{tocdepth}{1}\originaltableofcontents\endgroup}
+  - \let\originallistoffigures\listoffigures
+  - \renewcommand{\listoffigures}{\clearpage\begingroup\footnotesize\originallistoffigures\endgroup}
 ---
+
+\clearpage
 
 \begin{abstract}
 This report documents a 36-edition archive of the CIA World Factbook, its source acquisition and transformation methods, the evidence available to check its integrity, and the public website and offline companion app built around it. It is a replacement for the unpublished March 2026 report. Most archive-structure figures were generated from a local SQLite snapshot last modified 8 April 2026; each figure identifies its own source and date. The public archive and app descriptions were checked on 3 October 2026. Each validation result is evidence about a named snapshot and test, not a universal accuracy certificate. A commercial book titled \emph{The CIA World Factbook 2026-2027} is addressed separately from the archive's final CIA digital edition, labeled 2025.
@@ -48,7 +52,7 @@ The final archive edition is labeled **2025**, although its last source capture 
 
 Every large count needs a population, unit, and date. A **field row** is one stored label-and-content pair in a country-year entry. A **sub-value row** is a parsed component derived from that field. An **entity** is a canonical identity used to connect entries across editions. A **country-year record** is one source entry in one edition; historical polities and territories are included, and the word “country” in a database table is not a claim of sovereignty. Counts from the April local SQLite snapshot are labeled **local snapshot** in chart captions. Counts from the website on 3 October are labeled **live observation**. Counts from the May validation are labeled **May comparison**.
 
-The figures describe the structure of the archived publication and its extraction. They are not trends in real-world population, income, development, or political status. Changes in a chart can reflect the CIA's editorial choices, source format, parser behavior, and database corrections. The report uses the original CIA value and edition context as the first interpretive unit. SQL used for the aggregate figures and a SHA-256 digest of the local source database accompany this draft in the report source directory.
+The figures describe the structure of the archived publication and its extraction. They are not trends in real-world population, income, development, or political status. Changes in a chart can reflect the CIA's editorial choices, source format, parser behavior, and database corrections. The report uses the original CIA value and edition context as the first interpretive unit. SQL used for the aggregate figures and a SHA-256 digest of the local source database accompany this report in the report source directory.
 
 # Purpose, boundaries, and publication history
 
@@ -70,7 +74,7 @@ This distinction is especially important at the end of the series. A person may 
 
 Skyhorse Publishing lists *The CIA World Factbook 2026-2027* as a 1,040-page commercial book dated 7 April 2026, ISBN 9781510786042. The publisher's description calls it current for 2026 and looking ahead to 2027. The listing verifies that the **book title and product exist**. It does not provide a complete machine-readable data release or a documented post-closure CIA update sequence. [Skyhorse listing](https://www.skyhorsepublishing.com/9781510786042/the-cia-world-factbook-2026-2027/).
 
-The archive uses “2025” for the final CIA digital edition because there is no separately documented CIA online Factbook edition for 2026 or 2027 after the agency's sunset. The commercial title may package, select, reformat, or supplement material from the final period. Given the publication date and closure, it is reasonable to treat it as a separately marketed print product built from pre-closure Factbook material; that is an inference from the timeline, not a page-level comparison. This draft does **not** assert that every map, appendix, or field in the book is byte-identical to the archive's 2025 snapshot. If exact print-to-digital equivalence becomes a public claim, it needs a documented copy comparison.
+The archive uses “2025” for the final CIA digital edition because there is no separately documented CIA online Factbook edition for 2026 or 2027 after the agency's sunset. The commercial title may package, select, reformat, or supplement material from the final period. Given the publication date and closure, it is reasonable to treat it as a separately marketed print product built from pre-closure Factbook material; that is an inference from the timeline, not a page-level comparison. This report does **not** assert that every map, appendix, or field in the book is byte-identical to the archive's 2025 snapshot. If exact print-to-digital equivalence becomes a public claim, it needs a documented copy comparison.
 
 For citations, name the object actually used: “CIA World Factbook Archive, 2025 edition, field accessed [date]” for an archive value; *The CIA World Factbook 2026-2027*, ISBN 9781510786042, for the printed book. Neither label overrides the estimate year printed in a field. A bibliography should record the archive version or live access date, the entity, the field label, and the exact displayed source year where relevant.
 
@@ -413,7 +417,7 @@ For instruction, a good exercise asks for both an analytical view and the origin
 
 ## Case 1: a year label is not an estimate year
 
-The final digital edition is the clearest place to see why the three clocks in Chapter 2 matter. A literal search of its 32,594 stored field contents in the April local snapshot finds the text “2025 est.” in 2,423 fields. It also finds “2024 est.” in 4,516 fields, “2023 est.” in 5,683, and “2022 est.” in 4,469. The search finds no “2026 est.” or “2027 est.” tokens in that snapshot. These are **literal token counts**, not a complete classification of every field's observation year. One field can contain several tokens, and the wording can express a date without the exact pattern. The counts are therefore overlapping and should not be summed. The extraction SQL is recorded with the figures.
+The final digital edition is the clearest place to see why the three clocks in Section 2 matter. A literal search of its 32,594 stored field contents in the April local snapshot finds the text “2025 est.” in 2,423 fields. It also finds “2024 est.” in 4,516 fields, “2023 est.” in 5,683, and “2022 est.” in 4,469. The search finds no “2026 est.” or “2027 est.” tokens in that snapshot. These are **literal token counts**, not a complete classification of every field's observation year. One field can contain several tokens, and the wording can express a date without the exact pattern. The counts are therefore overlapping and should not be summed. The extraction SQL is recorded with the figures.
 
 ![Number of 2025-edition fields containing each literal year-plus-estimate token, April local SQLite snapshot. Counts can overlap across years and do not classify all date expressions.](figures/15-final-estimate-tokens.pdf){width=94%}
 
@@ -481,7 +485,7 @@ Website-only OSINT and other CIA collections have their own sources and should n
 
 The project's concept DOI is [10.5281/zenodo.18884612](https://doi.org/10.5281/zenodo.18884612). It identifies the continuing archive and resolves through versions. For a reproducible analysis, a researcher should also cite the exact database release tag or asset hash, the source edition, entity and original field label, and the access date if using the live service. A version-specific DOI may be appropriate when the analysis explicitly depends on that version, but the concept DOI is the stable general citation for the project. [Repository citation guidance](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025).
 
-The following example format is intentionally descriptive rather than tied to one citation style: “Milkovich, M. CIA World Factbook Archive 1990–2025. Concept DOI 10.5281/zenodo.18884612. Database release [tag/hash], 2025 edition, [historical source entry], [original field label], accessed [date].” Replace bracketed items with the actual record. If the claim comes from the publisher's 2026–27 book, cite that book's ISBN and page instead of treating it as a new archive edition.
+External sources in this report follow Chicago notes and bibliography. A note for a field-level claim should also supply the exact database release tag or asset hash, the edition, historical source entry, original field label, estimate year, and access date. The concept DOI identifies the continuing project, while the release and record details identify what was analyzed. If the claim comes from the publisher's 2026–27 book, cite that book's ISBN and page instead of treating it as a new archive edition.
 
 For a derived statistic, the citation should travel with the method. State whether the value came from full field text, a FieldValues sub-value, a download-time parser, or a calculation across records. If a cross-year label mapping was used, name the mapping and inspect its original labels. If a chart uses the website, record its filters and date; if it uses an offline app, record the installed dataset revision. A reader needs these details to distinguish a source change from a software change.
 
@@ -493,7 +497,7 @@ An app release should name the bundled archive revision, check packages on suppo
 
 ## A public reporting rule
 
-Before republishing an executive summary or this longer report, refresh the live website and app-release facts, rerun the candidate-level checks that support any new exact totals, inspect the rendered PDF, and review the claims about the 2026–27 book. The report is currently a local review draft. It does not link itself from the public README or claim that a new edition has been published. The historical March 2026 report remains an unpublished reference because its counts, exclusivity language, and provenance claims were too broad for the evidence now available.
+This report presents its checks as dated observations and states where a rerun was not performed. Before a later revision of this report or executive summary, refresh the live website and app-release facts, rerun candidate-level checks that support any new exact totals, inspect the rendered PDF, and review claims about the 2026–27 book. The historical March 2026 report remains an unpublished reference because its counts, exclusivity language, and provenance claims were too broad for the evidence now available.
 
 ## Closing assessment
 

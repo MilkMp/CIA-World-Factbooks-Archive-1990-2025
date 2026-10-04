@@ -2,9 +2,11 @@
 
 A complete, structured archive of the CIA World Factbook spanning **36 years** (1990-2025). On 3 October 2026, the live archive displayed **285 entities** and **1,071,313 data fields**; the v3.5 release statistics below describe an earlier database snapshot.
 
-The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves every edition published since 1990 and creates a structured, queryable dataset.
+The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves a selected source snapshot for each of the 36 editions labeled 1990–2025 and creates a structured, queryable dataset.
 
-**[Search the interactive archive](https://worldfactbookarchive.org/)** | **[Project documentation](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)** | **[Executive Summary](docs/CIA_Factbook_Archive_Executive_Summary.pdf)** | **[Raw Source Files](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/raw-sources-v1)**
+**[Search the interactive archive](https://worldfactbookarchive.org/)** | **[Project documentation](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)** | **[Executive summary](docs/CIA_Factbook_Archive_Executive_Summary.pdf)** | **[Full project report](docs/PROJECT_REPORT_FULL_2026-10-03.pdf)** | **[Raw source files](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/raw-sources-v1)**
+
+The report and executive summary describe the archive, its methods, validation limits, website, and offline app using dated evidence. The final CIA digital edition in this archive is labeled **2025** and was captured in January 2026. A [commercial book titled *The CIA World Factbook 2026–2027*](https://www.skyhorsepublishing.com/9781510786042/the-cia-world-factbook-2026-2027/) is a separate publication; its title does not establish a new CIA online data edition. The report has not compared that book page by page with the archive. An individual field's estimate year may differ from its edition label.
 
 ## Get the app
 
@@ -12,7 +14,7 @@ The full archive is also a **free, fully-offline app** — the entire
 36-year dataset is bundled inside, so it runs with no account and no network.
 See the [Apps page](https://worldfactbookarchive.org/apps) for current iPhone/iPad, Android, macOS, and Windows options; direct downloads and store versions may differ.
 
-> **Data Integrity:** No Factbook content is added or altered. The parsing process structures the CIA's raw text into queryable fields — removing formatting artifacts, sectioning headers, and deduplicating noise lines — but the actual data values are exactly as the CIA published them. The only additions to the source data are reference lookup tables (FIPS-to-ISO code mappings, entity classifications, COCOM regional assignments) that sit alongside the original data, not inside it. In FieldValues, a small number of rows are derived by computation from neighboring sub-values (e.g. total life expectancy averaged from male/female in pre-1995 data); these are clearly flagged with `IsComputed = 1`.
+> **Source fidelity and limits:** The project releases its source inputs and hashes, retains original field labels and full field text after documented parsing and normalization, and records targeted corrections. A small number of derived `FieldValues` rows are flagged with `IsComputed = 1`. The May 2026 parser comparison and later entity audit test named snapshots and rules; they do not certify every field in the current public database. See the [full report](docs/PROJECT_REPORT_FULL_2026-10-03.pdf) for the methods, results, and remaining checks.
 
 
 ## Database Statistics (v3.5 release snapshot)

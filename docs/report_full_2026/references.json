@@ -1,0 +1,189 @@
+[
+  {
+    "id": "cia-farewell",
+    "type": "webpage",
+    "title": "Spotlighting the World Factbook as We Bid a Fond Farewell",
+    "author": [{"literal": "Central Intelligence Agency"}],
+    "issued": {"date-parts": [[2026, 2, 4]]},
+    "URL": "https://www.cia.gov/stories/story/spotlighting-the-world-factbook-as-we-bid-a-fond-farewell/",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "skyhorse-book",
+    "type": "webpage",
+    "title": "The CIA World Factbook 2026–2027",
+    "author": [{"literal": "Skyhorse Publishing"}],
+    "issued": {"date-parts": [[2026, 4, 7]]},
+    "URL": "https://www.skyhorsepublishing.com/9781510786042/the-cia-world-factbook-2026-2027/",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "archive-repository",
+    "type": "webpage",
+    "title": "CIA World Factbooks Archive 1990–2025",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "source-manifest",
+    "type": "webpage",
+    "title": "Raw-Source Manifest",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/raw-sources/MANIFEST.json",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "methodology",
+    "type": "webpage",
+    "title": "Methodology",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/docs/METHODOLOGY.md",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "etl-pipeline",
+    "type": "webpage",
+    "title": "ETL Pipeline",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/docs/ETL_PIPELINE.md",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "l3-report",
+    "type": "webpage",
+    "title": "L3 Source-to-SQLite Comparison Report",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/raw-sources/L3_REPORT.md",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "validation-report",
+    "type": "webpage",
+    "title": "Raw-Source Validation",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/raw-sources/VALIDATION.md",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "entity-audit",
+    "type": "webpage",
+    "title": "Entity Integrity Issue 38",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/docs/ENTITY_INTEGRITY_ISSUE_38.md",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "final-snapshot",
+    "type": "webpage",
+    "title": "Final Snapshot Verification",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "URL": "https://worldfactbookarchive.org/about",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "live-archive",
+    "type": "webpage",
+    "title": "CIA World Factbook Archive: Browse",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "URL": "https://worldfactbookarchive.org/archive",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "apps-page",
+    "type": "webpage",
+    "title": "Factbook Apps",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "URL": "https://worldfactbookarchive.org/apps",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "app-release",
+    "type": "webpage",
+    "title": "Apps Version 1.4.1 Release",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub Releases",
+    "issued": {"date-parts": [[2026, 10, 3]]},
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/apps-v1.4.1",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "concept-doi",
+    "type": "dataset",
+    "title": "CIA World Factbook Archive 1990–2025",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "publisher": "Zenodo",
+    "DOI": "10.5281/zenodo.18884612",
+    "URL": "https://doi.org/10.5281/zenodo.18884612",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "raw-sources",
+    "type": "webpage",
+    "title": "Raw Sources",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/tree/main/raw-sources",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "field-evolution",
+    "type": "webpage",
+    "title": "Field Evolution",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/docs/FIELD_EVOLUTION.md",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "raw-release",
+    "type": "webpage",
+    "title": "Raw Sources Version 1 Release",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub Releases",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/raw-sources-v1",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "database-schema",
+    "type": "webpage",
+    "title": "Database Schema",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/docs/DATABASE_SCHEMA.md",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "parsing-design",
+    "type": "webpage",
+    "title": "Structured Parsing Design",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/etl/structured_parsing/DESIGN.md",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "l3b-report",
+    "type": "webpage",
+    "title": "L3b Validation Report",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "container-title": "GitHub",
+    "URL": "https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/raw-sources/L3B_REPORT.md",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  },
+  {
+    "id": "site-home",
+    "type": "webpage",
+    "title": "CIA World Factbook Archive",
+    "author": [{"literal": "CIA World Factbook Archive"}],
+    "URL": "https://worldfactbookarchive.org/",
+    "accessed": {"date-parts": [[2026, 10, 3]]}
+  }
+]

@@ -7,6 +7,7 @@ raw-sources/L3_REPORT.md. The figure captions in the report name the snapshot.
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import re
@@ -53,7 +54,12 @@ def setup() -> None:
 
 
 def save(name: str, fig) -> None:
-    fig.savefig(FIG / f"{name}.pdf", bbox_inches="tight", pad_inches=0.1)
+    fig.savefig(
+        FIG / f"{name}.pdf",
+        bbox_inches="tight",
+        pad_inches=0.1,
+        metadata={"CreationDate": datetime(2026, 10, 3, tzinfo=timezone.utc)},
+    )
     plt.close(fig)
 
 
@@ -237,14 +243,20 @@ def validation_l3() -> None:
     share=[100*r[2]/r[1] for r in rows]
     ax.bar(years,share,color=[GOLD if y in (1996,2008) else BLUE for y in years],width=.84)
     ax.set_xlim(1989.3,2025.7)
-    ax.set_xticks([1990,1995,2000,2005,2010,2015,2020,2025])
+    ax.set_xticks([1990,1996,2001,2008,2014,2020,2025])
     ax.set_ylim(0,105)
     ax.set_ylabel("Matched rows / DB rows (%)")
     ax.set_title("The May L3 rerun needs a corrected residual accounting",loc="left",pad=12)
     ax.grid(axis="y",color="#d8e0e6",lw=.6)
     ax.set_axisbelow(True)
-    ax.annotate("1996 repair shape",xy=(1996,share[6]),xytext=(1998,75),
-                arrowprops={"arrowstyle":"-","color":GREY,"lw":.8},fontsize=8)
+    for year, label, text_year in [(1996, "1996 repair shape", 1998.0),
+                                   (2008, "2008 duplicate source", 2010.0)]:
+        ax.annotate(label, xy=(year, share[years.index(year)]),
+                    xytext=(text_year, 77), ha="left", va="center",
+                    color=NAVY, fontsize=8, fontweight="bold",
+                    bbox={"boxstyle":"round,pad=0.25", "facecolor":"white",
+                          "edgecolor":GOLD, "linewidth":0.8},
+                    arrowprops={"arrowstyle":"-", "color":GOLD, "lw":0.9})
     save("13-validation-l3",fig)
 
 

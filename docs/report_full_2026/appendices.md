@@ -2,7 +2,7 @@
 
 # Evidence register and snapshot ledger
 
-The report uses three different data states. The **local chart snapshot** is a read-only SQLite file last modified 8 April 2026. The **May comparison** is the project's reported parser rerun against a 1,071,489-row SQLite baseline. The **live observation** was taken from the public website on 3 October 2026, after a documented September repair. Equal-looking counts between states do not prove byte identity; different counts require their own source explanations. The local aggregate extraction script and its JSON output are distributed with this draft so each figure can be rebuilt without reaching the live site.
+The report uses three different data states. The **local chart snapshot** is a read-only SQLite file last modified 8 April 2026. The **May comparison** is the project's reported parser rerun against a 1,071,489-row SQLite baseline. The **live observation** was taken from the public website on 3 October 2026, after a documented September repair. Equal-looking counts between states do not prove byte identity; different counts require their own source explanations. The local aggregate extraction script and its JSON output are distributed with this report so each figure can be rebuilt without reaching the live site.
 
 
 | Evidence state | Date or cutoff | Entities / entries / fields | Use in report |
@@ -118,44 +118,37 @@ The annual fields column sums to **1,071,489**. Its 2025 line has **260 entries*
 FieldValues rows are derived from parent fields and are not additional original CIA field rows. “Numeric share” is the percentage of FieldValues rows with non-null NumericVal. “Computed” counts IsComputed = 1. The parser and field formats changed; these are output-coverage measurements rather than independent measures of numeric information in the CIA publication.
 
 
-| Year | FieldValues | Numeric share | Computed |
-| --- | --- | --- | --- |
-| 1990 | 17,731 | 47.9% | 209 |
-| 1991 | 17,932 | 48.4% | 206 |
-| 1992 | 20,737 | 47.4% | 225 |
-| 1993 | 25,840 | 48.1% | 0 |
-| 1994 | 27,840 | 46.4% | 0 |
-| 1995 | 29,192 | 48.5% | 0 |
-| 1996 | 32,055 | 54.3% | 0 |
-| 1997 | 35,291 | 55.6% | 0 |
-| 1998 | 35,467 | 55.8% | 0 |
-| 1999 | 35,437 | 55.8% | 0 |
-| 2000 | 36,392 | 54.3% | 0 |
-| 2001 | 32,470 | 56.8% | 0 |
-| 2002 | 38,620 | 53.0% | 0 |
-| 2003 | 40,797 | 54.9% | 0 |
-| 2004 | 40,751 | 55.0% | 0 |
-| 2005 | 40,717 | 55.5% | 0 |
-| 2006 | 41,978 | 56.1% | 0 |
-| 2007 | 41,996 | 55.7% | 0 |
-| 2008 | 44,815 | 58.3% | 0 |
-| 2009 | 53,015 | 65.8% | 0 |
-| 2010 | 53,585 | 65.1% | 0 |
-| 2011 | 60,169 | 68.3% | 0 |
-| 2012 | 62,800 | 69.8% | 0 |
-| 2013 | 69,285 | 71.7% | 0 |
-| 2014 | 70,289 | 72.0% | 0 |
-| 2015 | 64,675 | 66.7% | 0 |
-| 2016 | 65,645 | 66.4% | 0 |
-| 2017 | 66,022 | 65.9% | 0 |
-| 2018 | 66,247 | 66.8% | 0 |
-| 2019 | 66,734 | 67.0% | 0 |
-| 2020 | 66,579 | 67.2% | 0 |
-| 2021 | 73,573 | 66.6% | 0 |
-| 2022 | 78,530 | 68.1% | 0 |
-| 2023 | 77,843 | 67.9% | 0 |
-| 2024 | 74,506 | 65.4% | 0 |
-| 2025 | 72,958 | 64.6% | 0 |
+
+\begin{center}
+\begingroup\small
+\setlength{\tabcolsep}{6.5pt}
+\begin{tabular}{rrrr@{\hspace{1.5em}}rrrr}
+\hline
+Year & Values & Numeric \% & Computed & Year & Values & Numeric \% & Computed \\
+\hline
+1990 & 17,731 & 47.9\% & 209 & 2008 & 44,815 & 58.3\% & 0 \\
+1991 & 17,932 & 48.4\% & 206 & 2009 & 53,015 & 65.8\% & 0 \\
+1992 & 20,737 & 47.4\% & 225 & 2010 & 53,585 & 65.1\% & 0 \\
+1993 & 25,840 & 48.1\% & 0 & 2011 & 60,169 & 68.3\% & 0 \\
+1994 & 27,840 & 46.4\% & 0 & 2012 & 62,800 & 69.8\% & 0 \\
+1995 & 29,192 & 48.5\% & 0 & 2013 & 69,285 & 71.7\% & 0 \\
+1996 & 32,055 & 54.3\% & 0 & 2014 & 70,289 & 72.0\% & 0 \\
+1997 & 35,291 & 55.6\% & 0 & 2015 & 64,675 & 66.7\% & 0 \\
+1998 & 35,467 & 55.8\% & 0 & 2016 & 65,645 & 66.4\% & 0 \\
+1999 & 35,437 & 55.8\% & 0 & 2017 & 66,022 & 65.9\% & 0 \\
+2000 & 36,392 & 54.3\% & 0 & 2018 & 66,247 & 66.8\% & 0 \\
+2001 & 32,470 & 56.8\% & 0 & 2019 & 66,734 & 67.0\% & 0 \\
+2002 & 38,620 & 53.0\% & 0 & 2020 & 66,579 & 67.2\% & 0 \\
+2003 & 40,797 & 54.9\% & 0 & 2021 & 73,573 & 66.6\% & 0 \\
+2004 & 40,751 & 55.0\% & 0 & 2022 & 78,530 & 68.1\% & 0 \\
+2005 & 40,717 & 55.5\% & 0 & 2023 & 77,843 & 67.9\% & 0 \\
+2006 & 41,978 & 56.1\% & 0 & 2024 & 74,506 & 65.4\% & 0 \\
+2007 & 41,996 & 55.7\% & 0 & 2025 & 72,958 & 64.6\% & 0 \\
+\hline
+\end{tabular}
+\endgroup
+\end{center}
+
 
 
 The local snapshot has **1,778,669** FieldValues rows, **1,776,960** non-empty SourceFragment values, and **640** rows explicitly marked computed. The fragment-population count is not a verbatim-source match count. The May L1 exact-substring test had a different denominator and purpose.
@@ -299,7 +292,7 @@ The Apps page listed iPhone/iPad, Android, macOS, and Windows access when checke
 
 # Reproduction and research checklist
 
-To rebuild this draft's local aggregate figures, use a SQLite file whose SHA-256 equals the digest in the evidence register. Run extract_evidence.py with an explicit --db path; inspect the generated evidence.json; then run make_figures.py and the PDF builder. The extraction script opens the database read-only and records its SQL and source hash. A different file hash may be a valid newer database, but its figures must be relabeled and revalidated before reuse.
+To rebuild this report's local aggregate figures, use a SQLite file whose SHA-256 equals the digest in the evidence register. Run extract_evidence.py with an explicit --db path; inspect the generated evidence.json; then run make_figures.py and the PDF builder. The extraction script opens the database read-only and records its SQL and source hash. A different file hash may be a valid newer database, but its figures must be relabeled and revalidated before reuse.
 
 ~~~text
 python docs/report_full_2026/extract_evidence.py --db PATH_TO_LOCAL_FACTBOOK_DB
@@ -327,13 +320,13 @@ The unpublished March 2026 report supplied a broad structure for this replacemen
 | 2026–27 title omitted | Explains commercial book label, final CIA 2025 digital edition, and lack of page comparison. |
 
 
-Before this draft is published or treated as a release note, three questions remain: (1) rerun raw-to-row validation with corrected residual accounting against the intended current database; (2) test the April-only semantic ownership mismatches on a current release candidate; and (3) refresh the live website, app assets, and store listing facts immediately before publication. A page-by-page comparison with the 2026–27 commercial book is only necessary if the project wants to claim exact identity with that product. These are bounded tasks, not reasons to discard the established preservation evidence.
+For a future data release or stronger current-database parity claim, three questions remain: (1) rerun raw-to-row validation with corrected residual accounting against the intended current database; (2) test the April-only semantic ownership mismatches on a current release candidate; and (3) refresh the live website, app assets, and store listing facts when the report is revised. A page-by-page comparison with the 2026–27 commercial book is necessary if the project wants to claim exact identity with that product. The present report labels its tested snapshots and does not make those stronger claims.
 
 # Definitions and source register
 
 **Edition**: the project's year-labeled source selection. **Snapshot**: a specific captured upstream state or database file. **Entry**: a source profile within one edition. **Entity**: a project canonical identity connecting entries. **Field**: one stored original label and content row. **Sub-value**: a parsed component linked to a field. **Original label**: the field name appearing in source context. **Canonical label**: a mapping for retrieval and comparison. **SourceFragment**: a normalized parser fragment, not necessarily a verbatim raw substring. **Computed value**: a FieldValues row flagged as calculated from source components. **Match rate**: a numerator and denominator under a stated comparison rule.
 
-The links below identify the substantive sources read for this draft. The website and release pages are time-sensitive; the repository documents may receive later edits. The evidence JSON fixes the numerical state used to draw this PDF.
+The links below identify the substantive sources read for this report. The website and release pages are time-sensitive; the repository documents may receive later edits. The evidence JSON fixes the numerical state used to draw this PDF.
 
 
 | Source | What it supports |
@@ -461,10 +454,10 @@ This is a retrieval example, not a ready-made population time series. The analys
 
 # Public release evidence matrix
 
-A public report can be exact only about the artifacts it actually checked. This matrix records the review status of central claims in this draft. “Observed” means a read-only check on 3 October 2026; “reported” means the cited project document supplies the result; “not run” means no new test was performed while preparing the report.
+A public report can be exact only about the artifacts it actually checked. This matrix records the review status of central claims in this report. “Observed” means a read-only check on 3 October 2026; “reported” means the cited project document supplies the result; “not run” means no new test was performed while preparing the report.
 
 
-| Claim or artifact | Evidence used | Status in this draft |
+| Claim or artifact | Evidence used | Status in this report |
 | --- | --- | --- |
 | Source inventory | 38-file manifest and raw-source guide | Read and reconciled to manifest totals |
 | April chart database | Read-only SQLite aggregates and SHA-256 | Computed locally |
@@ -478,3 +471,6 @@ A public report can be exact only about the artifacts it actually checked. This 
 
 
 The most consequential missing check is a corrected L3 rerun against a named current release candidate with disjoint accounting for matched, changed, missing, extra, and deliberately curated rows. That result would let a later public report replace the dated May baseline. A current full-database structural check would also settle whether the April-only cross-table ownership mismatch remains. A book comparison is optional unless exact identity with the commercial title becomes part of the project's public claim.
+
+
+\clearpage

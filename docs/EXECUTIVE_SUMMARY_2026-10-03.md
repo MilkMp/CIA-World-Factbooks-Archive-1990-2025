@@ -1,6 +1,6 @@
 ---
 title: "CIA World Factbook Archive"
-subtitle: "Executive Summary | October 2026 review draft"
+subtitle: "Executive Summary | 3 October 2026"
 author: "Milan Milkovich, MLIS"
 date: "3 October 2026"
 ---
@@ -8,6 +8,8 @@ date: "3 October 2026"
 ## Purpose and scope
 
 The CIA World Factbook Archive preserves 36 editions of the CIA's World Factbook, from 1990 through 2025, in a searchable research database. The online Factbook ended on 4 February 2026. The archive keeps the publication's historical country entries accessible across changes in format, names, and field labels. It also provides a public research website and a separate offline companion app.
+
+The final CIA digital edition in this archive is labeled **2025** and was captured in January 2026. A [commercial book titled *The CIA World Factbook 2026–2027*](https://www.skyhorsepublishing.com/9781510786042/the-cia-world-factbook-2026-2027/) is a separate publication; its title does not establish a new CIA online edition. The project has not compared that book page by page with the archive. A field's estimate year can also differ from its edition label. [Final snapshot verification](https://worldfactbookarchive.org/about)
 
 **Current public database snapshot.** On 3 October 2026, the live archive displayed **285 entities**, **36 editions**, and **1,071,313 field rows**. Its country API listed **9,535 country-year records**. These are live figures, not the March 2026 v3.5 release totals still printed in some older documentation. Counts can change when documented parsing or identity errors are repaired. [Live archive](https://worldfactbookarchive.org/archive) · [Country API](https://worldfactbookarchive.org/api/countries)
 
@@ -25,7 +27,7 @@ The project published the **38 input files (2.98 GB)** in a [raw-source release]
 
 ## What was verified
 
-The [raw-source validation](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/raw-sources/VALIDATION.md) re-parsed the released inputs and compared them with a **May 2026 SQLite snapshot**. It recorded **1,070,747 matching rows against 1,071,489 database rows** (about 99.9%). The validator documents differences involving decoding, the special 1996 repair, and a duplicate Serbia source entry. Its published percentage and difference categories need accounting clarification, as the project report explains. This was not rerun against the October live database.
+The [raw-source validation](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/raw-sources/VALIDATION.md) re-parsed the released inputs and compared them with a **May 2026 SQLite snapshot**. It recorded **1,070,747 matching rows against 1,071,489 database rows**. Their quotient is **99.93%**, correcting the published 99.94%. The validator documents differences involving decoding, the special 1996 repair, and a duplicate Serbia source entry. An exact residual needs a parser rerun with consistent row accounting. This was not rerun against the October live database.
 
 `SourceFragment` stores a **post-parser fragment**. Its presence for a parsed sub-value does not mean the raw publication contains those exact bytes: the parser can insert separators, flatten JSON keys, and join labels to values. The older summary's “100% provenance” claim therefore overstated what this column alone establishes. [Validation details](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/raw-sources/VALIDATION.md)
 
@@ -40,3 +42,5 @@ The database and raw-source bundles remain available from [GitHub Releases](http
 ## Limits that matter for research
 
 Factbook entries are the CIA's dated assessments, not measurements made by this archive. Format normalization, field mapping, and targeted corrections make them searchable but can affect the form of a record. Users should check the underlying edition, the field's own estimate year, `IsComputed` for derived sub-values, and the raw-source manifest before making a precise historical claim. The [September 2026 entity audit](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/docs/ENTITY_INTEGRITY_ISSUE_38.md) shows why entity identity and classification require explicit review. No claim of exhaustive error-free transcription or exclusive coverage of this subject is made here.
+
+The [full project report](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/docs/PROJECT_REPORT_FULL_2026-10-03.pdf) documents the methods, figures, source notes, and validation boundaries.
