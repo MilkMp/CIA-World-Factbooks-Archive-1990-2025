@@ -31,7 +31,7 @@ Before you trust the raw bytes, see how we proved they produced `factbook.db`:
 
 | File | What it answers |
 |---|---|
-| **[`VALIDATION.md`](VALIDATION.md)** | Full methodology, all four validation levels (L0 - L3b). Headline: **99.94% exact row-level match** against `factbook.db.CountryFields` (1,070,747 of 1,071,489 records). |
+| **[`VALIDATION.md`](VALIDATION.md)** | Full methodology, all four validation levels (L0 - L3b). The May comparison recorded **1,070,747 matching rows against 1,071,489 SQLite rows (99.93% from those counts)**; its difference categories mix rows and keys. |
 | **[`L3_REPORT.md`](L3_REPORT.md)** | Per-year diff: re-parse the raw files in memory and compare every record to SQLite. |
 | **[`L3B_REPORT.md`](L3B_REPORT.md)** | Same diff against the legacy SQL Server mirror. Surfaced real data drift in SQL Server (not in the raw files or SQLite). |
 | **[`MANIFEST.json`](MANIFEST.json)** | SHA256 hash + upstream URL (Wayback timestamp, Gutenberg ebook ID, or upstream commit hash) for every file. |
@@ -119,12 +119,14 @@ Get-FileHash html\factbook-2010.zip -Algorithm SHA256
 # compare to MANIFEST.json
 ```
 
-## Provenance proof
+## Provenance evidence
 
 These raw bytes have been validated against the published `factbook.db` at
-**99.94% exact match** (1,070,747 of 1,071,489 records matched in a row-level
-diff). The remaining 0.06% are documented downstream curation decisions, not
-data drift. Full validation methodology and results:
+**99.93% from the published counts** (1,070,747 matching rows against
+1,071,489 database rows). The May report attributes observed differences to
+validator behavior and downstream curation, but its categories mix rows and
+keys. A corrected rerun is needed for a precise residual count. Full methodology
+and results:
 
 [raw-sources/VALIDATION.md](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/blob/main/raw-sources/VALIDATION.md)
 
@@ -141,8 +143,8 @@ After these three loaders populate `CountryFields.Content` as pipe-delimited
 text, two further steps in the main repo build the structured artifacts in
 `factbook.db`:
 
-- `etl/build_field_mappings.py` populates `FieldNameMappings` (1,090 variants
-  to 416 canonical names).
+- `etl/build_field_mappings.py` populates `FieldNameMappings` for cross-year
+  field-name queries.
 - `etl/structured_parsing/parse_field_values.py` populates `FieldValues`
   (1.78M structured rows with `SourceFragment` provenance back to the original
   `CountryFields.Content` slice).

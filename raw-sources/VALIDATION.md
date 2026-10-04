@@ -1,27 +1,28 @@
 # Raw Sources Validation Report
 
-This document records the methodology and results of validating that the raw
-source files staged for the `raw-sources-v1` GitHub Release are exactly the
-inputs that produced `data/factbook.db`. Live status — updated as each step
-completes.
+This document records the May 2026 methodology and results for comparing the
+raw files staged for `raw-sources-v1` with the then-current `data/factbook.db`.
+The raw bundle and the database have changed on separate timelines; the L3
+result below is not a validation of the later live database.
 
 ## Why this matters
 
 `factbook.db` ships as the project's primary artifact. The raw-sources Release
-claims those raw bytes produced this database. That claim has to be provable,
-not asserted. This doc is the proof.
+claims those raw bytes produced the tested database snapshot. The hashes and
+parser comparison provide inspectable evidence for that claim, subject to the
+validator limitations documented below.
 
 ## Validation strategy: three levels
 
 | Level | What it tests | Verdict on the Release |
 |---|---|---|
-| L0 | SQL Server ↔ SQLite are in sync; declare canonical truth | Gate — must pass before any raw test |
+| L0 | Compare SQL Server and SQLite; select the canonical database for this test | SQLite selected; SQL Server drift documented |
 | L1 | Random `SourceFragment` substrings appear in raw files | Sanity signal only — see note below |
 | L2 | SHA256 of every raw file, recorded in `MANIFEST.json` | Integrity proof for the Release upload |
-| L3 | Full ETL rebuild from `raw-sources/` into a temp DB, then row-level diff vs `factbook.db` | Definitive proof of provenance |
+| L3 | In-memory re-parse of raw files and key-based diff vs the May `factbook.db` snapshot | Strong source-to-database evidence; residuals need a corrected rerun |
 
-L0 + L2 + L3 together answer the provenance question. L1 is supportive context,
-not a gate, for the reason documented in its section below.
+L0, L2, and L3 provide complementary provenance evidence for the tested snapshot.
+L1 is supportive context, not a gate, for the reason documented below.
 
 ---
 
@@ -150,7 +151,7 @@ L1 is **not** the right test for "does the raw file produce the DB row." It is
 substring-equality between raw bytes and post-parser text — which by design
 will diverge for any non-trivial parser. We keep L1 as a positive sanity
 signal (it proves raw files contain Factbook source content for every year)
-but the actual provenance proof is L3.
+but the stronger source-to-database comparison is L3.
 
 ---
 
@@ -218,14 +219,13 @@ joined to `Countries` for that year.
 
 No temp DB, no SQL writes. Pure in-memory re-parse.
 
-**Result: 1,070,747 / 1,071,489 records matched exactly = 99.94% match rate.**
+**Result: 1,070,747 matching rows against 1,071,489 database rows = 99.93% by arithmetic.** The originally printed 99.94% was a calculation error. The validator counts matches in rows but missing and extra items in distinct keys, so the difference categories below are not a partition of the database rows. This note corrects the reporting of the May 2026 run; it is not a new validation against a later database.
 
 Full report at `L3_REPORT.md`.
 
-### Mismatch categorization (742 records, 0.07%)
+### Difference categories (not additive)
 
-All discrepancies fall into three explainable buckets, none of which represent
-a problem with the raw files:
+The May review explained the observed differences through the three cases below. Because the validator uses different units for matching rows, content differences, and missing or extra keys, the category totals cannot be added to infer a single unmatched-row count. A corrected rerun is needed to establish a precise residual mismatch count.
 
 **Category 1 — 261 mojibake content-diffs in HTML years 2006-2017**
 
@@ -262,10 +262,9 @@ reproduced by re-parsing. SQLite has been manually cleaned up. The raw →
 SQLite provenance chain is intact; the duplicate is a downstream curation
 decision.
 
-### Net true raw-file mismatch: **0 records**
+### Interpretation of the reviewed differences
 
-All 742 discrepancies are validator imperfections or downstream cleanup.
-None reflect drift between the raw files and the canonical SQLite DB.
+The May review attributed the observed differences to validator behavior or downstream cleanup. It did not rerun a corrected validator against the later live database, so “zero true mismatches” is an interpretation of those reviewed cases rather than a newly measured exact count.
 
 ---
 
@@ -274,8 +273,8 @@ None reflect drift between the raw files and the canonical SQLite DB.
 **Status:** Complete.
 
 **Test:** Same in-memory re-parse as L3, but diffed against SQL Server's
-`CountryFields` instead of SQLite's. Provides independent provenance proof
-against the second database.
+`CountryFields` instead of SQLite's. This is a separate comparison against the
+legacy mirror; its differences are documented below.
 
 **Result: 1,063,060 / 1,071,601 records matched = 99.20% match rate.**
 
@@ -305,8 +304,10 @@ cross-country field leakage; needs investigation).
 
 ### Implications
 
-- **For the raw-sources Release:** none. Provenance against the canonical
-  database (SQLite) is proven by L3. The Release is unaffected.
+- **For the raw-sources Release:** the May L3 comparison provides strong
+  evidence for the canonical SQLite snapshot. The release is unaffected by
+  SQL Server's separate drift, but the L3 residual requires a corrected rerun
+  for an exact zero-mismatch claim.
 - **For the project's data quality:** SQL Server has real data drift in
   text-year fields. The current ETL + the raw `.txt` files in the Release
   produce the correct values; SQL Server should be reloaded from SQLite (or
@@ -325,18 +326,20 @@ cleanup task, but adds no information needed for the raw-sources Release.
 
 ## Final verdict
 
-**The raw source files staged for `raw-sources-v1` are the exact inputs that
-produced `data/factbook.db`'s `CountryFields` table.**
+**The released raw files provide strong, inspectable support for the May 2026
+SQLite snapshot's `CountryFields` provenance.** The May comparison did not
+produce a reconciled zero-difference row count, and it has not been rerun
+against the later live database.
 
 Evidence:
 
 | Test | Method | Result |
 |---|---|---|
 | L0 | Schema + per-year row counts SQL Server vs SQLite | SQLite declared canonical; one downstream cleanup row in SQL Server (Serbia 2008) |
-| L1 | 7,200 random `SourceFragment` substrings searched in raw files | 55.4% direct match (rest are parser transformations, not drift) |
+| L1 | 7,200 random `SourceFragment` substrings searched in raw files | 55.4% direct match; nonmatches need context because stored fragments are normalized |
 | L2 | SHA256 of all 38 raw files | Hashes recorded in `MANIFEST.json` for upload integrity verification |
-| L3 | In-memory re-parse of every raw file vs SQLite CountryFields | **99.94% match; net true raw mismatch: 0** |
+| L3 | In-memory re-parse of every raw file vs SQLite CountryFields | **1,070,747 matching rows / 1,071,489 database rows (99.93% by arithmetic); reviewed differences attributed to validator behavior or downstream cleanup** |
 | L3b | In-memory re-parse vs SQL Server CountryFields | 99.20% match; remainder is documented SQL Server drift, not raw-file issue |
 
-**The Release is cleared to ship.** Remaining steps in the plan are staging,
-manifest generation, docs, GitHub Release upload, and Discussion #30 reply.
+The May review cleared the raw-source release using the evidence available at
+that time. A fresh precision claim for a later database needs a new comparison.
