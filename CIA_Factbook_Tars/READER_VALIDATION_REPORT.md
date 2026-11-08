@@ -1,7 +1,7 @@
 # StarDict Reader Edition: Local Validation
 
 **Date:** 2026-11-08
-**Status:** Built and validated locally. Not published or tested on KOReader hardware.
+**Status:** Built and validated locally. KOReader hardware testing remains pending.
 
 ## Source and scope
 

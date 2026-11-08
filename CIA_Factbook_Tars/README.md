@@ -1,10 +1,10 @@
 # StarDict Dictionaries -- Design & Release Document
 
-> **Status**: v3.5 general edition released; reader edition is a local candidate
+> **Status**: v3.5 general edition released; reader edition prepared for public device testing
 > **Location**: `etl/stardict/`
 > **Updated**: 2026-11-08
 
-The 2026 reader refresh is documented in [READER_VALIDATION_REPORT.md](READER_VALIDATION_REPORT.md). It is not yet published. This document below primarily describes the earlier general and structured builds. The 2014 KOReader Factbook was category-based, not per-field; the new reader edition supports both category browsing and direct field lookup.
+The 2026 reader refresh is documented in [READER_VALIDATION_REPORT.md](READER_VALIDATION_REPORT.md). KOReader hardware testing is still pending. This document below primarily describes the earlier general and structured builds. The 2014 KOReader Factbook was category-based, not per-field; the new reader edition supports both category browsing and direct field lookup.
 
 ---
 
