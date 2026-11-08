@@ -1,8 +1,10 @@
 # StarDict Dictionaries -- Design & Release Document
 
-> **Status**: Complete
+> **Status**: v3.5 general edition released; reader edition is a local candidate
 > **Location**: `etl/stardict/`
-> **Date**: 2026-03-17
+> **Updated**: 2026-11-08
+
+The 2026 reader refresh is documented in [READER_VALIDATION_REPORT.md](READER_VALIDATION_REPORT.md). It is not yet published. This document below primarily describes the earlier general and structured builds. The 2014 KOReader Factbook was category-based, not per-field; the new reader edition supports both category browsing and direct field lookup.
 
 ---
 
@@ -10,7 +12,7 @@
 
 [Issue #10](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/issues/10) included a request from the KOReader community for CIA Factbook data in StarDict format -- an open binary dictionary format supported by offline e-reader apps ([KOReader](https://koreader.rocks/), [GoldenDict](https://xiaoyifang.github.io/goldendict-ng/), and others). The structured field parsing pipeline (see [DESIGN.md](../structured_parsing/DESIGN.md)) made this possible by decomposing raw text into queryable sub-values.
 
-**72 dictionaries** cover 36 years (1990-2025) in two editions, totaling ~253 MB compressed (~2.1M entries). Each (country, field) pair is its own dictionary entry, matching the per-field format used by KOReader's existing factbook dictionary. Entries are searchable by country name, ISO Alpha-2 code, or FIPS 10-4 code combined with the field name (e.g. "Afghanistan - Population").
+**72 dictionaries** were originally built for 36 years (1990-2025) in two editions, totaling ~253 MB compressed (~2.1M entries). Their per-field organization differs from KOReader's category-based 2014 Factbook dictionary. Entries are searchable by country name, ISO Alpha-2 code, or FIPS 10-4 code combined with the field name (e.g. "Afghanistan - Population").
 
 ---
 
