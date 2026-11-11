@@ -2,6 +2,10 @@
 
 A complete, structured archive of the CIA World Factbook spanning **36 years** (1990-2025). On 3 October 2026, the live archive displayed **285 entities** and **1,071,313 data fields**; the v3.5 release statistics below describe an earlier database snapshot.
 
+> **Earlier editions coming soon**
+>
+> In the coming days, we plan to add **World Factbook data from 1981–1989** and data from its predecessor, the **National Basic Intelligence Factbook, from 1975–1980**.
+
 The CIA World Factbook was discontinued on **February 4, 2026**. This archive preserves a selected source snapshot for each of the 36 editions labeled 1990–2025 and creates a structured, queryable dataset.
 
 **[Search the interactive archive](https://worldfactbookarchive.org/)** | **[Project documentation](https://milkmp.github.io/CIA-World-Factbooks-Archive-1990-2025/)** | **[Executive summary](docs/CIA_Factbook_Archive_Executive_Summary.pdf)** | **[Full project report](docs/PROJECT_REPORT_FULL_2026-10-03.pdf)** | **[Raw source files](https://github.com/MilkMp/CIA-World-Factbooks-Archive-1990-2025/releases/tag/raw-sources-v1)**
